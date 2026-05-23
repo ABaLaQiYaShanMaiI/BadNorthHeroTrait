@@ -68,7 +68,7 @@ namespace BadNorthRegenerative
             Type shootableType = typeof(Shootable);
             shooterField = shootableType.GetField("shooter", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
-            Type weakRefType = typeof(WeakReference<Agent>);
+            Type weakRefType = typeof(WeakReference);
             targetProperty = weakRefType.GetProperty("Target", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
             agentField = shootableType.GetField("agent", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
@@ -277,9 +277,9 @@ namespace BadNorthRegenerative
                 if (shooterField != null)
                 {
                     object shooter = shooterField.GetValue(shootable);
-                    if (shooter is WeakReference<Agent> weakRef && targetProperty != null)
+                    if (shooter is WeakReference weakRef && targetProperty != null)
                     {
-                        return targetProperty.GetValue(weakRef) as Agent;
+                        return targetProperty.GetValue(weakRef, null) as Agent;
                     }
                 }
 
