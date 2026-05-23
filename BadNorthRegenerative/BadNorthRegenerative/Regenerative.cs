@@ -34,7 +34,7 @@ namespace BadNorthRegenerative
         {
             Plugin.Logger.LogInfo("REGENERATIVE CREATED");
             this.upgradeType = ScriptableObject.CreateInstance<HeroUpgradeType>();
-            this.upgradeType.typeEnum = 4;
+            this.upgradeType.typeEnum = (HeroUpgradeTypeEnum)4;
             this.upgradeType.canBeStartItem = true;
             this.upgradeType.unknownNameTerm = "META_INVENTORY/UNKNOWN/TRAIT/NAME";
             this.upgradeType.unknownDescriptionTerm = "META_INVENTORY/UNKNOWN/TRAIT/DESC";

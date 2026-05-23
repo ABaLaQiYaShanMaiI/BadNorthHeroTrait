@@ -1,0 +1,7 @@
+f:\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns\BadNorthThorns\obj\Debug\BadNorthThorns.csproj.AssemblyReference.cache
+f:\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns\BadNorthThorns\obj\Debug\BadNorthThorns.csproj.CoreCompileInputs.cache
+f:\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns\BadNorthThorns\bin\Debug\Resources\trait_thorns.png
+f:\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns\BadNorthThorns\bin\Debug\BadNorthThorns.dll
+f:\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns\BadNorthThorns\bin\Debug\BadNorthThorns.pdb
+f:\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns\BadNorthThorns\obj\Debug\BadNorthThorns.dll
+f:\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns\BadNorthThorns\obj\Debug\BadNorthThorns.pdb
