@@ -42,24 +42,37 @@ namespace BadNorthAxeThrower
         }
 
         /// <summary>
-        /// 通过反射获取 AxeThrowing 的私有字段值
+        /// 获取或添加组件（Unity 扩展方法替代品）
         /// </summary>
-        private static T GetField<T>(AxeThrowing instance, string fieldName)
+        private static T GetOrAddComponent<T>(GameObject go) where T : Component
+        {
+            T comp = go.GetComponent<T>();
+            if (comp == null)
+            {
+                comp = go.AddComponent<T>();
+            }
+            return comp;
+        }
+
+        /// <summary>
+        /// 通过反射获取 AxeThrowing 的字段值（非泛型，避免类型转换错误）
+        /// </summary>
+        private static object GetFieldValue(AxeThrowing instance, string fieldName)
         {
             var field = typeof(AxeThrowing).GetField(fieldName,
                 BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
             if (field == null)
             {
                 Plugin.Logger.LogWarning($"[AxeThrower] 反射字段 {fieldName} 未找到");
-                return default(T);
+                return null;
             }
-            return (T)field.GetValue(instance);
+            return field.GetValue(instance);
         }
 
         /// <summary>
-        /// 通过反射设置 AxeThrowing 的私有字段值
+        /// 通过反射设置 AxeThrowing 的字段值（非泛型，避免类型转换错误）
         /// </summary>
-        private static void SetField<T>(AxeThrowing instance, string fieldName, T value)
+        private static void SetFieldValue(AxeThrowing instance, string fieldName, object value)
         {
             var field = typeof(AxeThrowing).GetField(fieldName,
                 BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
@@ -69,21 +82,6 @@ namespace BadNorthAxeThrower
                 return;
             }
             field.SetValue(instance, value);
-        }
-
-        /// <summary>
-        /// 通过反射获取 VikingReference 的私有字段值
-        /// </summary>
-        private static T GetVikingField<T>(VikingReference instance, string fieldName)
-        {
-            var field = typeof(VikingReference).GetField(fieldName,
-                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-            if (field == null)
-            {
-                Plugin.Logger.LogWarning($"[AxeThrower] VikingReference 反射字段 {fieldName} 未找到");
-                return default(T);
-            }
-            return (T)field.GetValue(instance);
         }
 
         /// <summary>
@@ -101,16 +99,31 @@ namespace BadNorthAxeThrower
                     LevelStateObjectReferences.dict.TryGetValue("Viking_AxeThrower", out var reference) &&
                     reference is VikingReference vikingRef)
                 {
-                    // 通过反射访问私有字段 vikingClone 或 viking
-                    GameObject vikingAgent = GetVikingField<GameObject>(vikingRef, "vikingClone");
-                    if (vikingAgent == null)
+                    // 通过反射访问 VikingReference 的字段（不同游戏版本字段名可能不同）
+                    GameObject agentObj = null;
+                    try
                     {
-                        vikingAgent = GetVikingField<GameObject>(vikingRef, "viking");
+                        var vikingCloneField = typeof(VikingReference).GetField("vikingClone",
+                            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                        var vikingField = typeof(VikingReference).GetField("viking",
+                            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+
+                        var vikingClone = vikingCloneField?.GetValue(vikingRef) as Component;
+                        var viking = vikingField?.GetValue(vikingRef) as Component;
+
+                        if (vikingClone != null)
+                            agentObj = vikingClone.gameObject;
+                        else if (viking != null)
+                            agentObj = viking.gameObject;
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Plugin.Logger.LogWarning("[AxeThrower] VikingReference 反射失败: " + ex.Message);
                     }
 
-                    if (vikingAgent != null)
+                    if (agentObj != null)
                     {
-                        var template = vikingAgent.GetComponent<AxeThrowing>();
+                        var template = agentObj.GetComponent<AxeThrowing>();
                         if (template != null)
                         {
                             Plugin.Logger.LogInfo("[AxeThrower] 从 LevelStateObjectReferences 成功获取模板");
@@ -150,29 +163,29 @@ namespace BadNorthAxeThrower
         private static void ApplyLevelScaling(AxeThrowing comp, int squadLevel)
         {
             // 获取 attackSettings 的副本（AttackSettings 是结构体）
-            AttackSettings attackSettings = GetField<AttackSettings>(comp, FIELD_ATTACK_SETTINGS);
+            AttackSettings attackSettings = (AttackSettings)GetFieldValue(comp, FIELD_ATTACK_SETTINGS);
 
             switch (squadLevel)
             {
                 case 0:
-                    SetField(comp, FIELD_AMMO, 5);
+                    SetFieldValue(comp, FIELD_AMMO, 5);
                     attackSettings.launchImpulse = attackSettings.launchImpulse * 0.9f;
                     break;
                 case 1:
-                    SetField(comp, FIELD_AMMO, 8);
+                    SetFieldValue(comp, FIELD_AMMO, 8);
                     attackSettings.damage = attackSettings.damage * 1.33f;
                     attackSettings.knockback = attackSettings.knockback * 1.33f;
                     attackSettings.stun = attackSettings.stun * 1.5f;
                     break;
                 case 2:
-                    SetField(comp, FIELD_AMMO, 11);
+                    SetFieldValue(comp, FIELD_AMMO, 11);
                     attackSettings.damage = attackSettings.damage * 1.66f;
                     attackSettings.launchImpulse = attackSettings.launchImpulse * 1.1f;
                     attackSettings.knockback = attackSettings.knockback * 1.66f;
                     attackSettings.stun = attackSettings.stun * 2f;
                     break;
                 default:
-                    SetField(comp, FIELD_AMMO, 14);
+                    SetFieldValue(comp, FIELD_AMMO, 14);
                     attackSettings.damage = attackSettings.damage * 2f;
                     attackSettings.launchImpulse = attackSettings.launchImpulse * 1.2f;
                     attackSettings.knockback = attackSettings.knockback * 2f;
@@ -181,7 +194,7 @@ namespace BadNorthAxeThrower
             }
 
             // 将修改后的结构体写回
-            SetField(comp, FIELD_ATTACK_SETTINGS, attackSettings);
+            SetFieldValue(comp, FIELD_ATTACK_SETTINGS, attackSettings);
         }
 
         public override void OnAppliedToSquad(EnglishSquad squad, int upgradeLevel)
@@ -189,7 +202,7 @@ namespace BadNorthAxeThrower
             base.OnAppliedToSquad(squad, upgradeLevel);
 
             // 添加 LineOfSight 组件（掷斧手需要视线系统）
-            squad.heroAgent.GetOrAddComponent<LineOfSight>();
+            GetOrAddComponent<LineOfSight>(squad.heroAgent.gameObject);
 
             // 获取模板（带容错）
             AxeThrowing template = GetAxeThrowingTemplate();
@@ -200,11 +213,11 @@ namespace BadNorthAxeThrower
 
             if (template != null)
             {
-                // 从模板复制所有关键战斗属性（通过反射访问私有字段）
-                SetField(comp, FIELD_PREPARE_SOUND, GetField<AudioSource>(template, FIELD_PREPARE_SOUND));
-                SetField(comp, FIELD_THROWING_AXE_PREFAB, GetField<GameObject>(template, FIELD_THROWING_AXE_PREFAB));
-                SetField(comp, FIELD_TRAJECTORY_UTILITY, GetField<TrajectoryUtility>(template, FIELD_TRAJECTORY_UTILITY));
-                SetField(comp, FIELD_ATTACK_SETTINGS, GetField<AttackSettings>(template, FIELD_ATTACK_SETTINGS));
+                // 从模板复制所有关键战斗属性（使用非泛型反射，避免类型转换错误）
+                SetFieldValue(comp, FIELD_PREPARE_SOUND, GetFieldValue(template, FIELD_PREPARE_SOUND));
+                SetFieldValue(comp, FIELD_THROWING_AXE_PREFAB, GetFieldValue(template, FIELD_THROWING_AXE_PREFAB));
+                SetFieldValue(comp, FIELD_TRAJECTORY_UTILITY, GetFieldValue(template, FIELD_TRAJECTORY_UTILITY));
+                SetFieldValue(comp, FIELD_ATTACK_SETTINGS, GetFieldValue(template, FIELD_ATTACK_SETTINGS));
 
                 Plugin.Logger.LogInfo("[AxeThrower] 成功从模板复制攻击属性");
             }

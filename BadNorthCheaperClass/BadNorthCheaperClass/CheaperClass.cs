@@ -13,6 +13,9 @@ namespace BadNorthCheaperClass
         // 折扣率：40% off
         private const float DISCOUNT = 0.4f;
 
+        // 防止重复应用折扣
+        private bool discountApplied = false;
+
         public CheaperClass()
         {
             Plugin.Logger.LogInfo("CHEAPERCLASS CREATED");
@@ -38,14 +41,24 @@ namespace BadNorthCheaperClass
         }
 
         /// <summary>
-        /// 当特质附加到英雄时，通过反射修改英雄的升级定义，应用折扣
+        /// 当特质应用到实装小队时，通过反射修改英雄的升级定义，应用折扣
+        /// 使用 OnAppliedToSquad 而非 OnAttachedToHero，因为后者不是虚方法
         /// </summary>
-        public override void OnAttachedToHero(HeroDefinition hero, int level)
+        public override void OnAppliedToSquad(EnglishSquad squad, int upgradeLevel)
         {
-            base.OnAttachedToHero(hero, level);
+            base.OnAppliedToSquad(squad, upgradeLevel);
+
+            // 防止重复应用
+            if (discountApplied || squad?.hero == null)
+            {
+                Plugin.Logger.LogInfo("[CheaperClass] 跳过折扣应用 (已应用=" + discountApplied + ")");
+                return;
+            }
 
             try
             {
+                var heroDef = squad.hero;
+
                 // 通过反射获取 hero 的 upgrades 列表
                 var upgradesField = typeof(HeroDefinition).GetField("upgrades",
                     BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
@@ -55,7 +68,7 @@ namespace BadNorthCheaperClass
                     return;
                 }
 
-                var upgrades = upgradesField.GetValue(hero) as IList<HeroUpgradeDefinition>;
+                var upgrades = upgradesField.GetValue(heroDef) as IList<HeroUpgradeDefinition>;
                 if (upgrades == null)
                 {
                     Plugin.Logger.LogWarning("[CheaperClass] upgrades 为空或类型不匹配");
@@ -79,19 +92,13 @@ namespace BadNorthCheaperClass
                     }
                 }
 
+                discountApplied = true;
                 Plugin.Logger.LogInfo("[CheaperClass] 成功应用 40% 折扣到所有英雄升级");
             }
             catch (System.Exception ex)
             {
                 Plugin.Logger.LogError("[CheaperClass] 应用折扣时出错: " + ex.Message);
             }
-        }
-
-        public override void OnAppliedToSquad(EnglishSquad squad, int upgradeLevel)
-        {
-            base.OnAppliedToSquad(squad, upgradeLevel);
-
-            Plugin.Logger.LogInfo("[CheaperClass] Applied 40% discount to hero upgrades");
         }
     }
 }
