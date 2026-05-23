@@ -24,13 +24,14 @@ namespace BNAPI
 
         private static void EnsureReflectionInit()
         {
-            if (_upgradesField != null) return;
+            // 使用 ReferenceEquals 避免 Mono 2.0 下 FieldInfo.op_Inequality 缺失问题
+            if (!ReferenceEquals(_upgradesField, null)) return;
 
             Type metaInventoryType = typeof(Voxels.TowerDefense.ProfileInternals.MetaInventory);
             _upgradesField = metaInventoryType.GetField("upgrades", BindingFlags.Instance | BindingFlags.NonPublic);
             _upgradeEntryType = metaInventoryType.GetNestedType("UpgradeEntry", BindingFlags.NonPublic);
 
-            if (_upgradeEntryType != null)
+            if (!ReferenceEquals(_upgradeEntryType, null))
             {
                 _upgradeEntryUpgradeField = _upgradeEntryType.GetField("upgrade");
                 _upgradeEntryIsStartingField = _upgradeEntryType.GetField("isStarting");
@@ -75,7 +76,7 @@ namespace BNAPI
         internal static void ApplyHooks()
         {
             On.Voxels.TowerDefense.ProfileInternals.MetaInventory.hook_InitStartingUpgrades hook_InitStartingUpgrades;
-            if ((hook_InitStartingUpgrades = O._0__MetaInventory_InitStartingUpgrades) == null)
+            if (ReferenceEquals(hook_InitStartingUpgrades = O._0__MetaInventory_InitStartingUpgrades, null))
             {
                 hook_InitStartingUpgrades = (O._0__MetaInventory_InitStartingUpgrades = new On.Voxels.TowerDefense.ProfileInternals.MetaInventory.hook_InitStartingUpgrades(CustomTraits.MetaInventory_InitStartingUpgrades));
             }
@@ -87,7 +88,7 @@ namespace BNAPI
             foreach (string traitID in CustomTraits.startingTraits)
             {
                 HeroUpgradeDefinition registeredTrait = CustomTraits.GetRegisteredTrait(traitID);
-                if (registeredTrait == null)
+                if (ReferenceEquals(registeredTrait, null))
                     continue;
 
                 // 使用反射调用 Get 方法
@@ -100,7 +101,7 @@ namespace BNAPI
                 }
                 catch { }
 
-                if (upgradeEntry == null)
+                if (ReferenceEquals(upgradeEntry, null))
                 {
                     GetUpgrades(self).Add(CreateUpgradeEntry(registeredTrait, true));
                 }
@@ -118,8 +119,8 @@ namespace BNAPI
                 object entry = upgrades[i];
                 object upgrade = GetUpgradeEntryUpgrade(entry);
                 PropertyInfo defProp = upgrade.GetType().GetProperty("definition");
-                object def = defProp.GetValue(upgrade);
-                if (def == null)
+                object def = defProp.GetValue(upgrade, null);
+                if (ReferenceEquals(def, null))
                 {
                     ids.Add(i);
                 }

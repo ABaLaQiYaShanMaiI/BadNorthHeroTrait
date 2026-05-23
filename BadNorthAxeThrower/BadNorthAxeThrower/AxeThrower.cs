@@ -47,7 +47,7 @@ namespace BadNorthAxeThrower
         private static T GetOrAddComponent<T>(GameObject go) where T : Component
         {
             T comp = go.GetComponent<T>();
-            if (comp == null)
+            if (ReferenceEquals(comp, null))
             {
                 comp = go.AddComponent<T>();
             }
@@ -56,14 +56,15 @@ namespace BadNorthAxeThrower
 
         /// <summary>
         /// 通过反射获取 AxeThrowing 的字段值（非泛型，避免类型转换错误）
+        /// 使用 ReferenceEquals 避免 Mono 2.0 下 FieldInfo.op_Inequality 缺失问题
         /// </summary>
         private static object GetFieldValue(AxeThrowing instance, string fieldName)
         {
-            var field = typeof(AxeThrowing).GetField(fieldName,
+            FieldInfo field = typeof(AxeThrowing).GetField(fieldName,
                 BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-            if (field == null)
+            if (ReferenceEquals(field, null))
             {
-                Plugin.Logger.LogWarning($"[AxeThrower] 反射字段 {fieldName} 未找到");
+                Plugin.Logger.LogWarning(string.Format("[AxeThrower] 反射字段 {0} 未找到", fieldName));
                 return null;
             }
             return field.GetValue(instance);
@@ -71,14 +72,15 @@ namespace BadNorthAxeThrower
 
         /// <summary>
         /// 通过反射设置 AxeThrowing 的字段值（非泛型，避免类型转换错误）
+        /// 使用 ReferenceEquals 避免 Mono 2.0 下 FieldInfo.op_Inequality 缺失问题
         /// </summary>
         private static void SetFieldValue(AxeThrowing instance, string fieldName, object value)
         {
-            var field = typeof(AxeThrowing).GetField(fieldName,
+            FieldInfo field = typeof(AxeThrowing).GetField(fieldName,
                 BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-            if (field == null)
+            if (ReferenceEquals(field, null))
             {
-                Plugin.Logger.LogWarning($"[AxeThrower] 反射字段 {fieldName} 未找到，无法设置");
+                Plugin.Logger.LogWarning(string.Format("[AxeThrower] 反射字段 {0} 未找到，无法设置", fieldName));
                 return;
             }
             field.SetValue(instance, value);
@@ -95,25 +97,31 @@ namespace BadNorthAxeThrower
             // 方法1: 从 LevelStateObjectReferences.dict 获取
             try
             {
-                if (LevelStateObjectReferences.dict != null &&
-                    LevelStateObjectReferences.dict.TryGetValue("Viking_AxeThrower", out var reference) &&
+                if (!ReferenceEquals(LevelStateObjectReferences.dict, null) &&
+                    LevelStateObjectReferences.dict.TryGetValue("Viking_AxeThrower", out UnityEngine.Object reference) &&
                     reference is VikingReference vikingRef)
                 {
                     // 通过反射访问 VikingReference 的字段（不同游戏版本字段名可能不同）
+                    // 使用 ReferenceEquals 和显式 null 检查避免 FieldInfo.op_Inequality 缺失
                     GameObject agentObj = null;
                     try
                     {
-                        var vikingCloneField = typeof(VikingReference).GetField("vikingClone",
+                        FieldInfo vikingCloneField = typeof(VikingReference).GetField("vikingClone",
                             BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-                        var vikingField = typeof(VikingReference).GetField("viking",
+                        FieldInfo vikingField = typeof(VikingReference).GetField("viking",
                             BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 
-                        var vikingClone = vikingCloneField?.GetValue(vikingRef) as Component;
-                        var viking = vikingField?.GetValue(vikingRef) as Component;
+                        Component vikingClone = null;
+                        if (!ReferenceEquals(vikingCloneField, null))
+                            vikingClone = vikingCloneField.GetValue(vikingRef) as Component;
 
-                        if (vikingClone != null)
+                        Component viking = null;
+                        if (!ReferenceEquals(vikingField, null))
+                            viking = vikingField.GetValue(vikingRef) as Component;
+
+                        if (!ReferenceEquals(vikingClone, null))
                             agentObj = vikingClone.gameObject;
-                        else if (viking != null)
+                        else if (!ReferenceEquals(viking, null))
                             agentObj = viking.gameObject;
                     }
                     catch (System.Exception ex)
@@ -121,10 +129,10 @@ namespace BadNorthAxeThrower
                         Plugin.Logger.LogWarning("[AxeThrower] VikingReference 反射失败: " + ex.Message);
                     }
 
-                    if (agentObj != null)
+                    if (!ReferenceEquals(agentObj, null))
                     {
-                        var template = agentObj.GetComponent<AxeThrowing>();
-                        if (template != null)
+                        AxeThrowing template = agentObj.GetComponent<AxeThrowing>();
+                        if (!ReferenceEquals(template, null))
                         {
                             Plugin.Logger.LogInfo("[AxeThrower] 从 LevelStateObjectReferences 成功获取模板");
                             return template;
@@ -140,8 +148,8 @@ namespace BadNorthAxeThrower
             // 方法2: 遍历 Resources 查找 AxeThrowing 组件
             try
             {
-                var allAxeThrowings = Resources.FindObjectsOfTypeAll<AxeThrowing>();
-                if (allAxeThrowings != null && allAxeThrowings.Length > 0)
+                AxeThrowing[] allAxeThrowings = Resources.FindObjectsOfTypeAll<AxeThrowing>();
+                if (!ReferenceEquals(allAxeThrowings, null) && allAxeThrowings.Length > 0)
                 {
                     Plugin.Logger.LogInfo("[AxeThrower] 从 Resources.FindObjectsOfTypeAll 获取模板 (共 " + allAxeThrowings.Length + " 个)");
                     return allAxeThrowings[0];
@@ -211,7 +219,7 @@ namespace BadNorthAxeThrower
             squad.heroAgent.gameObject.AddComponent<AxeThrowing>();
             AxeThrowing comp = squad.heroAgent.GetComponent<AxeThrowing>();
 
-            if (template != null)
+            if (!ReferenceEquals(template, null))
             {
                 // 从模板复制所有关键战斗属性（使用非泛型反射，避免类型转换错误）
                 SetFieldValue(comp, FIELD_PREPARE_SOUND, GetFieldValue(template, FIELD_PREPARE_SOUND));

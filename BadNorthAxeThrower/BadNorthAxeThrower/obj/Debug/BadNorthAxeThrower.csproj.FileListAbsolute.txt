@@ -1,7 +1,7 @@
-f:\BadNorthProgram\BadNorthHeroTraits\BadNorthAxeThrower\BadNorthAxeThrower\obj\Debug\BadNorthAxeThrower.csproj.AssemblyReference.cache
-f:\BadNorthProgram\BadNorthHeroTraits\BadNorthAxeThrower\BadNorthAxeThrower\obj\Debug\BadNorthAxeThrower.csproj.CoreCompileInputs.cache
 f:\BadNorthProgram\BadNorthHeroTraits\BadNorthAxeThrower\BadNorthAxeThrower\bin\Debug\Resources\trait_axe.png
 f:\BadNorthProgram\BadNorthHeroTraits\BadNorthAxeThrower\BadNorthAxeThrower\bin\Debug\BadNorthAxeThrower.dll
 f:\BadNorthProgram\BadNorthHeroTraits\BadNorthAxeThrower\BadNorthAxeThrower\bin\Debug\BadNorthAxeThrower.pdb
+f:\BadNorthProgram\BadNorthHeroTraits\BadNorthAxeThrower\BadNorthAxeThrower\obj\Debug\BadNorthAxeThrower.csproj.AssemblyReference.cache
+f:\BadNorthProgram\BadNorthHeroTraits\BadNorthAxeThrower\BadNorthAxeThrower\obj\Debug\BadNorthAxeThrower.csproj.CoreCompileInputs.cache
 f:\BadNorthProgram\BadNorthHeroTraits\BadNorthAxeThrower\BadNorthAxeThrower\obj\Debug\BadNorthAxeThrower.dll
 f:\BadNorthProgram\BadNorthHeroTraits\BadNorthAxeThrower\BadNorthAxeThrower\obj\Debug\BadNorthAxeThrower.pdb

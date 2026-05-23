@@ -13,7 +13,7 @@ namespace BNAPI
         internal static void ApplyHooks()
         {
             On.I2.Loc.LocalizationManager.hook_AddSource hook_AddSource;
-            if ((hook_AddSource = CustomText.Hooks.LocalizationManager_AddSourceHook) == null)
+            if (ReferenceEquals(hook_AddSource = CustomText.Hooks.LocalizationManager_AddSourceHook, null))
             {
                 hook_AddSource = (CustomText.Hooks.LocalizationManager_AddSourceHook = new On.I2.Loc.LocalizationManager.hook_AddSource(CustomText.LocalizationManager_AddSource));
             }
@@ -24,7 +24,7 @@ namespace BNAPI
         {
             orig.Invoke(source);
             CustomTermsAddedDelegate customTermsAdded = CustomText.CustomTermsAdded;
-            if (customTermsAdded != null)
+            if (!ReferenceEquals(customTermsAdded, null))
             {
                 customTermsAdded();
             }
@@ -37,8 +37,21 @@ namespace BNAPI
             {
                 I2.Loc.LanguageSourceData languageSourceData = I2.Loc.LocalizationManager.Sources[0];
 
-                // 防重复保护：遍历 mTerms 检查术语是否已存在（避免使用可能不存在的 ContainsTerm 方法）
-                if (languageSourceData.mTerms?.Exists(t => t.Term == term) == true)
+                // 防重复保护：使用传统 null 检查和循环查找（避免 ?. 运算符在 CLR 2.0 下的兼容性问题）
+                bool termExists = false;
+                if (languageSourceData.mTerms != null)
+                {
+                    for (int i = 0; i < languageSourceData.mTerms.Count; i++)
+                    {
+                        if (languageSourceData.mTerms[i].Term == term)
+                        {
+                            termExists = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (termExists)
                 {
                     Plugin.logger.LogInfo(string.Concat(new string[]
                     {

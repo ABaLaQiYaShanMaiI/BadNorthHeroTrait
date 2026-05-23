@@ -51,7 +51,7 @@ namespace BadNorthRegenerative
         private void Awake()
         {
             agent = GetComponent<Agent>();
-            if (agent == null)
+            if (ReferenceEquals(agent, null))
             {
                 Plugin.Logger.LogError("[RegenerativeJumpResponder] Awake: 未找到Agent组件");
                 return;
@@ -63,7 +63,8 @@ namespace BadNorthRegenerative
 
         private static void CacheReflectionInfo()
         {
-            if (shooterField != null) return; // 已缓存
+            // 使用 ReferenceEquals 避免 Mono 2.0 下 FieldInfo.op_Inequality 缺失问题
+            if (!ReferenceEquals(shooterField, null)) return; // 已缓存
 
             Type shootableType = typeof(Shootable);
             shooterField = shootableType.GetField("shooter", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
@@ -103,7 +104,7 @@ namespace BadNorthRegenerative
 
         private void Start()
         {
-            if (agent == null) return;
+            if (ReferenceEquals(agent, null)) return;
 
             // 将自己插入 attackResponders 首位
             if (!agent.attackResponders.Contains(this))
@@ -113,57 +114,61 @@ namespace BadNorthRegenerative
 
             // 尝试获取或创建 JumpAttack 组件
             jumpAttack = agent.GetComponent<JumpAttack>();
-            if (jumpAttack == null)
+            if (ReferenceEquals(jumpAttack, null))
             {
                 // 从 Viking_Twohanded 参考对象复制
                 // 三级容错：LevelStateObjectReferences.dict 的值可能不是 GameObject 类型
                 try
                 {
                     GameObject template = null;
-                    if (LevelStateObjectReferences.dict.TryGetValue("Viking_Twohanded", out var refObj))
+                    if (LevelStateObjectReferences.dict.TryGetValue("Viking_Twohanded", out UnityEngine.Object refObj))
                     {
                         // 第一级：直接 as GameObject
                         template = refObj as GameObject;
                         
                         // 第二级：如果是 Component，获取其 gameObject
-                        if (template == null)
+                        if (ReferenceEquals(template, null))
                         {
                             Component comp = refObj as Component;
-                            if (comp != null)
+                            if (!ReferenceEquals(comp, null))
                             {
                                 template = comp.gameObject;
                             }
                         }
                         
                         // 第三级：如果是 VikingReference（参考 AxeThrower 的反射逻辑），尝试获取 viking 或 vikingClone 的 gameObject
-                        if (template == null && refObj is VikingReference vRef)
+                        if (ReferenceEquals(template, null) && refObj is VikingReference vRef)
                         {
                             try
                             {
-                                var vikingCloneField = typeof(VikingReference).GetField("vikingClone",
-                                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
-                                var vikingField = typeof(VikingReference).GetField("viking",
-                                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+                                FieldInfo vikingCloneField = typeof(VikingReference).GetField("vikingClone",
+                                    BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                                FieldInfo vikingField = typeof(VikingReference).GetField("viking",
+                                    BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
                                 
-                                var vikingClone = vikingCloneField?.GetValue(vRef) as Component;
-                                var viking = vikingField?.GetValue(vRef) as Component;
+                                Component vikingClone = null;
+                                Component viking = null;
+                                if (!ReferenceEquals(vikingCloneField, null))
+                                    vikingClone = vikingCloneField.GetValue(vRef) as Component;
+                                if (!ReferenceEquals(vikingField, null))
+                                    viking = vikingField.GetValue(vRef) as Component;
                                 
-                                if (vikingClone != null)
+                                if (!ReferenceEquals(vikingClone, null))
                                     template = vikingClone.gameObject;
-                                else if (viking != null)
+                                else if (!ReferenceEquals(viking, null))
                                     template = viking.gameObject;
                             }
-                            catch (System.Exception ex)
+                            catch (Exception ex)
                             {
                                 Plugin.Logger.LogWarning("[RegenerativeJumpResponder] VikingReference 反射失败: " + ex.Message);
                             }
                         }
                     }
                     
-                    if (template != null)
+                    if (!ReferenceEquals(template, null))
                     {
                         JumpAttack templateJump = template.GetComponent<JumpAttack>();
-                        if (templateJump != null)
+                        if (!ReferenceEquals(templateJump, null))
                         {
                             jumpAttack = agent.gameObject.AddComponent<JumpAttack>();
                             // 通过反射复制私有字段
@@ -181,7 +186,7 @@ namespace BadNorthRegenerative
                 }
             }
 
-            if (jumpAttack != null)
+            if (!ReferenceEquals(jumpAttack, null))
             {
                 // 调用 Setup 初始化
                 jumpAttack.Setup(agent);
@@ -197,21 +202,21 @@ namespace BadNorthRegenerative
         /// </summary>
         private static void CopyJumpAttackFields(JumpAttack source, JumpAttack destination)
         {
-            if (jumpAttack_attackSettings != null)
+            if (!ReferenceEquals(jumpAttack_attackSettings, null))
                 jumpAttack_attackSettings.SetValue(destination, jumpAttack_attackSettings.GetValue(source));
-            if (jumpAttack_plungeState != null)
+            if (!ReferenceEquals(jumpAttack_plungeState, null))
                 jumpAttack_plungeState.SetValue(destination, jumpAttack_plungeState.GetValue(source));
-            if (jumpAttack_plungePrepareState != null)
+            if (!ReferenceEquals(jumpAttack_plungePrepareState, null))
                 jumpAttack_plungePrepareState.SetValue(destination, jumpAttack_plungePrepareState.GetValue(source));
-            if (jumpAttack_plungeAttackState != null)
+            if (!ReferenceEquals(jumpAttack_plungeAttackState, null))
                 jumpAttack_plungeAttackState.SetValue(destination, jumpAttack_plungeAttackState.GetValue(source));
-            if (jumpAttack_landPos != null)
+            if (!ReferenceEquals(jumpAttack_landPos, null))
                 jumpAttack_landPos.SetValue(destination, jumpAttack_landPos.GetValue(source));
-            if (jumpAttack_faceDirection != null)
+            if (!ReferenceEquals(jumpAttack_faceDirection, null))
                 jumpAttack_faceDirection.SetValue(destination, jumpAttack_faceDirection.GetValue(source));
-            if (jumpAttack_plungeJumpId != null)
+            if (!ReferenceEquals(jumpAttack_plungeJumpId, null))
                 jumpAttack_plungeJumpId.SetValue(destination, jumpAttack_plungeJumpId.GetValue(source));
-            if (jumpAttack_attackAnimId != null)
+            if (!ReferenceEquals(jumpAttack_attackAnimId, null))
                 jumpAttack_attackAnimId.SetValue(destination, jumpAttack_attackAnimId.GetValue(source));
         }
 
@@ -222,7 +227,7 @@ namespace BadNorthRegenerative
                 cooldownTimer -= Time.deltaTime;
             }
 
-            if (pendingJumpTarget != null && jumpAttack != null)
+            if (!ReferenceEquals(pendingJumpTarget, null) && !ReferenceEquals(jumpAttack, null))
             {
                 ExecuteJump(pendingJumpTarget);
                 pendingJumpTarget = null;
@@ -231,19 +236,19 @@ namespace BadNorthRegenerative
 
         public void ModifyAttack(ref Attack attack)
         {
-            if (agent == null || !agent.isActiveAndEnabled) return;
+            if (ReferenceEquals(agent, null) || !agent.isActiveAndEnabled) return;
             if (cooldownTimer > 0f) return;
 
             // 检查攻击来源是否为远程投射物
             Shootable shootable = attack.monoAttacker as Shootable;
-            if (shootable == null) return;
+            if (ReferenceEquals(shootable, null)) return;
 
             // 检查防御者存活
             if (IsAgentDead(agent)) return;
 
             // 获取远程攻击者的 Agent
             Agent attackerAgent = GetShooterAgent(shootable);
-            if (attackerAgent == null) return;
+            if (ReferenceEquals(attackerAgent, null)) return;
             if (IsAgentDead(attackerAgent)) return;
 
             // 检查距离
@@ -269,30 +274,30 @@ namespace BadNorthRegenerative
 
         private void ExecuteJump(Agent target)
         {
-            if (jumpAttack == null || target == null) return;
+            if (ReferenceEquals(jumpAttack, null) || ReferenceEquals(target, null)) return;
 
             try
             {
                 // 通过反射设置目标
-                if (jumpAttack_target != null)
+                if (!ReferenceEquals(jumpAttack_target, null))
                 {
                     jumpAttack_target.SetValue(jumpAttack, target);
                 }
 
                 // 设置落点（使用目标的 NavPos 位置）
-                if (jumpAttack_landPos != null)
+                if (!ReferenceEquals(jumpAttack_landPos, null))
                 {
                     NavPos landNavPos = new NavPos(target.navPos.tri, target.navPos.pos);
                     jumpAttack_landPos.SetValue(jumpAttack, landNavPos);
                 }
-                if (jumpAttack_faceDirection != null)
+                if (!ReferenceEquals(jumpAttack_faceDirection, null))
                 {
                     Vector3 direction = (target.transform.position - agent.transform.position).normalized;
                     jumpAttack_faceDirection.SetValue(jumpAttack, direction);
                 }
 
                 // 向目标施加威胁（使用 Agent.rangeWorry）
-                if (target.brain != null && agent.rangeWorry != null)
+                if (!ReferenceEquals(target.brain, null) && !ReferenceEquals(agent.rangeWorry, null))
                 {
                     agent.rangeWorry.threat = jumpAttack;
                     agent.rangeWorry.threatComponent = jumpAttack;
@@ -301,7 +306,7 @@ namespace BadNorthRegenerative
                 }
 
                 // 通过反射调用 PlungeJump 私有方法
-                if (jumpAttack_PlungeJump != null)
+                if (!ReferenceEquals(jumpAttack_PlungeJump, null))
                 {
                     jumpAttack_PlungeJump.Invoke(jumpAttack, null);
                 }
@@ -319,18 +324,18 @@ namespace BadNorthRegenerative
             try
             {
                 // 尝试通过反射获取 shooter 字段
-                if (shooterField != null)
+                if (!ReferenceEquals(shooterField, null))
                 {
                     object shooter = shooterField.GetValue(shootable);
                     WeakReference weakRef = shooter as WeakReference;
-                    if (weakRef != null && targetProperty != null)
+                    if (!ReferenceEquals(weakRef, null) && !ReferenceEquals(targetProperty, null))
                     {
                         return targetProperty.GetValue(weakRef, null) as Agent;
                     }
                 }
 
                 // 回退：尝试通过 agent 字段
-                if (agentField != null)
+                if (!ReferenceEquals(agentField, null))
                 {
                     return agentField.GetValue(shootable) as Agent;
                 }
@@ -348,16 +353,16 @@ namespace BadNorthRegenerative
         /// </summary>
         private bool IsAgentDead(Agent targetAgent)
         {
-            if (targetAgent == null) return true;
+            if (ReferenceEquals(targetAgent, null)) return true;
 
             // 检查 health <= 0
             if (targetAgent.health <= 0f) return true;
 
             // 通过反射检查 deadState
-            if (agent_deadState != null)
+            if (!ReferenceEquals(agent_deadState, null))
             {
                 AgentState deadState = agent_deadState.GetValue(targetAgent) as AgentState;
-                if (deadState != null && deadState.active) return true;
+                if (!ReferenceEquals(deadState, null) && deadState.active) return true;
             }
 
             return false;
@@ -368,12 +373,12 @@ namespace BadNorthRegenerative
         /// </summary>
         private bool IsAgentGrounded(Agent targetAgent)
         {
-            if (targetAgent == null) return false;
+            if (ReferenceEquals(targetAgent, null)) return false;
 
-            if (agent_groundedState != null)
+            if (!ReferenceEquals(agent_groundedState, null))
             {
                 AgentState groundedState = agent_groundedState.GetValue(targetAgent) as AgentState;
-                if (groundedState != null)
+                if (!ReferenceEquals(groundedState, null))
                 {
                     return groundedState.active;
                 }
@@ -388,16 +393,16 @@ namespace BadNorthRegenerative
         /// </summary>
         private bool IsJumpAttackJumping(JumpAttack ja)
         {
-            if (ja == null) return false;
+            if (ReferenceEquals(ja, null)) return false;
 
             // 通过 JumpComponent 的 jumpingState 判断
-            if (jumpAttack_jumpComponent != null)
+            if (!ReferenceEquals(jumpAttack_jumpComponent, null))
             {
                 JumpComponent jc = jumpAttack_jumpComponent.GetValue(ja) as JumpComponent;
-                if (jc != null && jumpComponent_jumpingState != null)
+                if (!ReferenceEquals(jc, null) && !ReferenceEquals(jumpComponent_jumpingState, null))
                 {
                     AgentState jumpingState = jumpComponent_jumpingState.GetValue(jc) as AgentState;
-                    if (jumpingState != null)
+                    if (!ReferenceEquals(jumpingState, null))
                     {
                         return jumpingState.active;
                     }
@@ -405,10 +410,10 @@ namespace BadNorthRegenerative
             }
 
             // 回退：检查 plungeState
-            if (jumpAttack_plungeState != null)
+            if (!ReferenceEquals(jumpAttack_plungeState, null))
             {
                 AgentState plungeState = jumpAttack_plungeState.GetValue(ja) as AgentState;
-                if (plungeState != null && plungeState.active) return true;
+                if (!ReferenceEquals(plungeState, null) && plungeState.active) return true;
             }
 
             return false;
@@ -416,14 +421,14 @@ namespace BadNorthRegenerative
 
         private bool IsSquadMemberJumping()
         {
-            if (agent.squad == null) return false;
+            if (ReferenceEquals(agent.squad, null)) return false;
 
             foreach (Agent squadAgent in agent.squad.agents)
             {
-                if (squadAgent != agent)
+                if (!ReferenceEquals(squadAgent, agent))
                 {
                     JumpAttack otherJump = squadAgent.GetComponent<JumpAttack>();
-                    if (otherJump != null && otherJump.enabled && IsJumpAttackJumping(otherJump))
+                    if (!ReferenceEquals(otherJump, null) && otherJump.enabled && IsJumpAttackJumping(otherJump))
                     {
                         return true;
                     }
@@ -435,7 +440,7 @@ namespace BadNorthRegenerative
 
         private void OnDestroy()
         {
-            if (agent != null && agent.attackResponders != null)
+            if (!ReferenceEquals(agent, null) && !ReferenceEquals(agent.attackResponders, null))
             {
                 agent.attackResponders.Remove(this);
             }
