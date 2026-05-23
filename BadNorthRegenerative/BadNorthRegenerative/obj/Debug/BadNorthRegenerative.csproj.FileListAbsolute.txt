@@ -1,0 +1,2 @@
+f:\BadNorthProgram\BadNorthHeroTraits\BadNorthRegenerative\BadNorthRegenerative\obj\Debug\BadNorthRegenerative.csproj.AssemblyReference.cache
+f:\BadNorthProgram\BadNorthHeroTraits\BadNorthRegenerative\BadNorthRegenerative\obj\Debug\BadNorthRegenerative.csproj.CoreCompileInputs.cache
