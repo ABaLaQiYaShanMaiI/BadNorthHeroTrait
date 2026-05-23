@@ -24,10 +24,15 @@ namespace BadNorthRegenerative
         };
 
         [Header("Sound")]
+        [SerializeField]
         private string swordSoundPrefix = "Sfx/Viking/Twohanded";
+        [SerializeField]
         private FabricEventReference moveSound = "Sfx/Viking/Twohanded/Move";
+        [SerializeField]
         private FabricEventReference deathSound = "Sfx/Viking/Twohanded/Die";
+        [SerializeField]
         private FabricEventReference swingSound = "Sfx/Viking/Twohanded/Swing";
+        [SerializeField]
         private FabricEventReference swordSound = "Sfx/Viking/Twohanded";
 
         public Regenerative()
@@ -131,15 +136,24 @@ namespace BadNorthRegenerative
 
         private void SetupAgentSounds(Agent agent, Swordsman swordsman)
         {
-            if (agent.body != null)
+            if (agent.body != null && !string.IsNullOrEmpty(this.moveSound?.name))
             {
                 agent.body.baseMoveSoundRef = this.moveSound;
             }
-            swordsman.swingSound = this.swingSound.name;
-            swordsman.chargeSound = this.swordSoundPrefix;
-            swordsman.swordSound = this.swordSound.name;
+            if (!string.IsNullOrEmpty(this.swingSound?.name))
+            {
+                swordsman.swingSound = this.swingSound.name;
+            }
+            if (!string.IsNullOrEmpty(this.swordSoundPrefix))
+            {
+                swordsman.chargeSound = this.swordSoundPrefix;
+            }
+            if (!string.IsNullOrEmpty(this.swordSound?.name))
+            {
+                swordsman.swordSound = this.swordSound.name;
+            }
             Death component = agent.GetComponent<Death>();
-            if (component != null)
+            if (component != null && !string.IsNullOrEmpty(this.deathSound?.name))
             {
                 component.deathSound = this.deathSound.name;
             }
@@ -252,7 +266,7 @@ namespace BadNorthRegenerative
             }
             catch (System.Exception ex)
             {
-                Plugin.Logger.LogWarning($"[Regenerative] 移除 SpearShield 失败：{ex.Message}");
+                Plugin.Logger.LogWarning(string.Format("[Regenerative] 移除 SpearShield 失败：{0}", ex.Message));
             }
         }
 

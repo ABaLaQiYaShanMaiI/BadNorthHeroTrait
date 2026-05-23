@@ -20,7 +20,7 @@ namespace BadNorthRegenerative
         {
             if (agent != null)
             {
-                Plugin.Logger.LogInfo($"[RegenerativeSpearBuff] 已挂载到 {agent.name}");
+                Plugin.Logger.LogInfo(string.Format("[RegenerativeSpearBuff] 已挂载到 {0}", agent.name));
             }
         }
     }

@@ -49,7 +49,7 @@ namespace BadNorthCheaperClass
             base.OnAppliedToSquad(squad, upgradeLevel);
 
             // 防止重复应用
-            if (discountApplied || squad?.hero == null)
+            if (discountApplied || squad == null || squad.hero == null)
             {
                 Plugin.Logger.LogInfo("[CheaperClass] 跳过折扣应用 (已应用=" + discountApplied + ")");
                 return;
@@ -59,14 +59,15 @@ namespace BadNorthCheaperClass
             {
                 var heroDef = squad.hero;
 
-                // 自适应字段查找：遍历所有非静态字段，寻找名字包含 "upgrade" 且实现了 IList 的字段
+                // 自适应字段查找：遍历所有非静态字段，寻找名字包含 "upgrades"（复数）且实现了 IList 的字段
+                // 使用复数形式避免误匹配其他包含 "upgrade" 但不相关的字段（如已购买的升级列表、已禁用的升级列表等）
                 var heroDefType = typeof(HeroDefinition);
                 var fields = heroDefType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
                 bool found = false;
 
                 foreach (var field in fields)
                 {
-                    if (!field.Name.ToLower().Contains("upgrade"))
+                    if (!field.Name.ToLower().Contains("upgrades"))
                         continue;
                     if (!typeof(System.Collections.IList).IsAssignableFrom(field.FieldType))
                         continue;
@@ -74,7 +75,7 @@ namespace BadNorthCheaperClass
                     var upgradesList = field.GetValue(heroDef) as System.Collections.IList;
                     if (upgradesList == null || upgradesList.Count == 0)
                     {
-                        Plugin.Logger.LogWarning($"[CheaperClass] 字段 {field.Name} 为空或元素数量为0");
+                        Plugin.Logger.LogWarning(string.Format("[CheaperClass] 字段 {0} 为空或元素数量为0", field.Name));
                         continue;
                     }
 
@@ -92,7 +93,7 @@ namespace BadNorthCheaperClass
                             int originalCost = levels[i].cost;
                             int discountedCost = Mathf.RoundToInt(originalCost * (1f - DISCOUNT));
                             levels[i].cost = discountedCost;
-                            Plugin.Logger.LogInfo($"[CheaperClass] {upgrade.name} 等级{i} 费用 {originalCost} -> {discountedCost}");
+                            Plugin.Logger.LogInfo(string.Format("[CheaperClass] {0} 等级{1} 费用 {2} -> {3}", upgrade.name, i, originalCost, discountedCost));
                         }
                     }
 
@@ -104,7 +105,7 @@ namespace BadNorthCheaperClass
 
                 if (!found)
                 {
-                    Plugin.Logger.LogWarning("[CheaperClass] 未找到任何包含 upgrade 的列表字段，可能特质的折扣功能无法生效");
+                    Plugin.Logger.LogWarning("[CheaperClass] 未找到任何包含 upgrades 的列表字段，可能特质的折扣功能无法生效");
                 }
             }
             catch (System.Exception ex)

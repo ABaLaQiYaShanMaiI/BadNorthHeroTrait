@@ -116,9 +116,50 @@ namespace BadNorthRegenerative
             if (jumpAttack == null)
             {
                 // 从 Viking_Twohanded 参考对象复制
+                // 三级容错：LevelStateObjectReferences.dict 的值可能不是 GameObject 类型
                 try
                 {
-                    GameObject template = LevelStateObjectReferences.dict["Viking_Twohanded"] as GameObject;
+                    GameObject template = null;
+                    if (LevelStateObjectReferences.dict.TryGetValue("Viking_Twohanded", out var refObj))
+                    {
+                        // 第一级：直接 as GameObject
+                        template = refObj as GameObject;
+                        
+                        // 第二级：如果是 Component，获取其 gameObject
+                        if (template == null)
+                        {
+                            Component comp = refObj as Component;
+                            if (comp != null)
+                            {
+                                template = comp.gameObject;
+                            }
+                        }
+                        
+                        // 第三级：如果是 VikingReference（参考 AxeThrower 的反射逻辑），尝试获取 viking 或 vikingClone 的 gameObject
+                        if (template == null && refObj is VikingReference vRef)
+                        {
+                            try
+                            {
+                                var vikingCloneField = typeof(VikingReference).GetField("vikingClone",
+                                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+                                var vikingField = typeof(VikingReference).GetField("viking",
+                                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+                                
+                                var vikingClone = vikingCloneField?.GetValue(vRef) as Component;
+                                var viking = vikingField?.GetValue(vRef) as Component;
+                                
+                                if (vikingClone != null)
+                                    template = vikingClone.gameObject;
+                                else if (viking != null)
+                                    template = viking.gameObject;
+                            }
+                            catch (System.Exception ex)
+                            {
+                                Plugin.Logger.LogWarning("[RegenerativeJumpResponder] VikingReference 反射失败: " + ex.Message);
+                            }
+                        }
+                    }
+                    
                     if (template != null)
                     {
                         JumpAttack templateJump = template.GetComponent<JumpAttack>();
@@ -129,10 +170,14 @@ namespace BadNorthRegenerative
                             CopyJumpAttackFields(templateJump, jumpAttack);
                         }
                     }
+                    else
+                    {
+                        Plugin.Logger.LogWarning("[RegenerativeJumpResponder] 无法获取 Viking_Twohanded 模板对象，跳劈功能可能不可用");
+                    }
                 }
                 catch (Exception ex)
                 {
-                    Plugin.Logger.LogWarning($"[RegenerativeJumpResponder] 无法从模板复制JumpAttack: {ex.Message}");
+                    Plugin.Logger.LogWarning(string.Format("[RegenerativeJumpResponder] 无法从模板复制JumpAttack: {0}", ex.Message));
                 }
             }
 
@@ -219,7 +264,7 @@ namespace BadNorthRegenerative
             pendingJumpTarget = attackerAgent;
             cooldownTimer = cooldownDuration;
 
-            Plugin.Logger.LogInfo($"[RegenerativeJumpResponder] {agent.name} 即将跳劈反击 {attackerAgent.name}");
+            Plugin.Logger.LogInfo(string.Format("[RegenerativeJumpResponder] {0} 即将跳劈反击 {1}", agent.name, attackerAgent.name));
         }
 
         private void ExecuteJump(Agent target)
@@ -261,11 +306,11 @@ namespace BadNorthRegenerative
                     jumpAttack_PlungeJump.Invoke(jumpAttack, null);
                 }
 
-                Plugin.Logger.LogInfo($"[RegenerativeJumpResponder] {agent.name} 执行跳劈反击");
+                Plugin.Logger.LogInfo(string.Format("[RegenerativeJumpResponder] {0} 执行跳劈反击", agent.name));
             }
             catch (Exception ex)
             {
-                Plugin.Logger.LogWarning($"[RegenerativeJumpResponder] 跳劈执行失败: {ex.Message}");
+                Plugin.Logger.LogWarning(string.Format("[RegenerativeJumpResponder] 跳劈执行失败: {0}", ex.Message));
             }
         }
 
@@ -277,7 +322,8 @@ namespace BadNorthRegenerative
                 if (shooterField != null)
                 {
                     object shooter = shooterField.GetValue(shootable);
-                    if (shooter is WeakReference weakRef && targetProperty != null)
+                    WeakReference weakRef = shooter as WeakReference;
+                    if (weakRef != null && targetProperty != null)
                     {
                         return targetProperty.GetValue(weakRef, null) as Agent;
                     }
@@ -291,7 +337,7 @@ namespace BadNorthRegenerative
             }
             catch (Exception ex)
             {
-                Plugin.Logger.LogWarning($"[RegenerativeJumpResponder] 获取攻击者Agent失败: {ex.Message}");
+                Plugin.Logger.LogWarning(string.Format("[RegenerativeJumpResponder] 获取攻击者Agent失败: {0}", ex.Message));
             }
 
             return null;

@@ -8,7 +8,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>BadNorthRegenerative</RootNamespace>
     <AssemblyName>BadNorthRegenerative</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
@@ -44,7 +44,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="BNAPI">
-      <HintPath>..\..\..\BNAPI\BNAPI.dll</HintPath>
+      <HintPath>f:\BadNorthProgram\BadNorthHeroTraits\BNAPI\BNAPI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="MMHOOK-Assembly-CSharp">

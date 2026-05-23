@@ -8,9 +8,10 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>BadNorthAxeThrower</RootNamespace>
     <AssemblyName>BadNorthAxeThrower</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <NoWarn>0433</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -44,7 +45,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="BNAPI">
-      <HintPath>f:\BadNorthProgram\BadNorthHeroTraits\BNAPI\BNAPI.dll</HintPath>
+      <HintPath>..\..\..\BNAPI\BNAPI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="MMHOOK-Assembly-CSharp">
@@ -52,6 +53,10 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="System.Core" />
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
@@ -76,10 +81,6 @@
       <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
-      <Reference Include="UnityEngine.AnimationModule">
-      <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="UnityEngine.AudioModule">
       <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
       <Private>False</Private>
@@ -88,7 +89,7 @@
       <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
-</ItemGroup>
+  </ItemGroup>
   <ItemGroup>
     <AppDesigner Include="Properties\" />
   </ItemGroup>
