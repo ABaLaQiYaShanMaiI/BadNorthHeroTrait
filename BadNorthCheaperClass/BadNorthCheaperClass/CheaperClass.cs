@@ -59,41 +59,53 @@ namespace BadNorthCheaperClass
             {
                 var heroDef = squad.hero;
 
-                // 通过反射获取 hero 的 upgrades 列表
-                var upgradesField = typeof(HeroDefinition).GetField("upgrades",
-                    BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-                if (upgradesField == null)
+                // 自适应字段查找：遍历所有非静态字段，寻找名字包含 "upgrade" 且实现了 IList 的字段
+                var heroDefType = typeof(HeroDefinition);
+                var fields = heroDefType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                bool found = false;
+
+                foreach (var field in fields)
                 {
-                    Plugin.Logger.LogWarning("[CheaperClass] 无法找到 HeroDefinition.upgrades 字段");
-                    return;
-                }
+                    if (!field.Name.ToLower().Contains("upgrade"))
+                        continue;
+                    if (!typeof(System.Collections.IList).IsAssignableFrom(field.FieldType))
+                        continue;
 
-                var upgrades = upgradesField.GetValue(heroDef) as IList<HeroUpgradeDefinition>;
-                if (upgrades == null)
-                {
-                    Plugin.Logger.LogWarning("[CheaperClass] upgrades 为空或类型不匹配");
-                    return;
-                }
-
-                // 遍历所有升级，修改其每个等级的费用
-                foreach (var upgrade in upgrades)
-                {
-                    if (upgrade == null || upgrade == this) continue;
-
-                    var levels = upgrade.levels;
-                    if (levels == null) continue;
-
-                    for (int i = 0; i < levels.Length; i++)
+                    var upgradesList = field.GetValue(heroDef) as System.Collections.IList;
+                    if (upgradesList == null || upgradesList.Count == 0)
                     {
-                        int originalCost = levels[i].cost;
-                        int discountedCost = Mathf.RoundToInt(originalCost * (1f - DISCOUNT));
-                        levels[i].cost = discountedCost;
-                        Plugin.Logger.LogInfo($"[CheaperClass] 升级 {upgrade.name} 等级 {i} 费用: {originalCost} -> {discountedCost}");
+                        Plugin.Logger.LogWarning($"[CheaperClass] 字段 {field.Name} 为空或元素数量为0");
+                        continue;
                     }
+
+                    // 遍历所有升级，修改其每个等级的费用
+                    foreach (var item in upgradesList)
+                    {
+                        var upgrade = item as HeroUpgradeDefinition;
+                        if (upgrade == null || upgrade == this) continue;
+
+                        var levels = upgrade.levels;
+                        if (levels == null) continue;
+
+                        for (int i = 0; i < levels.Length; i++)
+                        {
+                            int originalCost = levels[i].cost;
+                            int discountedCost = Mathf.RoundToInt(originalCost * (1f - DISCOUNT));
+                            levels[i].cost = discountedCost;
+                            Plugin.Logger.LogInfo($"[CheaperClass] {upgrade.name} 等级{i} 费用 {originalCost} -> {discountedCost}");
+                        }
+                    }
+
+                    discountApplied = true;
+                    found = true;
+                    Plugin.Logger.LogInfo("[CheaperClass] 折扣应用成功");
+                    return; // 找到并处理完后直接返回
                 }
 
-                discountApplied = true;
-                Plugin.Logger.LogInfo("[CheaperClass] 成功应用 40% 折扣到所有英雄升级");
+                if (!found)
+                {
+                    Plugin.Logger.LogWarning("[CheaperClass] 未找到任何包含 upgrade 的列表字段，可能特质的折扣功能无法生效");
+                }
             }
             catch (System.Exception ex)
             {

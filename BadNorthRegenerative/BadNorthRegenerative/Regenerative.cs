@@ -233,6 +233,29 @@ namespace BadNorthRegenerative
             this.ApplyDualWieldAnimations(agent);
         }
 
+        // 使用字符串名称引用可能不存在的类型，避免 JIT 编译时 TypeLoadException
+        private static readonly string SpearShieldTypeName = "Voxels.TowerDefense.SpearShield";
+
+        private void RemoveSpearShieldIfPresent(Agent agent)
+        {
+            try
+            {
+                // 使用 GameObject.GetComponent(string) 通过字符串查找组件
+                Component shield = agent.GetComponent(SpearShieldTypeName);
+                if (shield != null)
+                {
+                    UnityEngine.Object.Destroy(shield);
+                    // 刷新显示（AgentSelected 是公共类型，无问题）
+                    AgentSelected comp = agent.GetComponent<AgentSelected>();
+                    if (comp) comp.RefreshRenderers();
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Plugin.Logger.LogWarning($"[Regenerative] 移除 SpearShield 失败：{ex.Message}");
+            }
+        }
+
         private void ModifyAgentProperties(Agent agent, int squadLevel)
         {
             if (agent == null)
@@ -268,16 +291,8 @@ namespace BadNorthRegenerative
                 {
                     agent.gameObject.AddComponent<RegenerativeSpearBuff>();
                 }
-                SpearShield component2 = agent.GetComponent<SpearShield>();
-                if (component2 != null)
-                {
-                    UnityEngine.Object.Destroy(component2);
-                    AgentSelected component3 = agent.GetComponent<AgentSelected>();
-                    if (component3)
-                    {
-                        component3.RefreshRenderers();
-                    }
-                }
+                // 使用反射方式移除 SpearShield，避免硬编码类型引用导致 JIT 崩溃
+                this.RemoveSpearShieldIfPresent(agent);
                 return;
             }
             Plugin.Logger.LogWarning("[Regenerative] " + agent.name + " 无Swordsman/无Spear组件，跳过改造");
