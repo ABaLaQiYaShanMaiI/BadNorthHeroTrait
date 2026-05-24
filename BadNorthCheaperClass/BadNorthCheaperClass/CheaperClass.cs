@@ -14,8 +14,9 @@ namespace BadNorthCheaperClass
         // 折扣率：40% off
         private const float DISCOUNT = 0.4f;
 
-        // 防止重复应用折扣
+        // 防止重复应用折扣（实例级 + 静态级双重保障）
         private bool discountApplied = false;
+        private static bool _globalDiscountApplied = false;
 
         public CheaperClass()
         {
@@ -39,6 +40,185 @@ namespace BadNorthCheaperClass
             level.description = "NACU/TRAIT/CCLASS/DESC";
             array[num] = level;
             this.levels = array;
+
+            // 构造时尝试自动触发全局折扣（绕过 SpawnSquad MissingMethodException）
+            TryTriggerGlobalDiscount();
+        }
+
+        /// <summary>
+        /// 尝试在构造时自动触发全局折扣。
+        /// 用纯反射避免对 MetaInventory 等不可引用类型的直接依赖。
+        /// </summary>
+        private void TryTriggerGlobalDiscount()
+        {
+            if (_globalDiscountApplied)
+                return;
+
+            try
+            {
+                // 方案 A：通过反射查找所有 HeroDefinition（HeroDefinition 继承 ScriptableObject，可用 FindObjectsOfTypeAll）
+                // 注意：HeroDefinition 是 ScriptableObject，因此可以通过 Resources.FindObjectsOfTypeAll 使用 typeof
+                Type heroDefType = typeof(HeroDefinition);
+                MethodInfo findMethod = typeof(Resources).GetMethod("FindObjectsOfTypeAll", Type.EmptyTypes);
+                if (findMethod != null)
+                {
+                    MethodInfo genericFind = findMethod.MakeGenericMethod(heroDefType);
+                    object result = genericFind.Invoke(null, null);
+                    Array heroDefs = result as Array;
+                    if (heroDefs != null && heroDefs.Length > 0)
+                    {
+                        Plugin.Logger.LogInfo("[CheaperClass] 构造器触发全局折扣：找到 " + heroDefs.Length + " 个 HeroDefinition");
+                        int appliedCount = 0;
+                        foreach (var heroDef in heroDefs)
+                        {
+                            if (ApplyDiscountToHeroDef(heroDef as HeroDefinition))
+                                appliedCount++;
+                        }
+                        _globalDiscountApplied = true;
+                        Plugin.Logger.LogInfo("[CheaperClass] 构造器全局折扣完成，共处理 " + appliedCount + " 个 HeroDefinition");
+                        return;
+                    }
+                }
+
+                Plugin.Logger.LogInfo("[CheaperClass] 构造器暂无可处理 HeroDefinition，稍后由 OnAppliedToSquad 触发");
+            }
+            catch (Exception ex)
+            {
+                Plugin.Logger.LogWarning("[CheaperClass] TryTriggerGlobalDiscount 异常: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// 对单个 HeroDefinition 应用折扣。
+        /// 这是核心执行逻辑，被 OnAppliedToSquad 和 构造器共用。
+        /// </summary>
+        public static bool ApplyDiscountToHeroDef(HeroDefinition heroDef)
+        {
+            if (ReferenceEquals(heroDef, null))
+            {
+                Plugin.Logger.LogWarning("[CheaperClass] ApplyDiscountToHeroDef: heroDef 为 null");
+                return false;
+            }
+
+            try
+            {
+                // 用反射获取 HeroDefinition 的 name（因为它是 ScriptableObject 的 name 属性，但可能在编译时不可见）
+                string heroName = "(unknown)";
+                try 
+                { 
+                    var nameProp = typeof(HeroDefinition).GetProperty("name", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                    if (nameProp != null)
+                        heroName = nameProp.GetValue(heroDef, null) as string ?? "(unknown)";
+                    else
+                    {
+                        var nameField = typeof(HeroDefinition).GetField("name", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                        if (nameField != null)
+                            heroName = nameField.GetValue(heroDef) as string ?? "(unknown)";
+                    }
+                } 
+                catch { }
+
+                var heroDefType = typeof(HeroDefinition);
+                var fields = heroDefType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                bool found = false;
+
+                foreach (var field in fields)
+                {
+                    if (!field.Name.ToLower().Contains("upgrades"))
+                        continue;
+                    if (!typeof(System.Collections.IList).IsAssignableFrom(field.FieldType))
+                        continue;
+
+                    var upgradesList = field.GetValue(heroDef) as System.Collections.IList;
+                    if (upgradesList == null || upgradesList.Count == 0)
+                        continue;
+
+                    int totalUpgrades = upgradesList.Count;
+                    int modifiedUpgrades = 0;
+
+                    Type serializableUpgradeType = null;
+                    FieldInfo serializableDefinitionField = null;
+                    FieldInfo serializableLevelsField = null;
+                    FieldInfo serializableUpgradeField = null;
+
+                    foreach (var item in upgradesList)
+                    {
+                        if (item == null)
+                            continue;
+
+                        HeroUpgradeDefinition upgrade = item as HeroUpgradeDefinition;
+
+                        if (upgrade == null)
+                        {
+                            Type itemType = item.GetType();
+                            if (serializableUpgradeType == null || serializableUpgradeType != itemType)
+                            {
+                                serializableUpgradeType = itemType;
+                                serializableDefinitionField = itemType.GetField("definition", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                                serializableUpgradeField = itemType.GetField("upgrade", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                                if (serializableDefinitionField == null)
+                                    serializableDefinitionField = serializableUpgradeField;
+                                serializableLevelsField = itemType.GetField("levels", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                            }
+
+                            if (serializableDefinitionField != null)
+                                upgrade = serializableDefinitionField.GetValue(item) as HeroUpgradeDefinition;
+
+                            if (upgrade == null && serializableLevelsField != null)
+                            {
+                                HeroUpgradeDefinition.Level[] itemLevels = serializableLevelsField.GetValue(item) as HeroUpgradeDefinition.Level[];
+                                if (itemLevels != null)
+                                {
+                                    for (int i = 0; i < itemLevels.Length; i++)
+                                    {
+                                        int originalCost = itemLevels[i].cost;
+                                        int discountedCost = Mathf.RoundToInt(originalCost * (1f - DISCOUNT));
+                                        itemLevels[i].cost = discountedCost;
+                                    }
+                                    modifiedUpgrades++;
+                                    continue;
+                                }
+                            }
+
+                            if (upgrade == null)
+                                continue;
+                        }
+
+                        if (upgrade is CheaperClass)
+                        {
+                            Plugin.Logger.LogInfo("[CheaperClass]   跳过自身");
+                            continue;
+                        }
+
+                        var levels = upgrade.levels;
+                        if (levels == null)
+                            continue;
+
+                        for (int i = 0; i < levels.Length; i++)
+                        {
+                            int originalCost = levels[i].cost;
+                            int discountedCost = Mathf.RoundToInt(originalCost * (1f - DISCOUNT));
+                            levels[i].cost = discountedCost;
+                        }
+                        modifiedUpgrades++;
+                    }
+
+                    found = true;
+                    Plugin.Logger.LogInfo($"[CheaperClass] 处理 HeroDef {heroName}，共修改 {modifiedUpgrades}/{totalUpgrades} 个升级费用");
+                    return true;
+                }
+
+                if (!found)
+                {
+                    Plugin.Logger.LogWarning($"[CheaperClass] HeroDef {heroName}：未找到 upgrades 列表字段");
+                }
+                return found;
+            }
+            catch (Exception ex)
+            {
+                Plugin.Logger.LogWarning($"[CheaperClass] ApplyDiscountToHeroDef 异常: {ex.Message}");
+                return false;
+            }
         }
 
         /// <summary>
@@ -71,138 +251,18 @@ namespace BadNorthCheaperClass
             try
             {
                 var heroDef = squad.hero;
-                Plugin.Logger.LogInfo($"[CheaperClass] 开始处理英雄，小队名称={squad.name}，小队等级={squad.hero.squadLevel}");
 
-                // 自适应字段查找：遍历所有非静态字段，寻找名字包含 "upgrades"（复数）且实现了 IList 的字段
-                // 使用复数形式避免误匹配其他包含 "upgrade" 但不相关的字段（如已购买的升级列表、已禁用的升级列表等）
-                var heroDefType = typeof(HeroDefinition);
-                var fields = heroDefType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-                bool found = false;
-
-                Plugin.Logger.LogInfo($"[CheaperClass] HeroDefinition 共有 {fields.Length} 个字段");
-                foreach (var field in fields)
+                // 如果全局折扣尚未应用，在此处触发
+                bool result = ApplyDiscountToHeroDef(heroDef);
+                if (result)
                 {
-                    Plugin.Logger.LogInfo($"[CheaperClass]   字段: {field.Name} ({field.FieldType.Name})");
-                }
-
-                foreach (var field in fields)
-                {
-                    if (!field.Name.ToLower().Contains("upgrades"))
-                    {
-                        Plugin.Logger.LogInfo($"[CheaperClass] 跳过字段 {field.Name}：名称不包含 upgrades");
-                        continue;
-                    }
-                    if (!typeof(System.Collections.IList).IsAssignableFrom(field.FieldType))
-                    {
-                        Plugin.Logger.LogInfo($"[CheaperClass] 跳过字段 {field.Name}：类型 {field.FieldType.Name} 不是 IList");
-                        continue;
-                    }
-
-                    var upgradesList = field.GetValue(heroDef) as System.Collections.IList;
-                    Plugin.Logger.LogInfo($"[CheaperClass] 找到候选字段 {field.Name}，元素数量={upgradesList?.Count ?? 0}");
-                    if (upgradesList == null || upgradesList.Count == 0)
-                    {
-                        Plugin.Logger.LogWarning(string.Format("[CheaperClass] 字段 {0} 为空或元素数量为0", field.Name));
-                        continue;
-                    }
-
-                    // 遍历所有升级，修改其每个等级的费用
-                    int totalUpgrades = upgradesList.Count;
-                    int modifiedUpgrades = 0;
-
-                    // 反射缓存：SerializableHeroUpgrade 可能包含 definition/upgrade 字段指向 HeroUpgradeDefinition
-                    Type serializableUpgradeType = null;
-                    FieldInfo serializableDefinitionField = null;
-                    FieldInfo serializableLevelsField = null;
-
-                    foreach (var item in upgradesList)
-                    {
-                        if (item == null)
-                        {
-                            Plugin.Logger.LogInfo("[CheaperClass]   跳过 null 条目");
-                            continue;
-                        }
-
-                        HeroUpgradeDefinition upgrade = item as HeroUpgradeDefinition;
-
-                        // 如果元素不是 HeroUpgradeDefinition，尝试通过 SerializableHeroUpgrade 获取内部引用
-                        if (upgrade == null)
-                        {
-                            Type itemType = item.GetType();
-                            if (serializableUpgradeType == null || serializableUpgradeType != itemType)
-                            {
-                                serializableUpgradeType = itemType;
-                                serializableDefinitionField = itemType.GetField("definition", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                                if (serializableDefinitionField == null)
-                                    serializableDefinitionField = itemType.GetField("upgrade", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                                // 也尝试直接获取 levels 字段
-                                serializableLevelsField = itemType.GetField("levels", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                            }
-
-                            if (serializableDefinitionField != null)
-                            {
-                                upgrade = serializableDefinitionField.GetValue(item) as HeroUpgradeDefinition;
-                            }
-
-                            if (upgrade == null && serializableLevelsField != null)
-                            {
-                                // 直接操作 levels 数组（共享引用）
-                                HeroUpgradeDefinition.Level[] itemLevels = serializableLevelsField.GetValue(item) as HeroUpgradeDefinition.Level[];
-                                if (itemLevels != null)
-                                {
-                                    Plugin.Logger.LogInfo($"[CheaperClass]   通过序列化类型 {itemType.Name} 直接处理 levels，等级数={itemLevels.Length}");
-                                    for (int i = 0; i < itemLevels.Length; i++)
-                                    {
-                                        int originalCost = itemLevels[i].cost;
-                                        int discountedCost = Mathf.RoundToInt(originalCost * (1f - DISCOUNT));
-                                        itemLevels[i].cost = discountedCost;
-                                        Plugin.Logger.LogInfo(string.Format("[CheaperClass]   {0}(序列化) 等级{1} 费用 {2} -> {3}", itemType.Name, i, originalCost, discountedCost));
-                                    }
-                                    modifiedUpgrades++;
-                                    continue;
-                                }
-                            }
-
-                            if (upgrade == null)
-                            {
-                                Plugin.Logger.LogInfo($"[CheaperClass]   跳过 {itemType.Name}：无法获取 HeroUpgradeDefinition 引用");
-                                continue;
-                            }
-                        }
-
-                        if (upgrade == this)
-                        {
-                            Plugin.Logger.LogInfo("[CheaperClass]   跳过自身");
-                            continue;
-                        }
-
-                        var levels = upgrade.levels;
-                        if (levels == null)
-                        {
-                            Plugin.Logger.LogInfo($"[CheaperClass]   {upgrade.name} 无等级定义，跳过");
-                            continue;
-                        }
-
-                        Plugin.Logger.LogInfo($"[CheaperClass]   处理 {upgrade.name}，等级数={levels.Length}");
-                        for (int i = 0; i < levels.Length; i++)
-                        {
-                            int originalCost = levels[i].cost;
-                            int discountedCost = Mathf.RoundToInt(originalCost * (1f - DISCOUNT));
-                            levels[i].cost = discountedCost;
-                            Plugin.Logger.LogInfo(string.Format("[CheaperClass]   {0} 等级{1} 费用 {2} -> {3}", upgrade.name, i, originalCost, discountedCost));
-                        }
-                        modifiedUpgrades++;
-                    }
-
                     discountApplied = true;
-                    found = true;
-                    Plugin.Logger.LogInfo($"[CheaperClass] 已应用到小队 {squad.name}，共处理 {modifiedUpgrades}/{totalUpgrades} 个升级，折扣应用成功");
-                    return; // 找到并处理完后直接返回
+                    _globalDiscountApplied = true;
+                    Plugin.Logger.LogInfo($"[CheaperClass] 已应用到小队 {squad.name}，折扣应用成功");
                 }
-
-                if (!found)
+                else
                 {
-                    Plugin.Logger.LogWarning("[CheaperClass] 未找到任何包含 upgrades 的列表字段，可能特质的折扣功能无法生效");
+                    Plugin.Logger.LogWarning($"[CheaperClass] 应用到小队 {squad.name} 失败");
                 }
             }
             catch (System.Exception ex)

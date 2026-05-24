@@ -168,6 +168,7 @@ namespace BadNorthRegenerative
         /// <summary>
         /// 通过反射扫描攻击者对象的所有字段，寻找 Agent 引用。
         /// 使用按类型缓存避免重复扫描。
+        /// 支持 WeakReference 解引用、Agent/Component 类型字段。
         /// </summary>
         private static Agent FindAgentInFields(MonoBehaviour monoAttacker)
         {
@@ -177,13 +178,14 @@ namespace BadNorthRegenerative
             FieldInfo[] candidateFields;
             if (!_attackerFieldCache.TryGetValue(type, out candidateFields))
             {
-                // 扫描该类型的所有字段，找出 Agent 和 Component 类型的字段
+                // 扫描该类型的所有字段，找出 Agent、Component 和 WeakReference 类型的字段
                 FieldInfo[] allFields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                var list = new System.Collections.Generic.List<FieldInfo>();
+                var list = new List<FieldInfo>();
                 foreach (FieldInfo fi in allFields)
                 {
                     if (typeof(Agent).IsAssignableFrom(fi.FieldType) ||
-                        typeof(Component).IsAssignableFrom(fi.FieldType))
+                        typeof(Component).IsAssignableFrom(fi.FieldType) ||
+                        typeof(WeakReference).IsAssignableFrom(fi.FieldType))
                     {
                         list.Add(fi);
                     }
@@ -193,7 +195,7 @@ namespace BadNorthRegenerative
 
                 if (candidateFields.Length > 0)
                 {
-                    Plugin.Logger.LogInfo("[RegenerativeJumpResponder] FindAgentInFields: 类型 " + type.Name + " 发现 " + candidateFields.Length + " 个候选字段");
+                    Plugin.Logger.LogInfo("[RegenerativeJumpResponder] FindAgentInFields: 类型 " + type.Name + " 发现 " + candidateFields.Length + " 个候选字段（含WeakReference）");
                 }
             }
 
@@ -206,7 +208,54 @@ namespace BadNorthRegenerative
                     if (ReferenceEquals(val, null))
                         continue;
 
-                    // 字段值直接就是 Agent
+                    // === WeakReference 解引用：Arrow 等可能使用 WeakReference 持有 shooter ===
+                    WeakReference weakRef = val as WeakReference;
+                    if (!ReferenceEquals(weakRef, null))
+                    {
+                        object target = weakRef.Target;
+                        if (!ReferenceEquals(target, null))
+                        {
+                            // WeakReference.Target 直接是 Agent
+                            Agent agentFromWeak = target as Agent;
+                            if (!ReferenceEquals(agentFromWeak, null))
+                            {
+                                Plugin.Logger.LogInfo("[RegenerativeJumpResponder] FindAgentInFields: 通过 " + type.Name + "." + fi.Name + " (WeakReference) 获取到 Agent=" + agentFromWeak.name);
+                                return agentFromWeak;
+                            }
+                            // WeakReference.Target 是 Component
+                            Component compFromWeak = target as Component;
+                            if (!ReferenceEquals(compFromWeak, null))
+                            {
+                                agentFromWeak = compFromWeak.GetComponent<Agent>();
+                                if (!ReferenceEquals(agentFromWeak, null))
+                                {
+                                    Plugin.Logger.LogInfo("[RegenerativeJumpResponder] FindAgentInFields: 通过 " + type.Name + "." + fi.Name + " (WeakReference->Component) 获取到 Agent=" + agentFromWeak.name);
+                                    return agentFromWeak;
+                                }
+                                agentFromWeak = compFromWeak.GetComponentInParent<Agent>();
+                                if (!ReferenceEquals(agentFromWeak, null))
+                                {
+                                    Plugin.Logger.LogInfo("[RegenerativeJumpResponder] FindAgentInFields: 通过 " + type.Name + "." + fi.Name + " (WeakReference->ComponentInParent) 获取到 Agent=" + agentFromWeak.name);
+                                    return agentFromWeak;
+                                }
+                            }
+                            // WeakReference.Target 是 GameObject
+                            GameObject goFromWeak = target as GameObject;
+                            if (!ReferenceEquals(goFromWeak, null))
+                            {
+                                agentFromWeak = goFromWeak.GetComponent<Agent>();
+                                if (!ReferenceEquals(agentFromWeak, null))
+                                {
+                                    Plugin.Logger.LogInfo("[RegenerativeJumpResponder] FindAgentInFields: 通过 " + type.Name + "." + fi.Name + " (WeakReference->GameObject) 获取到 Agent=" + agentFromWeak.name);
+                                    return agentFromWeak;
+                                }
+                            }
+                        }
+                        // WeakReference 已失效，跳过
+                        continue;
+                    }
+
+                    // === 字段值直接就是 Agent ===
                     Agent agentVal = val as Agent;
                     if (!ReferenceEquals(agentVal, null))
                     {
@@ -214,7 +263,25 @@ namespace BadNorthRegenerative
                         return agentVal;
                     }
 
-                    // 字段值是 Component，从中获取 Agent
+                    // === 字段值是 GameObject ===
+                    GameObject goVal = val as GameObject;
+                    if (!ReferenceEquals(goVal, null))
+                    {
+                        agentVal = goVal.GetComponent<Agent>();
+                        if (!ReferenceEquals(agentVal, null))
+                        {
+                            Plugin.Logger.LogInfo("[RegenerativeJumpResponder] FindAgentInFields: 通过 " + type.Name + "." + fi.Name + " (GameObject) 获取到 Agent=" + agentVal.name);
+                            return agentVal;
+                        }
+                        agentVal = goVal.GetComponentInParent<Agent>();
+                        if (!ReferenceEquals(agentVal, null))
+                        {
+                            Plugin.Logger.LogInfo("[RegenerativeJumpResponder] FindAgentInFields: 通过 " + type.Name + "." + fi.Name + " (GameObject->ComponentInParent) 获取到 Agent=" + agentVal.name);
+                            return agentVal;
+                        }
+                    }
+
+                    // === 字段值是 Component，从中获取 Agent ===
                     Component compVal = val as Component;
                     if (!ReferenceEquals(compVal, null))
                     {
@@ -294,6 +361,7 @@ namespace BadNorthRegenerative
                     jumpAttack = agent.GetComponent<JumpAttack>();
                     if (ReferenceEquals(jumpAttack, null))
                     {
+                        // === 第一阶段：主模板获取（LevelStateObjectReferences.Viking_Twohanded） ===
                         try
                         {
                             GameObject template = null;
@@ -333,17 +401,75 @@ namespace BadNorthRegenerative
                                 {
                                     jumpAttack = agent.gameObject.AddComponent<JumpAttack>();
                                     CopyJumpAttackFields(templateJump, jumpAttack);
-                                    Plugin.Logger.LogInfo("[RegenerativeJumpResponder] 成功从模板复制 JumpAttack");
+                                    Plugin.Logger.LogInfo("[RegenerativeJumpResponder] 主模板成功：从 LevelStateObjectReferences 获取 JumpAttack");
                                 }
                             }
                             else
                             {
-                                Plugin.Logger.LogWarning("[RegenerativeJumpResponder] 无法获取 Viking_Twohanded 模板对象，跳劈功能可能不可用");
+                                Plugin.Logger.LogWarning("[RegenerativeJumpResponder] 主模板获取失败：LevelStateObjectReferences 中无 Viking_Twohanded");
                             }
                         }
                         catch (Exception ex)
                         {
-                            Plugin.Logger.LogWarning("[RegenerativeJumpResponder] 无法从模板复制JumpAttack: " + ex.Message);
+                            Plugin.Logger.LogWarning("[RegenerativeJumpResponder] 主模板获取异常: " + ex.Message);
+                        }
+
+                        // === 第二阶段：备用模板获取（Resources.FindObjectsOfTypeAll 兜底） ===
+                        if (ReferenceEquals(jumpAttack, null))
+                        {
+                            Plugin.Logger.LogInfo("[RegenerativeJumpResponder] 启动备用方案：Resources.FindObjectsOfTypeAll<JumpAttack>()...");
+                            try
+                            {
+                                JumpAttack[] allJumpAttacks = Resources.FindObjectsOfTypeAll<JumpAttack>();
+                                if (!ReferenceEquals(allJumpAttacks, null) && allJumpAttacks.Length > 0)
+                                {
+                                    Plugin.Logger.LogInfo("[RegenerativeJumpResponder] FindObjectsOfTypeAll 找到 " + allJumpAttacks.Length + " 个 JumpAttack 实例");
+                                    
+                                    JumpAttack sourceTemplate = null;
+                                    foreach (var ja in allJumpAttacks)
+                                    {
+                                        if (ReferenceEquals(ja.gameObject, agent.gameObject))
+                                            continue;
+                                        sourceTemplate = ja;
+                                        break;
+                                    }
+
+                                    if (!ReferenceEquals(sourceTemplate, null))
+                                    {
+                                        jumpAttack = agent.gameObject.AddComponent<JumpAttack>();
+                                        CopyJumpAttackFields(sourceTemplate, jumpAttack);
+                                        Plugin.Logger.LogInfo("[RegenerativeJumpResponder] 备用方案成功：模板源=" + sourceTemplate.name);
+                                    }
+                                    else
+                                    {
+                                        Plugin.Logger.LogWarning("[RegenerativeJumpResponder] FindObjectsOfTypeAll 未找到非自身的 JumpAttack 实例");
+                                    }
+                                }
+                                else
+                                {
+                                    Plugin.Logger.LogWarning("[RegenerativeJumpResponder] FindObjectsOfTypeAll 返回空，无法获取 JumpAttack 模板");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Plugin.Logger.LogWarning("[RegenerativeJumpResponder] FindObjectsOfTypeAll 备用方案异常: " + ex.Message);
+                            }
+                        }
+
+                        // === 第三阶段：最终兜底——手动创建 ==
+                        if (ReferenceEquals(jumpAttack, null))
+                        {
+                            Plugin.Logger.LogInfo("[RegenerativeJumpResponder] 所有模板获取均失败，执行最终兜底：手动创建...");
+                            try
+                            {
+                                jumpAttack = agent.gameObject.AddComponent<JumpAttack>();
+                                Plugin.Logger.LogInfo("[RegenerativeJumpResponder] 最终兜底：JumpAttack 已手动创建");
+                            }
+                            catch (Exception ex)
+                            {
+                                Plugin.Logger.LogError("[RegenerativeJumpResponder] 最终兜底创建 JumpAttack 失败: " + ex.Message);
+                                jumpAttack = null;
+                            }
                         }
                     }
 
