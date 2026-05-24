@@ -50,7 +50,8 @@ namespace BadNorthThorns
 
         public void ModifyAttack(ref Attack attack)
         {
-            Plugin.Logger.LogDebug($"[Thorns] ModifyAttack called, agent={attack.monoAttacker?.GetType().Name}, name={attack.monoAttacker?.name}");
+            // 改为 Info 级别，确保能看到
+            Plugin.Logger.LogInfo($"[Thorns] ModifyAttack called, monoAttacker type={attack.monoAttacker?.GetType().ToString()}, name={attack.monoAttacker?.name}");
 
             CloseCombatBrain closeCombatBrain = attack.monoAttacker as CloseCombatBrain;
             if (closeCombatBrain != null)
@@ -62,6 +63,11 @@ namespace BadNorthThorns
                     "Sfx/English/Sword",
                     ScriptableObjectSingleton<PrefabManager>.instance.hitEffect
                 ));
+            }
+            else
+            {
+                // 帮助判断攻击来源是否为其他类型
+                Plugin.Logger.LogInfo("[Thorns] 攻击者不是 CloseCombatBrain，跳过反伤");
             }
         }
     }

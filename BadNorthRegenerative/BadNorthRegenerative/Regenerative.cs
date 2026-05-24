@@ -271,6 +271,9 @@ namespace BadNorthRegenerative
             }
         }
 
+        // 控制 isGiant 警告仅输出一次
+        private static bool _isGiantWarningLogged = false;
+
         private void ModifyAgentProperties(Agent agent, int squadLevel)
         {
             if (agent == null)
@@ -287,9 +290,10 @@ namespace BadNorthRegenerative
                 {
                     isGiantField.SetValue(component, true);
                 }
-                else
+                else if (!_isGiantWarningLogged)
                 {
-                    Plugin.Logger.LogWarning("[Regenerative] Swordsman.isGiant field not found, skipping.");
+                    _isGiantWarningLogged = true;
+                    Plugin.Logger.LogWarning("[Regenerative] Swordsman.isGiant field not found, skipping. (此警告仅显示一次)");
                 }
                 for (int i = 0; i < component.stunLevels.Length; i++)
                 {

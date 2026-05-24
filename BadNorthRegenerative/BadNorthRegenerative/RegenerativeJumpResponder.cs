@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
+using System.Text;
 using UnityEngine;
 using Voxels.TowerDefense;
 using Voxels.TowerDefense.Ballistics;
@@ -7,8 +9,9 @@ using Voxels.TowerDefense.Ballistics;
 namespace BadNorthRegenerative
 {
     /// <summary>
-    /// 跳劈反击组件：当受 Regenerative 特质影响的盾兵单位被远程攻击时，
-    /// 该组件会触发跳劈反击，跃向远程攻击者进行攻击。
+    /// 跳劈反击组件：当受 Regenerative 特质影响的盾兵单位受到攻击时，
+    /// 该组件会触发跳劈反击，跃向攻击者进行攻击。
+    /// 不依赖任何兵种类型判断，纯通用 Agent 提取。
     /// 对应原 PlentyTraits 中的 RegenerativeJumpResponder。
     /// </summary>
     public class RegenerativeJumpResponder : MonoBehaviour, IAttackResponder
@@ -19,10 +22,10 @@ namespace BadNorthRegenerative
         private float cooldownTimer = 0f;
         private float cooldownDuration = 1.5f;
 
-        // 通过反射缓存的字段信息
-        private static FieldInfo shooterField;
-        private static PropertyInfo targetProperty;
-        private static FieldInfo agentField;
+        // 标志：反射是否就绪，若关键类型不存在则跳过所有逻辑
+        private static bool _reflectionReady = false;
+        private static bool _reflectionAttempted = false;
+        private static bool _jumpAttackTypeExists = true;
 
         // JumpAttack 私有字段反射
         private static FieldInfo jumpAttack_attackSettings;
@@ -50,157 +53,328 @@ namespace BadNorthRegenerative
 
         private void Awake()
         {
-            agent = GetComponent<Agent>();
-            if (ReferenceEquals(agent, null))
+            try
             {
-                Plugin.Logger.LogError("[RegenerativeJumpResponder] Awake: 未找到Agent组件");
-                return;
+                agent = GetComponent<Agent>();
+                if (ReferenceEquals(agent, null))
+                {
+                    Plugin.Logger.LogError("[RegenerativeJumpResponder] Awake: 未找到Agent组件");
+                    return;
+                }
+                Plugin.Logger.LogInfo("[RegenerativeJumpResponder] Awake: agent=" + agent.name + " [" + GetInstanceID() + "]");
+                CacheReflectionInfo();
             }
-
-            // 缓存反射信息
-            CacheReflectionInfo();
+            catch (Exception ex)
+            {
+                Plugin.Logger.LogError("[RegenerativeJumpResponder] Awake 异常: " + ex.Message);
+                Plugin.Logger.LogError(ex.StackTrace);
+            }
         }
 
         private static void CacheReflectionInfo()
         {
-            // 使用 ReferenceEquals 避免 Mono 2.0 下 FieldInfo.op_Inequality 缺失问题
-            if (!ReferenceEquals(shooterField, null)) return; // 已缓存
+            if (_reflectionAttempted) return;
+            _reflectionAttempted = true;
 
-            Type shootableType = typeof(Shootable);
-            shooterField = shootableType.GetField("shooter", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-            Type weakRefType = typeof(WeakReference);
-            targetProperty = weakRefType.GetProperty("Target", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-            agentField = shootableType.GetField("agent", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-            // JumpAttack 私有字段
-            Type jumpAttackType = typeof(JumpAttack);
-            jumpAttack_attackSettings = jumpAttackType.GetField("attackSettings", BindingFlags.Instance | BindingFlags.NonPublic);
-            jumpAttack_target = jumpAttackType.GetField("target", BindingFlags.Instance | BindingFlags.NonPublic);
-            jumpAttack_jumpComponent = jumpAttackType.GetField("jumpComponent", BindingFlags.Instance | BindingFlags.NonPublic);
-            jumpAttack_plungeState = jumpAttackType.GetField("plungeState", BindingFlags.Instance | BindingFlags.NonPublic);
-            jumpAttack_plungePrepareState = jumpAttackType.GetField("plungePrepareState", BindingFlags.Instance | BindingFlags.NonPublic);
-            jumpAttack_plungeAttackState = jumpAttackType.GetField("plungeAttackState", BindingFlags.Instance | BindingFlags.NonPublic);
-            jumpAttack_landPos = jumpAttackType.GetField("landPos", BindingFlags.Instance | BindingFlags.NonPublic);
-            jumpAttack_faceDirection = jumpAttackType.GetField("faceDirection", BindingFlags.Instance | BindingFlags.NonPublic);
-            jumpAttack_plungeJumpId = jumpAttackType.GetField("plungeJumpId", BindingFlags.Instance | BindingFlags.NonPublic);
-            jumpAttack_attackAnimId = jumpAttackType.GetField("attackAnimId", BindingFlags.Instance | BindingFlags.NonPublic);
-
-            // JumpAttack 私有方法
-            jumpAttack_PlungeJump = jumpAttackType.GetMethod("PlungeJump", BindingFlags.Instance | BindingFlags.NonPublic);
-
-            // JumpComponent 字段
-            Type jumpComponentType = typeof(JumpComponent);
-            jumpComponent_jumpingState = jumpComponentType.GetField("jumpingState", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            jumpComponent_targetPos = jumpComponentType.GetField("targetPos", BindingFlags.Instance | BindingFlags.NonPublic);
-
-            // Agent 状态字段
-            Type agentType = typeof(Agent);
-            agent_groundedState = agentType.GetField("groundedState", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            agent_deadState = agentType.GetField("deadState", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            agent_lifeState = agentType.GetField("lifeState", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        }
-
-        private void Start()
-        {
-            if (ReferenceEquals(agent, null)) return;
-
-            // 将自己插入 attackResponders 首位
-            if (!agent.attackResponders.Contains(this))
+            try
             {
-                agent.attackResponders.Insert(0, this);
-                Plugin.Logger.LogInfo($"[JumpResponder] 已加入 attackResponders，当前数量={agent.attackResponders.Count}");
-            }
-
-            // 尝试获取或创建 JumpAttack 组件
-            jumpAttack = agent.GetComponent<JumpAttack>();
-            if (ReferenceEquals(jumpAttack, null))
-            {
-                // 从 Viking_Twohanded 参考对象复制
-                // 三级容错：LevelStateObjectReferences.dict 的值可能不是 GameObject 类型
+                // 检查 JumpAttack 类型是否存在（避免 TypeLoadException）
+                Type jumpAttackType = null;
                 try
                 {
-                    GameObject template = null;
-                    if (LevelStateObjectReferences.dict.TryGetValue("Viking_Twohanded", out UnityEngine.Object refObj))
+                    jumpAttackType = typeof(JumpAttack);
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Logger.LogError("[RegenerativeJumpResponder] JumpAttack 类型加载失败: " + ex.Message + " - 跳劈功能将完全禁用");
+                    _jumpAttackTypeExists = false;
+                }
+
+                if (_jumpAttackTypeExists && !ReferenceEquals(jumpAttackType, null))
+                {
+                    jumpAttack_attackSettings = jumpAttackType.GetField("attackSettings", BindingFlags.Instance | BindingFlags.NonPublic);
+                    jumpAttack_target = jumpAttackType.GetField("target", BindingFlags.Instance | BindingFlags.NonPublic);
+                    jumpAttack_jumpComponent = jumpAttackType.GetField("jumpComponent", BindingFlags.Instance | BindingFlags.NonPublic);
+                    jumpAttack_plungeState = jumpAttackType.GetField("plungeState", BindingFlags.Instance | BindingFlags.NonPublic);
+                    jumpAttack_plungePrepareState = jumpAttackType.GetField("plungePrepareState", BindingFlags.Instance | BindingFlags.NonPublic);
+                    jumpAttack_plungeAttackState = jumpAttackType.GetField("plungeAttackState", BindingFlags.Instance | BindingFlags.NonPublic);
+                    jumpAttack_landPos = jumpAttackType.GetField("landPos", BindingFlags.Instance | BindingFlags.NonPublic);
+                    jumpAttack_faceDirection = jumpAttackType.GetField("faceDirection", BindingFlags.Instance | BindingFlags.NonPublic);
+                    jumpAttack_plungeJumpId = jumpAttackType.GetField("plungeJumpId", BindingFlags.Instance | BindingFlags.NonPublic);
+                    jumpAttack_attackAnimId = jumpAttackType.GetField("attackAnimId", BindingFlags.Instance | BindingFlags.NonPublic);
+                    jumpAttack_PlungeJump = jumpAttackType.GetMethod("PlungeJump", BindingFlags.Instance | BindingFlags.NonPublic);
+                }
+
+                Type jumpComponentType = typeof(JumpComponent);
+                if (!ReferenceEquals(jumpComponentType, null))
+                {
+                    jumpComponent_jumpingState = jumpComponentType.GetField("jumpingState", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                    jumpComponent_targetPos = jumpComponentType.GetField("targetPos", BindingFlags.Instance | BindingFlags.NonPublic);
+                }
+
+                Type agentType = typeof(Agent);
+                if (!ReferenceEquals(agentType, null))
+                {
+                    agent_groundedState = agentType.GetField("groundedState", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                    agent_deadState = agentType.GetField("deadState", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                    agent_lifeState = agentType.GetField("lifeState", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                }
+
+                _reflectionReady = true;
+                Plugin.Logger.LogInfo("[RegenerativeJumpResponder] 反射初始化完成，JumpAttack存在=" + _jumpAttackTypeExists);
+            }
+            catch (Exception ex)
+            {
+                Plugin.Logger.LogError("[RegenerativeJumpResponder] CacheReflectionInfo 反射初始化异常: " + ex.Message);
+                Plugin.Logger.LogError(ex.StackTrace);
+                _reflectionReady = false;
+            }
+        }
+
+        // 反射缓存：按攻击者类型缓存对应的反射字段
+        // key: Type, value: FieldInfo 数组（Agent 类型字段 + Component 类型字段）
+        private static Dictionary<Type, FieldInfo[]> _attackerFieldCache = new Dictionary<Type, FieldInfo[]>();
+
+        /// <summary>
+        /// 纯通用的攻击者 Agent 提取方法，不依赖任何兵种类型判断。
+        /// 查找顺序：直接转换 → GetComponent → GetComponentInParent → 全字段反射扫描
+        /// </summary>
+        private static Agent GetAttackerAgent(MonoBehaviour monoAttacker)
+        {
+            if (ReferenceEquals(monoAttacker, null))
+                return null;
+
+            // 1. 直接是 Agent
+            Agent agent = monoAttacker as Agent;
+            if (!ReferenceEquals(agent, null))
+                return agent;
+
+            // 2. GetComponent 查找
+            agent = monoAttacker.GetComponent<Agent>();
+            if (!ReferenceEquals(agent, null))
+                return agent;
+
+            // 3. GetComponentInParent 查找（适用于子物体上的攻击脚本）
+            agent = monoAttacker.GetComponentInParent<Agent>();
+            if (!ReferenceEquals(agent, null))
+                return agent;
+
+            // 4. 通用反射扫描：查找攻击者对象上所有可能引用 Agent 的字段
+            //    这能处理 Arrow.shooter、Shootable 内部引用等间接情况
+            agent = FindAgentInFields(monoAttacker);
+            return agent;
+        }
+
+        /// <summary>
+        /// 通过反射扫描攻击者对象的所有字段，寻找 Agent 引用。
+        /// 使用按类型缓存避免重复扫描。
+        /// </summary>
+        private static Agent FindAgentInFields(MonoBehaviour monoAttacker)
+        {
+            Type type = monoAttacker.GetType();
+
+            // 尝试从缓存获取字段列表
+            FieldInfo[] candidateFields;
+            if (!_attackerFieldCache.TryGetValue(type, out candidateFields))
+            {
+                // 扫描该类型的所有字段，找出 Agent 和 Component 类型的字段
+                FieldInfo[] allFields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                var list = new System.Collections.Generic.List<FieldInfo>();
+                foreach (FieldInfo fi in allFields)
+                {
+                    if (typeof(Agent).IsAssignableFrom(fi.FieldType) ||
+                        typeof(Component).IsAssignableFrom(fi.FieldType))
                     {
-                        // 第一级：直接 as GameObject
-                        template = refObj as GameObject;
-                        
-                        // 第二级：如果是 Component，获取其 gameObject
-                        if (ReferenceEquals(template, null))
-                        {
-                            Component comp = refObj as Component;
-                            if (!ReferenceEquals(comp, null))
-                            {
-                                template = comp.gameObject;
-                            }
-                        }
-                        
-                        // 第三级：如果是 VikingReference（参考 AxeThrower 的反射逻辑），尝试获取 viking 或 vikingClone 的 gameObject
-                        if (ReferenceEquals(template, null) && refObj is VikingReference vRef)
-                        {
-                            try
-                            {
-                                FieldInfo vikingCloneField = typeof(VikingReference).GetField("vikingClone",
-                                    BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-                                FieldInfo vikingField = typeof(VikingReference).GetField("viking",
-                                    BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-                                
-                                Component vikingClone = null;
-                                Component viking = null;
-                                if (!ReferenceEquals(vikingCloneField, null))
-                                    vikingClone = vikingCloneField.GetValue(vRef) as Component;
-                                if (!ReferenceEquals(vikingField, null))
-                                    viking = vikingField.GetValue(vRef) as Component;
-                                
-                                if (!ReferenceEquals(vikingClone, null))
-                                    template = vikingClone.gameObject;
-                                else if (!ReferenceEquals(viking, null))
-                                    template = viking.gameObject;
-                            }
-                            catch (Exception ex)
-                            {
-                                Plugin.Logger.LogWarning("[RegenerativeJumpResponder] VikingReference 反射失败: " + ex.Message);
-                            }
-                        }
+                        list.Add(fi);
                     }
-                    
-                    if (!ReferenceEquals(template, null))
+                }
+                candidateFields = list.ToArray();
+                _attackerFieldCache[type] = candidateFields;
+
+                if (candidateFields.Length > 0)
+                {
+                    Plugin.Logger.LogInfo("[RegenerativeJumpResponder] FindAgentInFields: 类型 " + type.Name + " 发现 " + candidateFields.Length + " 个候选字段");
+                }
+            }
+
+            // 遍历候选字段，尝试提取 Agent
+            foreach (FieldInfo fi in candidateFields)
+            {
+                try
+                {
+                    object val = fi.GetValue(monoAttacker);
+                    if (ReferenceEquals(val, null))
+                        continue;
+
+                    // 字段值直接就是 Agent
+                    Agent agentVal = val as Agent;
+                    if (!ReferenceEquals(agentVal, null))
                     {
-                        JumpAttack templateJump = template.GetComponent<JumpAttack>();
-                        if (!ReferenceEquals(templateJump, null))
-                        {
-                            jumpAttack = agent.gameObject.AddComponent<JumpAttack>();
-                            // 通过反射复制私有字段
-                            CopyJumpAttackFields(templateJump, jumpAttack);
-                        }
+                        Plugin.Logger.LogInfo("[RegenerativeJumpResponder] FindAgentInFields: 通过 " + type.Name + "." + fi.Name + " 获取到 Agent=" + agentVal.name);
+                        return agentVal;
                     }
-                    else
+
+                    // 字段值是 Component，从中获取 Agent
+                    Component compVal = val as Component;
+                    if (!ReferenceEquals(compVal, null))
                     {
-                        Plugin.Logger.LogWarning("[RegenerativeJumpResponder] 无法获取 Viking_Twohanded 模板对象，跳劈功能可能不可用");
+                        agentVal = compVal.GetComponent<Agent>();
+                        if (!ReferenceEquals(agentVal, null))
+                        {
+                            Plugin.Logger.LogInfo("[RegenerativeJumpResponder] FindAgentInFields: 通过 " + type.Name + "." + fi.Name + "->GetComponent 获取到 Agent=" + agentVal.name);
+                            return agentVal;
+                        }
+
+                        agentVal = compVal.GetComponentInParent<Agent>();
+                        if (!ReferenceEquals(agentVal, null))
+                        {
+                            Plugin.Logger.LogInfo("[RegenerativeJumpResponder] FindAgentInFields: 通过 " + type.Name + "." + fi.Name + "->GetComponentInParent 获取到 Agent=" + agentVal.name);
+                            return agentVal;
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    Plugin.Logger.LogWarning(string.Format("[RegenerativeJumpResponder] 无法从模板复制JumpAttack: {0}", ex.Message));
+                    Plugin.Logger.LogWarning("[RegenerativeJumpResponder] FindAgentInFields 字段 " + fi.Name + " 访问异常: " + ex.Message);
                 }
             }
 
-            if (!ReferenceEquals(jumpAttack, null))
-            {
-                // 调用 Setup 初始化
-                jumpAttack.Setup(agent);
-                // 禁用追击跳劈逻辑，避免与反击行为冲突
-                jumpAttack.enabled = false;
-            }
-
-            Plugin.Logger.LogInfo("[RegenerativeJumpResponder] 初始化完成");
+            return null;
         }
 
-        /// <summary>
-        /// 通过反射从模板 JumpAttack 复制私有字段到目标 JumpAttack
-        /// </summary>
+        private void Start()
+        {
+            try
+            {
+                // 即使在早期 return 也要留下日志
+                Plugin.Logger.LogInfo("[RegenerativeJumpResponder] Start 被调用，agent=" + (agent?.name ?? "null") + ", reflectionReady=" + _reflectionReady);
+
+                if (ReferenceEquals(agent, null))
+                {
+                    Plugin.Logger.LogError("[RegenerativeJumpResponder] Start: agent 为 null，无法初始化");
+                    return;
+                }
+
+                if (!_reflectionReady && _reflectionAttempted)
+                {
+                    Plugin.Logger.LogWarning("[RegenerativeJumpResponder] Start: 反射初始化失败，跳劈功能不可用");
+                    // 仍然注册自己以响应 ModifyAttack，但不会执行跳劈
+                }
+
+                if (!agent.attackResponders.Contains(this))
+                {
+                    agent.attackResponders.Add(this);
+                    Plugin.Logger.LogInfo("[JumpResponder] 已加入 attackResponders，当前数量=" + agent.attackResponders.Count);
+
+                    // 安全输出列表内容（不使用 String.Join）
+                    StringBuilder sb = new StringBuilder("[JumpResponder] Responders: ");
+                    for (int i = 0; i < agent.attackResponders.Count; i++)
+                    {
+                        var r = agent.attackResponders[i];
+                        if (!ReferenceEquals(r, null))
+                            sb.Append(r.GetType().Name);
+                        else
+                            sb.Append("null");
+                        if (i < agent.attackResponders.Count - 1)
+                            sb.Append(", ");
+                    }
+                    Plugin.Logger.LogInfo(sb.ToString());
+                }
+                else
+                {
+                    Plugin.Logger.LogWarning("[JumpResponder] 已在 attackResponders 中，跳过重复添加");
+                }
+
+                if (!_jumpAttackTypeExists)
+                {
+                    Plugin.Logger.LogWarning("[RegenerativeJumpResponder] JumpAttack 类型不存在，跳过 JumpAttack 初始化");
+                }
+                else
+                {
+                    jumpAttack = agent.GetComponent<JumpAttack>();
+                    if (ReferenceEquals(jumpAttack, null))
+                    {
+                        try
+                        {
+                            GameObject template = null;
+                            if (!ReferenceEquals(LevelStateObjectReferences.dict, null) && LevelStateObjectReferences.dict.TryGetValue("Viking_Twohanded", out UnityEngine.Object refObj))
+                            {
+                                template = refObj as GameObject;
+                                if (ReferenceEquals(template, null))
+                                {
+                                    Component comp = refObj as Component;
+                                    if (!ReferenceEquals(comp, null))
+                                        template = comp.gameObject;
+                                }
+                                if (ReferenceEquals(template, null) && refObj is VikingReference vRef)
+                                {
+                                    try
+                                    {
+                                        FieldInfo vikingCloneField = typeof(VikingReference).GetField("vikingClone", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                                        FieldInfo vikingField = typeof(VikingReference).GetField("viking", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                                        Component vikingClone = null;
+                                        Component viking = null;
+                                        if (!ReferenceEquals(vikingCloneField, null)) vikingClone = vikingCloneField.GetValue(vRef) as Component;
+                                        if (!ReferenceEquals(vikingField, null)) viking = vikingField.GetValue(vRef) as Component;
+                                        if (!ReferenceEquals(vikingClone, null)) template = vikingClone.gameObject;
+                                        else if (!ReferenceEquals(viking, null)) template = viking.gameObject;
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Plugin.Logger.LogWarning("[RegenerativeJumpResponder] VikingReference 反射失败: " + ex.Message);
+                                    }
+                                }
+                            }
+
+                            if (!ReferenceEquals(template, null))
+                            {
+                                JumpAttack templateJump = template.GetComponent<JumpAttack>();
+                                if (!ReferenceEquals(templateJump, null))
+                                {
+                                    jumpAttack = agent.gameObject.AddComponent<JumpAttack>();
+                                    CopyJumpAttackFields(templateJump, jumpAttack);
+                                    Plugin.Logger.LogInfo("[RegenerativeJumpResponder] 成功从模板复制 JumpAttack");
+                                }
+                            }
+                            else
+                            {
+                                Plugin.Logger.LogWarning("[RegenerativeJumpResponder] 无法获取 Viking_Twohanded 模板对象，跳劈功能可能不可用");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Plugin.Logger.LogWarning("[RegenerativeJumpResponder] 无法从模板复制JumpAttack: " + ex.Message);
+                        }
+                    }
+
+                    if (!ReferenceEquals(jumpAttack, null))
+                    {
+                        try
+                        {
+                            jumpAttack.Setup(agent);
+                            jumpAttack.enabled = false;
+                        }
+                        catch (Exception ex)
+                        {
+                            Plugin.Logger.LogWarning("[RegenerativeJumpResponder] jumpAttack.Setup 失败: " + ex.Message);
+                        }
+                    }
+                }
+
+                if (ReferenceEquals(jumpAttack, null))
+                    Plugin.Logger.LogWarning("[RegenerativeJumpResponder] jumpAttack 未初始化，跳劈将不可用");
+                else
+                    Plugin.Logger.LogInfo("[RegenerativeJumpResponder] jumpAttack 已就绪，enabled=" + jumpAttack.enabled);
+
+                Plugin.Logger.LogInfo("[RegenerativeJumpResponder] 初始化完成");
+            }
+            catch (Exception ex)
+            {
+                Plugin.Logger.LogError("[RegenerativeJumpResponder] Start 初始化异常: " + ex.Message);
+                Plugin.Logger.LogError(ex.StackTrace);
+            }
+        }
+
         private static void CopyJumpAttackFields(JumpAttack source, JumpAttack destination)
         {
             if (!ReferenceEquals(jumpAttack_attackSettings, null))
@@ -230,93 +404,137 @@ namespace BadNorthRegenerative
 
             if (!ReferenceEquals(pendingJumpTarget, null) && !ReferenceEquals(jumpAttack, null))
             {
+                Plugin.Logger.LogInfo("[RegenerativeJumpResponder] Update 触发跳劈，target=" + pendingJumpTarget.name);
                 ExecuteJump(pendingJumpTarget);
                 pendingJumpTarget = null;
+            }
+            else if (!ReferenceEquals(pendingJumpTarget, null))
+            {
+                Plugin.Logger.LogWarning("[RegenerativeJumpResponder] Update 跳过跳劈，jumpAttack=" + (jumpAttack == null ? "null" : "ok") + ", target=" + (pendingJumpTarget == null ? "null" : pendingJumpTarget.name));
             }
         }
 
         public void ModifyAttack(ref Attack attack)
         {
-            // 每次调用都记录，方便确认是否触发（初期可保留，调试后改为条件输出）
-            Plugin.Logger.LogDebug($"[JumpResponder] ModifyAttack called, agent={agent?.name}, monoAttacker={attack.monoAttacker?.GetType().Name}, monoAttacker.name={attack.monoAttacker?.name}");
-
-            if (ReferenceEquals(agent, null) || !agent.isActiveAndEnabled) return;
-            if (cooldownTimer > 0f) return;
-
-            // 检查攻击来源是否为远程投射物
-            Shootable shootable = attack.monoAttacker as Shootable;
-            if (ReferenceEquals(shootable, null))
+            if (!this.enabled || !gameObject.activeInHierarchy)
             {
-                // 可能不是 Shootable，尝试直接取 Agent
-                Agent directAttacker = attack.monoAttacker?.GetComponent<Agent>();
-                if (ReferenceEquals(directAttacker, null)) return;
-                // 补充处理...
-                return; // 目前仍按原逻辑，可后续扩展
+                Plugin.Logger.LogWarning("[JumpResponder] ModifyAttack 被调用但组件被禁用或GameObject非活跃");
+                return;
             }
 
-            // 检查防御者存活
-            if (IsAgentDead(agent)) return;
+            Plugin.Logger.LogInfo("[JumpResponder] CRITICAL - ModifyAttack ENTERED");
+            Plugin.Logger.LogInfo("[JumpResponder] ModifyAttack called, agent=" + (agent?.name ?? "null") + ", monoAttacker=" + (attack.monoAttacker?.GetType().Name ?? "null") + ", monoAttacker.name=" + (attack.monoAttacker?.name ?? "null"));
 
-            // 获取远程攻击者的 Agent
-            Agent attackerAgent = GetShooterAgent(shootable);
+            if (ReferenceEquals(agent, null) || !agent.isActiveAndEnabled)
+            {
+                Plugin.Logger.LogInfo("[JumpResponder] agent无效，退出");
+                return;
+            }
+
+            if (!_jumpAttackTypeExists)
+            {
+                Plugin.Logger.LogInfo("[JumpResponder] JumpAttack 类型不存在，跳过跳劈");
+                return;
+            }
+
+            if (cooldownTimer > 0f)
+            {
+                Plugin.Logger.LogInfo("[JumpResponder] 冷却中");
+                return;
+            }
+
+            if (IsAgentDead(agent))
+            {
+                Plugin.Logger.LogInfo("[JumpResponder] 防御者已死亡，退出");
+                return;
+            }
+
+            // --- 通用攻击者提取（无需区分 Arrow / Shootable / 直接 Agent） ---
+            Agent attackerAgent = GetAttackerAgent(attack.monoAttacker);
             if (ReferenceEquals(attackerAgent, null))
             {
-                // 备选：直接通过 Shootable 所在物体的 Agent 组件获取
-                attackerAgent = shootable.GetComponent<Agent>();
-                if (ReferenceEquals(attackerAgent, null))
-                {
-                    Plugin.Logger.LogWarning("[JumpResponder] 无法获取攻击者Agent");
-                    return;
-                }
+                Plugin.Logger.LogInfo("[JumpResponder] 无法从攻击者获取 Agent，退出");
+                return;
             }
-            if (IsAgentDead(attackerAgent)) return;
 
-            // 检查距离
+            // 避免攻击自己
+            if (ReferenceEquals(attackerAgent, agent))
+            {
+                Plugin.Logger.LogInfo("[JumpResponder] 攻击者是自身，退出");
+                return;
+            }
+
+            if (IsAgentDead(attackerAgent))
+            {
+                Plugin.Logger.LogInfo("[JumpResponder] 攻击者已死亡，退出");
+                return;
+            }
+
             float distance = Vector3.Distance(agent.transform.position, attackerAgent.transform.position);
-            if (distance > 5f) return;
+            if (distance > 5f)
+            {
+                Plugin.Logger.LogInfo("[JumpResponder] 距离过远 (" + distance + ")，退出");
+                return;
+            }
 
-            // 检查高度差
             float heightDiff = Mathf.Abs(agent.transform.position.y - attackerAgent.transform.position.y);
-            if (heightDiff > 0.5f) return;
+            if (heightDiff > 0.5f)
+            {
+                Plugin.Logger.LogInfo("[JumpResponder] 高度差过大 (" + heightDiff + ")，退出");
+                return;
+            }
 
-            // 检查攻击者是否在地面上
-            if (!IsAgentGrounded(attackerAgent)) return;
+            if (!IsAgentGrounded(attackerAgent))
+            {
+                Plugin.Logger.LogInfo("[JumpResponder] 攻击者不在地面上，退出");
+                return;
+            }
 
-            // 检查同小队内没有其他单位正在跳跃
-            if (IsSquadMemberJumping()) return;
+            if (IsSquadMemberJumping())
+            {
+                Plugin.Logger.LogInfo("[JumpResponder] 同小队有其他单位正在跳跃，退出");
+                return;
+            }
 
-            // 设置跳劈目标
             pendingJumpTarget = attackerAgent;
             cooldownTimer = cooldownDuration;
-
-            Plugin.Logger.LogInfo(string.Format("[RegenerativeJumpResponder] {0} 即将跳劈反击 {1}", agent.name, attackerAgent.name));
+            Plugin.Logger.LogInfo("[RegenerativeJumpResponder] " + agent.name + " 即将跳劈反击 " + attackerAgent.name);
         }
 
         private void ExecuteJump(Agent target)
         {
-            if (ReferenceEquals(jumpAttack, null) || ReferenceEquals(target, null)) return;
-
+            if (ReferenceEquals(jumpAttack, null) || ReferenceEquals(target, null))
+            {
+                Plugin.Logger.LogWarning("[RegenerativeJumpResponder] ExecuteJump 失败：jumpAttack=" + (jumpAttack == null ? "null" : "ok") + ", target=" + (target == null ? "null" : target.name));
+                return;
+            }
             try
             {
-                // 通过反射设置目标
-                if (!ReferenceEquals(jumpAttack_target, null))
-                {
-                    jumpAttack_target.SetValue(jumpAttack, target);
-                }
+                // 1. 启用 JumpAttack 组件，使其 Update 循环开始工作
+                jumpAttack.enabled = true;
+                Plugin.Logger.LogInfo("[RegenerativeJumpResponder] 已启用 jumpAttack");
 
-                // 设置落点（使用目标的 NavPos 位置）
+                // 2. 设置目标
+                if (!ReferenceEquals(jumpAttack_target, null))
+                    jumpAttack_target.SetValue(jumpAttack, target);
+                else
+                    Plugin.Logger.LogWarning("[RegenerativeJumpResponder] jumpAttack_target 反射字段为 null，将无法设置目标");
+
+                // 3. 设置着陆点（目标位置）
                 if (!ReferenceEquals(jumpAttack_landPos, null))
                 {
                     NavPos landNavPos = new NavPos(target.navPos.tri, target.navPos.pos);
                     jumpAttack_landPos.SetValue(jumpAttack, landNavPos);
                 }
+
+                // 4. 设置面朝方向
                 if (!ReferenceEquals(jumpAttack_faceDirection, null))
                 {
                     Vector3 direction = (target.transform.position - agent.transform.position).normalized;
                     jumpAttack_faceDirection.SetValue(jumpAttack, direction);
                 }
 
-                // 向目标施加威胁（使用 Agent.rangeWorry）
+                // 5. 设置威胁对象（用于 AI 等，非必须）
                 if (!ReferenceEquals(target.brain, null) && !ReferenceEquals(agent.rangeWorry, null))
                 {
                     agent.rangeWorry.threat = jumpAttack;
@@ -325,145 +543,126 @@ namespace BadNorthRegenerative
                     agent.rangeWorry.dir = (target.transform.position - agent.transform.position).normalized;
                 }
 
-                // 通过反射调用 PlungeJump 私有方法
+                // 6. 调用 PlungeJump 启动跳跃状态机
                 if (!ReferenceEquals(jumpAttack_PlungeJump, null))
-                {
                     jumpAttack_PlungeJump.Invoke(jumpAttack, null);
-                }
+                else
+                    Plugin.Logger.LogWarning("[RegenerativeJumpResponder] jumpAttack_PlungeJump 方法为 null，跳跃无法执行");
 
-                Plugin.Logger.LogInfo(string.Format("[RegenerativeJumpResponder] {0} 执行跳劈反击", agent.name));
+                Plugin.Logger.LogInfo("[RegenerativeJumpResponder] " + agent.name + " 执行跳劈反击，目标 " + target.name);
             }
             catch (Exception ex)
             {
-                Plugin.Logger.LogWarning(string.Format("[RegenerativeJumpResponder] 跳劈执行失败: {0}", ex.Message));
+                Plugin.Logger.LogWarning("[RegenerativeJumpResponder] 跳劈执行失败: " + ex.Message);
+                // 失败时禁用组件，避免残留状态
+                if (!ReferenceEquals(jumpAttack, null))
+                    jumpAttack.enabled = false;
             }
         }
 
-        private Agent GetShooterAgent(Shootable shootable)
-        {
-            try
-            {
-                // 优先使用反射获取 shooter 字段
-                if (!ReferenceEquals(shooterField, null))
-                {
-                    object shooter = shooterField.GetValue(shootable);
-                    WeakReference weakRef = shooter as WeakReference;
-                    if (!ReferenceEquals(weakRef, null) && !ReferenceEquals(targetProperty, null))
-                    {
-                        return targetProperty.GetValue(weakRef, null) as Agent;
-                    }
-                }
-
-                // 回退：尝试通过 agent 字段
-                if (!ReferenceEquals(agentField, null))
-                {
-                    return agentField.GetValue(shootable) as Agent;
-                }
-            }
-            catch (Exception ex)
-            {
-                Plugin.Logger.LogWarning(string.Format("[RegenerativeJumpResponder] 获取攻击者Agent失败: {0}", ex.Message));
-            }
-
-            // 最终回退：直接查找 Shootable 所在物体的 Agent
-            return shootable.GetComponent<Agent>();
-        }
-
-        /// <summary>
-        /// 通过反射检查 Agent 是否死亡
-        /// </summary>
         private bool IsAgentDead(Agent targetAgent)
         {
             if (ReferenceEquals(targetAgent, null)) return true;
-
-            // 检查 health <= 0
             if (targetAgent.health <= 0f) return true;
-
-            // 通过反射检查 deadState
             if (!ReferenceEquals(agent_deadState, null))
             {
-                AgentState deadState = agent_deadState.GetValue(targetAgent) as AgentState;
-                if (!ReferenceEquals(deadState, null) && deadState.active) return true;
+                try
+                {
+                    AgentState deadState = agent_deadState.GetValue(targetAgent) as AgentState;
+                    if (!ReferenceEquals(deadState, null) && deadState.active) return true;
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Logger.LogWarning("[RegenerativeJumpResponder] IsAgentDead 反射异常: " + ex.Message);
+                }
             }
-
             return false;
         }
 
-        /// <summary>
-        /// 通过反射检查 Agent 是否在地面上
-        /// </summary>
         private bool IsAgentGrounded(Agent targetAgent)
         {
             if (ReferenceEquals(targetAgent, null)) return false;
-
             if (!ReferenceEquals(agent_groundedState, null))
             {
-                AgentState groundedState = agent_groundedState.GetValue(targetAgent) as AgentState;
-                if (!ReferenceEquals(groundedState, null))
+                try
                 {
-                    return groundedState.active;
+                    AgentState groundedState = agent_groundedState.GetValue(targetAgent) as AgentState;
+                    if (!ReferenceEquals(groundedState, null)) return groundedState.active;
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Logger.LogWarning("[RegenerativeJumpResponder] IsAgentGrounded 反射异常: " + ex.Message);
                 }
             }
-
-            // 回退：默认认为在地面上
             return true;
         }
 
-        /// <summary>
-        /// 通过反射检查 JumpAttack 是否正在跳跃
-        /// </summary>
         private bool IsJumpAttackJumping(JumpAttack ja)
         {
             if (ReferenceEquals(ja, null)) return false;
-
-            // 通过 JumpComponent 的 jumpingState 判断
             if (!ReferenceEquals(jumpAttack_jumpComponent, null))
             {
-                JumpComponent jc = jumpAttack_jumpComponent.GetValue(ja) as JumpComponent;
-                if (!ReferenceEquals(jc, null) && !ReferenceEquals(jumpComponent_jumpingState, null))
+                try
                 {
-                    AgentState jumpingState = jumpComponent_jumpingState.GetValue(jc) as AgentState;
-                    if (!ReferenceEquals(jumpingState, null))
+                    JumpComponent jc = jumpAttack_jumpComponent.GetValue(ja) as JumpComponent;
+                    if (!ReferenceEquals(jc, null) && !ReferenceEquals(jumpComponent_jumpingState, null))
                     {
-                        return jumpingState.active;
+                        AgentState jumpingState = jumpComponent_jumpingState.GetValue(jc) as AgentState;
+                        if (!ReferenceEquals(jumpingState, null)) return jumpingState.active;
                     }
                 }
+                catch (Exception ex)
+                {
+                    Plugin.Logger.LogWarning("[RegenerativeJumpResponder] IsJumpAttackJumping 反射异常: " + ex.Message);
+                }
             }
-
-            // 回退：检查 plungeState
             if (!ReferenceEquals(jumpAttack_plungeState, null))
             {
-                AgentState plungeState = jumpAttack_plungeState.GetValue(ja) as AgentState;
-                if (!ReferenceEquals(plungeState, null) && plungeState.active) return true;
+                try
+                {
+                    AgentState plungeState = jumpAttack_plungeState.GetValue(ja) as AgentState;
+                    if (!ReferenceEquals(plungeState, null) && plungeState.active) return true;
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Logger.LogWarning("[RegenerativeJumpResponder] IsJumpAttackJumping plungeState 反射异常: " + ex.Message);
+                }
             }
-
             return false;
         }
 
         private bool IsSquadMemberJumping()
         {
             if (ReferenceEquals(agent.squad, null)) return false;
-
-            foreach (Agent squadAgent in agent.squad.agents)
+            try
             {
-                if (!ReferenceEquals(squadAgent, agent))
+                foreach (Agent squadAgent in agent.squad.agents)
                 {
-                    JumpAttack otherJump = squadAgent.GetComponent<JumpAttack>();
-                    if (!ReferenceEquals(otherJump, null) && otherJump.enabled && IsJumpAttackJumping(otherJump))
+                    if (!ReferenceEquals(squadAgent, agent))
                     {
-                        return true;
+                        JumpAttack otherJump = squadAgent.GetComponent<JumpAttack>();
+                        if (!ReferenceEquals(otherJump, null) && otherJump.enabled && IsJumpAttackJumping(otherJump))
+                            return true;
                     }
                 }
             }
-
+            catch (Exception ex)
+            {
+                Plugin.Logger.LogWarning("[RegenerativeJumpResponder] IsSquadMemberJumping 异常: " + ex.Message);
+            }
             return false;
         }
 
         private void OnDestroy()
         {
-            if (!ReferenceEquals(agent, null) && !ReferenceEquals(agent.attackResponders, null))
+            try
             {
-                agent.attackResponders.Remove(this);
+                if (!ReferenceEquals(agent, null) && !ReferenceEquals(agent.attackResponders, null))
+                    agent.attackResponders.Remove(this);
+            }
+            catch (Exception ex)
+            {
+                Plugin.Logger.LogWarning("[RegenerativeJumpResponder] OnDestroy 移除失败: " + ex.Message);
             }
         }
     }

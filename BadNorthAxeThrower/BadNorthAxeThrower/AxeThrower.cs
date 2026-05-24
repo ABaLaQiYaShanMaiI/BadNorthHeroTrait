@@ -173,6 +173,9 @@ namespace BadNorthAxeThrower
             // 获取 attackSettings 的副本（AttackSettings 是结构体）
             AttackSettings attackSettings = (AttackSettings)GetFieldValue(comp, FIELD_ATTACK_SETTINGS);
 
+            // 记录模板原始值以便诊断
+            Plugin.Logger.LogInfo($"[AxeThrower] 应用缩放前: launchImpulse={attackSettings.launchImpulse}, damage={attackSettings.damage}, knockback={attackSettings.knockback}, stun={attackSettings.stun}");
+
             switch (squadLevel)
             {
                 case 0:
@@ -199,6 +202,13 @@ namespace BadNorthAxeThrower
                     attackSettings.knockback = attackSettings.knockback * 2f;
                     attackSettings.stun = attackSettings.stun * 2.5f;
                     break;
+            }
+
+            // 确保 launchImpulse 不为零（如果模板值为 0，设为合理默认值）
+            if (attackSettings.launchImpulse <= 0f)
+            {
+                Plugin.Logger.LogWarning($"[AxeThrower] launchImpulse 为 {attackSettings.launchImpulse}（来自模板），设置为默认值 1.0f");
+                attackSettings.launchImpulse = 1.0f;
             }
 
             // 将修改后的结构体写回
@@ -242,6 +252,11 @@ namespace BadNorthAxeThrower
 
             // 初始化组件
             comp.Setup();
+
+            // 验证实际设置的值
+            object finalAmmo = GetFieldValue(comp, FIELD_AMMO);
+            AttackSettings finalSettings = (AttackSettings)GetFieldValue(comp, FIELD_ATTACK_SETTINGS);
+            Plugin.Logger.LogInfo($"[AxeThrower] 验证：ammo={finalAmmo}, damage={finalSettings.damage}, knockback={finalSettings.knockback}, stun={finalSettings.stun}, launchImpulse={finalSettings.launchImpulse}");
 
             Plugin.Logger.LogInfo($"[AxeThrower] 已应用到小队 {squad.name}，等级={squad.hero.squadLevel}");
         }

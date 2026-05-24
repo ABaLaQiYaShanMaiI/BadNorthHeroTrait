@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text;
 using Voxels.TowerDefense;
 using Voxels.TowerDefense.ProfileInternals;
 
@@ -38,18 +39,39 @@ namespace BNAPI
                 _upgradeEntryUpgradeField = _upgradeEntryType.GetField("upgrade");
                 _upgradeEntryIsStartingField = _upgradeEntryType.GetField("isStarting");
 
+                Plugin.logger.LogInfo("[BNAPI] Listing UpgradeEntry constructors:");
+                foreach (ConstructorInfo ctor in _upgradeEntryType.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+                {
+                    ParameterInfo[] parameters = ctor.GetParameters();
+                    StringBuilder sb = new StringBuilder("[BNAPI]   ctor(");
+                    for (int i = 0; i < parameters.Length; i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(parameters[i].ParameterType.FullName);
+                    }
+                    sb.Append(")");
+                    Plugin.logger.LogInfo(sb.ToString());
+                }
+
                 // 遍历所有构造函数，寻找可用的
                 foreach (ConstructorInfo ctor in _upgradeEntryType.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
                 {
                     ParameterInfo[] parameters = ctor.GetParameters();
-                    if (parameters.Length == 2 &&
+                    if (parameters.Length >= 2 &&
                         parameters[0].ParameterType.IsAssignableFrom(typeof(HeroUpgradeDefinition)) &&
                         (parameters[1].ParameterType.Equals(typeof(bool)) || 
                          parameters[1].ParameterType.Equals(typeof(int)) ||
                          parameters[1].ParameterType.Equals(typeof(object))))
                     {
                         _upgradeEntryConstructor = ctor;
-                        Plugin.logger.LogInfo($"[BNAPI] Found UpgradeEntry constructor with signature ({parameters[0].ParameterType.Name}, {parameters[1].ParameterType.Name})");
+                        StringBuilder sb = new StringBuilder("[BNAPI] Found UpgradeEntry constructor with signature (");
+                        for (int i = 0; i < parameters.Length; i++)
+                        {
+                            if (i > 0) sb.Append(", ");
+                            sb.Append(parameters[i].ParameterType.Name);
+                        }
+                        sb.Append(")");
+                        Plugin.logger.LogInfo(sb.ToString());
                         break;
                     }
                 }
@@ -86,14 +108,38 @@ namespace BNAPI
                 Plugin.logger.LogError("[BNAPI] Cannot create UpgradeEntry: constructor not found. Game version may be incompatible.");
                 return null;
             }
-            object secondParam = isStarting;
-            // 如果第二个参数是 int 类型，可能需要将 bool 转为 int
-            ParameterInfo param = _upgradeEntryConstructor.GetParameters()[1];
-            if (param.ParameterType.Equals(typeof(int)))
-                secondParam = isStarting ? 1 : 0;
-            else if (param.ParameterType.Equals(typeof(object)))
-                secondParam = (object)isStarting;
-            return _upgradeEntryConstructor.Invoke(new object[] { def, secondParam });
+
+            ParameterInfo[] parameters = _upgradeEntryConstructor.GetParameters();
+            object[] args = new object[parameters.Length];
+
+            // 第一个参数始终是 HeroUpgradeDefinition
+            args[0] = def;
+
+            // 根据参数数量动态构建
+            if (parameters.Length == 2)
+            {
+                // 2参数: (HeroUpgradeDefinition, bool/int/object)
+                object secondParam = isStarting;
+                if (parameters[1].ParameterType.Equals(typeof(int)))
+                    secondParam = isStarting ? 1 : 0;
+                else if (parameters[1].ParameterType.Equals(typeof(object)))
+                    secondParam = (object)isStarting;
+                args[1] = secondParam;
+            }
+            else if (parameters.Length == 3)
+            {
+                // 3参数: (HeroUpgradeDefinition, int, bool)
+                // 第二个参数是 int（等级索引？），第三个参数是 bool（isStarting）
+                args[1] = 0; // 默认等级索引为0
+                args[2] = isStarting;
+            }
+            else
+            {
+                Plugin.logger.LogError($"[BNAPI] Unexpected UpgradeEntry constructor parameter count: {parameters.Length}");
+                return null;
+            }
+
+            return _upgradeEntryConstructor.Invoke(args);
         }
 
         private static object GetUpgradeEntryUpgrade(object entry)

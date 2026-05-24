@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using BepInEx;
 using BepInEx.Logging;
 
@@ -14,7 +15,16 @@ namespace BNAPI
 			Plugin.logger = base.Logger;
 			CustomText.ApplyHooks();
 			CustomTraits.ApplyHooks();
-			Plugin.logger.LogInfo($"======== BNAPI 已就绪，特性ID: {string.Join(", ", CustomTraits.startingTraits.ToArray())} ========");
+
+			// 使用 StringBuilder 替代 string.Join 避免 Mono CLR 2.0 兼容性问题
+			StringBuilder sb = new StringBuilder("======== BNAPI 已就绪，特性ID: ");
+			for (int i = 0; i < CustomTraits.startingTraits.Count; i++)
+			{
+				if (i > 0) sb.Append(", ");
+				sb.Append(CustomTraits.startingTraits[i]);
+			}
+			sb.Append(" ========");
+			Plugin.logger.LogInfo(sb.ToString());
 		}
 
 		// Token: 0x04000005 RID: 5
