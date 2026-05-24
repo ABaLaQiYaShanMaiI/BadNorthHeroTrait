@@ -44,9 +44,9 @@ namespace BNAPI
                     ParameterInfo[] parameters = ctor.GetParameters();
                     if (parameters.Length == 2 &&
                         parameters[0].ParameterType.IsAssignableFrom(typeof(HeroUpgradeDefinition)) &&
-                        (parameters[1].ParameterType == typeof(bool) || 
-                         parameters[1].ParameterType == typeof(int) ||
-                         parameters[1].ParameterType == typeof(object)))
+                        (parameters[1].ParameterType.Equals(typeof(bool)) || 
+                         parameters[1].ParameterType.Equals(typeof(int)) ||
+                         parameters[1].ParameterType.Equals(typeof(object))))
                     {
                         _upgradeEntryConstructor = ctor;
                         Plugin.logger.LogInfo($"[BNAPI] Found UpgradeEntry constructor with signature ({parameters[0].ParameterType.Name}, {parameters[1].ParameterType.Name})");
@@ -89,9 +89,9 @@ namespace BNAPI
             object secondParam = isStarting;
             // 如果第二个参数是 int 类型，可能需要将 bool 转为 int
             ParameterInfo param = _upgradeEntryConstructor.GetParameters()[1];
-            if (param.ParameterType == typeof(int))
+            if (param.ParameterType.Equals(typeof(int)))
                 secondParam = isStarting ? 1 : 0;
-            else if (param.ParameterType == typeof(object))
+            else if (param.ParameterType.Equals(typeof(object)))
                 secondParam = (object)isStarting;
             return _upgradeEntryConstructor.Invoke(new object[] { def, secondParam });
         }
