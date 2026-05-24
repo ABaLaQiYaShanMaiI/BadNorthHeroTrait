@@ -110,6 +110,7 @@ namespace BadNorthRegenerative
             if (!agent.attackResponders.Contains(this))
             {
                 agent.attackResponders.Insert(0, this);
+                Plugin.Logger.LogInfo($"[JumpResponder] 已加入 attackResponders，当前数量={agent.attackResponders.Count}");
             }
 
             // 尝试获取或创建 JumpAttack 组件
@@ -236,19 +237,38 @@ namespace BadNorthRegenerative
 
         public void ModifyAttack(ref Attack attack)
         {
+            // 每次调用都记录，方便确认是否触发（初期可保留，调试后改为条件输出）
+            Plugin.Logger.LogDebug($"[JumpResponder] ModifyAttack called, agent={agent?.name}, monoAttacker={attack.monoAttacker?.GetType().Name}, monoAttacker.name={attack.monoAttacker?.name}");
+
             if (ReferenceEquals(agent, null) || !agent.isActiveAndEnabled) return;
             if (cooldownTimer > 0f) return;
 
             // 检查攻击来源是否为远程投射物
             Shootable shootable = attack.monoAttacker as Shootable;
-            if (ReferenceEquals(shootable, null)) return;
+            if (ReferenceEquals(shootable, null))
+            {
+                // 可能不是 Shootable，尝试直接取 Agent
+                Agent directAttacker = attack.monoAttacker?.GetComponent<Agent>();
+                if (ReferenceEquals(directAttacker, null)) return;
+                // 补充处理...
+                return; // 目前仍按原逻辑，可后续扩展
+            }
 
             // 检查防御者存活
             if (IsAgentDead(agent)) return;
 
             // 获取远程攻击者的 Agent
             Agent attackerAgent = GetShooterAgent(shootable);
-            if (ReferenceEquals(attackerAgent, null)) return;
+            if (ReferenceEquals(attackerAgent, null))
+            {
+                // 备选：直接通过 Shootable 所在物体的 Agent 组件获取
+                attackerAgent = shootable.GetComponent<Agent>();
+                if (ReferenceEquals(attackerAgent, null))
+                {
+                    Plugin.Logger.LogWarning("[JumpResponder] 无法获取攻击者Agent");
+                    return;
+                }
+            }
             if (IsAgentDead(attackerAgent)) return;
 
             // 检查距离
@@ -323,7 +343,7 @@ namespace BadNorthRegenerative
         {
             try
             {
-                // 尝试通过反射获取 shooter 字段
+                // 优先使用反射获取 shooter 字段
                 if (!ReferenceEquals(shooterField, null))
                 {
                     object shooter = shooterField.GetValue(shootable);
@@ -345,7 +365,8 @@ namespace BadNorthRegenerative
                 Plugin.Logger.LogWarning(string.Format("[RegenerativeJumpResponder] 获取攻击者Agent失败: {0}", ex.Message));
             }
 
-            return null;
+            // 最终回退：直接查找 Shootable 所在物体的 Agent
+            return shootable.GetComponent<Agent>();
         }
 
         /// <summary>

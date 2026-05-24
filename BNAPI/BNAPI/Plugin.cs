@@ -14,7 +14,7 @@ namespace BNAPI
 			Plugin.logger = base.Logger;
 			CustomText.ApplyHooks();
 			CustomTraits.ApplyHooks();
-			Plugin.logger.LogInfo("API loaded");
+			Plugin.logger.LogInfo($"======== BNAPI 已就绪，特性ID: {string.Join(", ", CustomTraits.startingTraits.ToArray())} ========");
 		}
 
 		// Token: 0x04000005 RID: 5

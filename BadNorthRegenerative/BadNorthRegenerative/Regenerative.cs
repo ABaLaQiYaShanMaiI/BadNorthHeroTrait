@@ -259,18 +259,10 @@ namespace BadNorthRegenerative
                 Component shield = agent.GetComponent(SpearShieldTypeName);
                 if (shield != null)
                 {
-                    UnityEngine.Object.Destroy(shield);
-                    // 安全调用 RefreshRenderers（当前版本可能没有此方法）
-                    var agentSelected = agent.GetComponent<AgentSelected>();
-                    if (agentSelected != null)
-                    {
-                    var refreshMethod = typeof(AgentSelected).GetMethod("RefreshRenderers",
-                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                        if (!ReferenceEquals(refreshMethod, null))
-                            refreshMethod.Invoke(agentSelected, null);
-                        else
-                            Plugin.Logger.LogWarning("[Regenerative] AgentSelected.RefreshRenderers not found when removing SpearShield.");
-                    }
+                    // 禁用组件并关闭其 GameObject，防止渲染引用崩溃
+                    ((MonoBehaviour)shield).enabled = false;
+                    shield.gameObject.SetActive(false);
+                    // 不再需要 RefreshRenderers
                 }
             }
             catch (System.Exception ex)
@@ -337,21 +329,12 @@ namespace BadNorthRegenerative
             {
                 if (shield.shield != null)
                 {
-                    UnityEngine.Object.Destroy(shield.shield.gameObject);
+                    // 不再销毁，改为禁用，避免 AgentSelected 访问已销毁的渲染器
+                    shield.shield.gameObject.SetActive(false);
                 }
-                UnityEngine.Object.Destroy(shield);
+                shield.enabled = false;          // 禁止盾牌逻辑
                 swordsman.shield = null;
-                // 安全调用 RefreshRenderers（当前版本可能没有此方法）
-                var agentSelected = agent.GetComponent<AgentSelected>();
-                if (agentSelected != null)
-                {
-                    var refreshMethod = typeof(AgentSelected).GetMethod("RefreshRenderers",
-                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                    if (!ReferenceEquals(refreshMethod, null))
-                        refreshMethod.Invoke(agentSelected, null);
-                    else
-                        Plugin.Logger.LogWarning("[Regenerative] AgentSelected.RefreshRenderers not found, skipping renderer refresh.");
-                }
+                // 不再调用 RefreshRenderers（该版本无此方法）
             }
         }
 

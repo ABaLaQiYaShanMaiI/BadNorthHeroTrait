@@ -32,7 +32,7 @@ namespace BadNorthCheaperClass
             // 3. Add localization
             CustomText.CustomTermsAdded += AddCustomTerms;
 
-            Logger.LogInfo("BadNorthCheaperClass loaded");
+            Logger.LogInfo($"======== BadNorthCheaperClass 已就绪，特性ID: {CheaperClass.CHEAPERCLASS_ID} ========");
         }
 
         private void AddCustomTerms()

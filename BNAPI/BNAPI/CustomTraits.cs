@@ -37,15 +37,26 @@ namespace BNAPI
             {
                 _upgradeEntryUpgradeField = _upgradeEntryType.GetField("upgrade");
                 _upgradeEntryIsStartingField = _upgradeEntryType.GetField("isStarting");
-                _upgradeEntryConstructor = _upgradeEntryType.GetConstructor(new Type[]
+
+                // 遍历所有构造函数，寻找可用的
+                foreach (ConstructorInfo ctor in _upgradeEntryType.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
                 {
-                    typeof(HeroUpgradeDefinition),
-                    typeof(bool)
-                });
+                    ParameterInfo[] parameters = ctor.GetParameters();
+                    if (parameters.Length == 2 &&
+                        parameters[0].ParameterType.IsAssignableFrom(typeof(HeroUpgradeDefinition)) &&
+                        (parameters[1].ParameterType == typeof(bool) || 
+                         parameters[1].ParameterType == typeof(int) ||
+                         parameters[1].ParameterType == typeof(object)))
+                    {
+                        _upgradeEntryConstructor = ctor;
+                        Plugin.logger.LogInfo($"[BNAPI] Found UpgradeEntry constructor with signature ({parameters[0].ParameterType.Name}, {parameters[1].ParameterType.Name})");
+                        break;
+                    }
+                }
 
                 if (ReferenceEquals(_upgradeEntryConstructor, null))
                 {
-                    Plugin.logger.LogError("[BNAPI] Failed to find UpgradeEntry constructor. Game version may be incompatible. Custom traits will be disabled.");
+                    Plugin.logger.LogError("[BNAPI] Failed to find compatible UpgradeEntry constructor. Custom traits will be disabled.");
                     _reflectionFailed = true;
                 }
             }
@@ -75,7 +86,14 @@ namespace BNAPI
                 Plugin.logger.LogError("[BNAPI] Cannot create UpgradeEntry: constructor not found. Game version may be incompatible.");
                 return null;
             }
-            return _upgradeEntryConstructor.Invoke(new object[] { def, isStarting });
+            object secondParam = isStarting;
+            // 如果第二个参数是 int 类型，可能需要将 bool 转为 int
+            ParameterInfo param = _upgradeEntryConstructor.GetParameters()[1];
+            if (param.ParameterType == typeof(int))
+                secondParam = isStarting ? 1 : 0;
+            else if (param.ParameterType == typeof(object))
+                secondParam = (object)isStarting;
+            return _upgradeEntryConstructor.Invoke(new object[] { def, secondParam });
         }
 
         private static object GetUpgradeEntryUpgrade(object entry)

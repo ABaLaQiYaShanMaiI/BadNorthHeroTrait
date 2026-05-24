@@ -32,7 +32,7 @@ namespace BadNorthThorns
             // 3. Add localization
             CustomText.CustomTermsAdded += AddCustomTerms;
 
-            Logger.LogInfo("BadNorthThorns loaded");
+            Logger.LogInfo($"======== BadNorthThorns 已就绪，特性ID: {Thorns.THORNS_ID} ========");
         }
 
         private void AddCustomTerms()

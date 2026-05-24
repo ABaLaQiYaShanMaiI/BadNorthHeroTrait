@@ -36,6 +36,7 @@ namespace BadNorthThorns
         {
             base.OnAppliedToSquad(squad, upgradeLevel);
             squad.onAgentCreated += this.AddThing;
+            Plugin.Logger.LogInfo($"[Thorns] 已应用到小队 {squad.name}");
         }
 
         public void AddThing(Agent agent)
@@ -43,14 +44,18 @@ namespace BadNorthThorns
             if (!agent.attackResponders.Contains(this))
             {
                 agent.attackResponders.Add(this);
+                Plugin.Logger.LogInfo($"[Thorns] 已为 {agent.name} 添加反伤响应器");
             }
         }
 
         public void ModifyAttack(ref Attack attack)
         {
+            Plugin.Logger.LogDebug($"[Thorns] ModifyAttack called, agent={attack.monoAttacker?.GetType().Name}, name={attack.monoAttacker?.name}");
+
             CloseCombatBrain closeCombatBrain = attack.monoAttacker as CloseCombatBrain;
             if (closeCombatBrain != null)
             {
+                Plugin.Logger.LogInfo($"[Thorns] 反伤触发: {closeCombatBrain.agent.name} 受到荆棘伤害");
                 closeCombatBrain.agent.DealDamage(new Attack(
                     1.5f, 1f, 1f, -attack.direction, attack.pos,
                     closeCombatBrain, closeCombatBrain.enSquad,

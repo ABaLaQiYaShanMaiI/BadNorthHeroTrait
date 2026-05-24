@@ -99,7 +99,7 @@ namespace BadNorthCheaperClass
 
                     discountApplied = true;
                     found = true;
-                    Plugin.Logger.LogInfo("[CheaperClass] 折扣应用成功");
+                    Plugin.Logger.LogInfo($"[CheaperClass] 已应用到小队 {squad.name}，折扣应用成功");
                     return; // 找到并处理完后直接返回
                 }
 

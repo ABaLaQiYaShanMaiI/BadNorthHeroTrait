@@ -242,6 +242,8 @@ namespace BadNorthAxeThrower
 
             // 初始化组件
             comp.Setup();
+
+            Plugin.Logger.LogInfo($"[AxeThrower] 已应用到小队 {squad.name}，等级={squad.hero.squadLevel}");
         }
     }
 }

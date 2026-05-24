@@ -32,7 +32,7 @@ namespace BadNorthRegenerative
             // 3. Add localization
             CustomText.CustomTermsAdded += AddCustomTerms;
 
-            Logger.LogInfo("BadNorthRegenerative loaded");
+            Logger.LogInfo($"======== BadNorthRegenerative 已就绪，特性ID: {Regenerative.REGENERATIVE_ID} ========");
         }
 
         private void AddCustomTerms()
