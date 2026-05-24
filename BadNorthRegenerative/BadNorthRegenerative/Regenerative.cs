@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using BepInEx.Logging;
 using BNAPI;
 using UnityEngine;
@@ -280,7 +281,16 @@ namespace BadNorthRegenerative
             Swordsman component = agent.GetComponent<Swordsman>();
             if (component != null)
             {
-                component.isGiant = true;
+                // 使用反射安全设置 isGiant，避免因版本差异导致 MissingFieldException
+                var isGiantField = typeof(Swordsman).GetField("isGiant", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (!ReferenceEquals(isGiantField, null))
+                {
+                    isGiantField.SetValue(component, true);
+                }
+                else
+                {
+                    Plugin.Logger.LogWarning("[Regenerative] Swordsman.isGiant field not found, skipping.");
+                }
                 for (int i = 0; i < component.stunLevels.Length; i++)
                 {
                     component.stunLevels[i] *= 0.1f;
