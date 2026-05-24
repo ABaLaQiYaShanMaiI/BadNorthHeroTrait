@@ -260,9 +260,17 @@ namespace BadNorthRegenerative
                 if (shield != null)
                 {
                     UnityEngine.Object.Destroy(shield);
-                    // 刷新显示（AgentSelected 是公共类型，无问题）
-                    AgentSelected comp = agent.GetComponent<AgentSelected>();
-                    if (comp) comp.RefreshRenderers();
+                    // 安全调用 RefreshRenderers（当前版本可能没有此方法）
+                    var agentSelected = agent.GetComponent<AgentSelected>();
+                    if (agentSelected != null)
+                    {
+                    var refreshMethod = typeof(AgentSelected).GetMethod("RefreshRenderers",
+                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                        if (!ReferenceEquals(refreshMethod, null))
+                            refreshMethod.Invoke(agentSelected, null);
+                        else
+                            Plugin.Logger.LogWarning("[Regenerative] AgentSelected.RefreshRenderers not found when removing SpearShield.");
+                    }
                 }
             }
             catch (System.Exception ex)
@@ -333,10 +341,16 @@ namespace BadNorthRegenerative
                 }
                 UnityEngine.Object.Destroy(shield);
                 swordsman.shield = null;
-                AgentSelected component = agent.GetComponent<AgentSelected>();
-                if (component)
+                // 安全调用 RefreshRenderers（当前版本可能没有此方法）
+                var agentSelected = agent.GetComponent<AgentSelected>();
+                if (agentSelected != null)
                 {
-                    component.RefreshRenderers();
+                    var refreshMethod = typeof(AgentSelected).GetMethod("RefreshRenderers",
+                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                    if (!ReferenceEquals(refreshMethod, null))
+                        refreshMethod.Invoke(agentSelected, null);
+                    else
+                        Plugin.Logger.LogWarning("[Regenerative] AgentSelected.RefreshRenderers not found, skipping renderer refresh.");
                 }
             }
         }
