@@ -36,56 +36,56 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\BadNorth\BadNorth_Data\Managed\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="BepInEx">
-      <HintPath>..\..\..\BadNorth\BepInEx\core\BepInEx.dll</HintPath>
+      <HintPath>..\..\BadNorth\BepInEx\core\BepInEx.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="BNAPI">
-      <HintPath>f:\BadNorthProgram\BadNorthHeroTraits\BNAPI\BNAPI.dll</HintPath>
+      <HintPath>..\BNAPI\BNAPI\bin\Debug\BNAPI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="MMHOOK-Assembly-CSharp">
-      <HintPath>..\..\..\MMHOOK-Assembly-CSharp\MMHOOK-Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\BadNorth\BepInEx\plugins\MMHOOK-Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System.Core" />
     <Reference Include="UnityEngine.AnimationModule">
-      <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
+      <HintPath>..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.ImageConversionModule">
-      <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
+      <HintPath>..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.IMGUIModule">
-      <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+      <HintPath>..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
-      <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+      <HintPath>..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <HintPath>..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.AudioModule">
-      <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
+      <HintPath>..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.PhysicsModule">
-      <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
+      <HintPath>..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
