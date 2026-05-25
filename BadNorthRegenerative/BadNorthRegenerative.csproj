@@ -3,12 +3,12 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{B2C3D4E5-F6A7-8901-BCDE-F12345678901}</ProjectGuid>
+    <ProjectGuid>{E5F6A7B8-C9D0-1234-EF01-345678901234}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>BadNorthAxeThrower</RootNamespace>
-    <AssemblyName>BadNorthAxeThrower</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <RootNamespace>BadNorthRegenerative</RootNamespace>
+    <AssemblyName>BadNorthRegenerative</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
@@ -52,6 +52,10 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="System.Core" />
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
@@ -76,10 +80,6 @@
       <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
-      <Reference Include="UnityEngine.AnimationModule">
-      <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="UnityEngine.AudioModule">
       <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
       <Private>False</Private>
@@ -88,17 +88,20 @@
       <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
-</ItemGroup>
+  </ItemGroup>
   <ItemGroup>
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AxeThrower.cs" />
+    <Compile Include="Regenerative.cs" />
+    <Compile Include="RegenerativeBuff.cs" />
+    <Compile Include="RegenerativeJumpResponder.cs" />
+    <Compile Include="RegenerativeSpearBuff.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Resources\trait_axe.png">
+    <Content Include="Resources\trait_regenerative.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

@@ -8,7 +8,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>BadNorthRegenerative</RootNamespace>
     <AssemblyName>BadNorthRegenerative</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
@@ -44,14 +44,13 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="BNAPI">
-      <HintPath>f:\BadNorthProgram\BadNorthHeroTraits\BNAPI\BNAPI.dll</HintPath>
+      <HintPath>f:\BadNorthProgram\BadNorthHeroTraits\BNAPI\BNAPI\bin\Debug\BNAPI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="MMHOOK-Assembly-CSharp">
       <HintPath>..\..\..\MMHOOK-Assembly-CSharp\MMHOOK-Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="System.Core" />
     <Reference Include="UnityEngine.AnimationModule">
       <HintPath>..\..\..\BadNorth\BadNorth_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
       <Private>False</Private>

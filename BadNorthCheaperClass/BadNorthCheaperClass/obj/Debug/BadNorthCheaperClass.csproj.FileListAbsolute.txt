@@ -1,7 +1,0 @@
-f:\BadNorthProgram\BadNorthHeroTraits\BadNorthCheaperClass\BadNorthCheaperClass\obj\Debug\BadNorthCheaperClass.csproj.AssemblyReference.cache
-f:\BadNorthProgram\BadNorthHeroTraits\BadNorthCheaperClass\BadNorthCheaperClass\obj\Debug\BadNorthCheaperClass.csproj.CoreCompileInputs.cache
-f:\BadNorthProgram\BadNorthHeroTraits\BadNorthCheaperClass\BadNorthCheaperClass\bin\Debug\Resources\trait_cheaperclass.png
-f:\BadNorthProgram\BadNorthHeroTraits\BadNorthCheaperClass\BadNorthCheaperClass\bin\Debug\BadNorthCheaperClass.dll
-f:\BadNorthProgram\BadNorthHeroTraits\BadNorthCheaperClass\BadNorthCheaperClass\bin\Debug\BadNorthCheaperClass.pdb
-f:\BadNorthProgram\BadNorthHeroTraits\BadNorthCheaperClass\BadNorthCheaperClass\obj\Debug\BadNorthCheaperClass.dll
-f:\BadNorthProgram\BadNorthHeroTraits\BadNorthCheaperClass\BadNorthCheaperClass\obj\Debug\BadNorthCheaperClass.pdb

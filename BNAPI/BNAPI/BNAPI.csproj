@@ -45,7 +45,6 @@
       <HintPath>f:\BadNorthProgram\BadNorth\BepInEx\plugins\MMHOOK-Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="System.Core" />
     <Reference Include="UnityEngine">
       <HintPath>f:\BadNorthProgram\BadNorth\BadNorth_Data\Managed\UnityEngine.dll</HintPath>
       <Private>False</Private>

@@ -1,0 +1,11 @@
+F:\BadNorthProgram\BadNorthHeroTraits\BadNorthRegenerative\BadNorthRegenerative\bin\Debug\Resources\trait_regenerative.png
+F:\BadNorthProgram\BadNorthHeroTraits\BadNorthRegenerative\BadNorthRegenerative\bin\Debug\BadNorthRegenerative.dll
+F:\BadNorthProgram\BadNorthHeroTraits\BadNorthRegenerative\BadNorthRegenerative\bin\Debug\BadNorthRegenerative.pdb
+F:\BadNorthProgram\BadNorthHeroTraits\BadNorthRegenerative\BadNorthRegenerative\obj\Debug\BadNorthRegenerative.csproj.AssemblyReference.cache
+F:\BadNorthProgram\BadNorthHeroTraits\BadNorthRegenerative\BadNorthRegenerative\obj\Debug\BadNorthRegenerative.csproj.CoreCompileInputs.cache
+F:\BadNorthProgram\BadNorthHeroTraits\BadNorthRegenerative\BadNorthRegenerative\obj\Debug\BadNorthRegenerative.dll
+F:\BadNorthProgram\BadNorthHeroTraits\BadNorthRegenerative\BadNorthRegenerative\obj\Debug\BadNorthRegenerative.pdb
+F:\BadNorthProgram\BadNorthHeroTraits\BadNorthRegenerative\obj\Debug\BadNorthRegenerative.csproj.AssemblyReference.cache
+F:\BadNorthProgram\BadNorthHeroTraits\BadNorthRegenerative\obj\Debug\BadNorthRegenerative.csproj.CoreCompileInputs.cache
+F:\BadNorthProgram\BadNorthHeroTraits\BadNorthRegenerative\obj\Debug\BadNorthRegenerative.dll
+F:\BadNorthProgram\BadNorthHeroTraits\BadNorthRegenerative\obj\Debug\BadNorthRegenerative.pdb
