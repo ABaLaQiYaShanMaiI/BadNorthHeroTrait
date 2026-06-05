@@ -20,7 +20,7 @@ namespace BadNorthAxeThrower
             string modPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + Path.DirectorySeparatorChar;
 
             // 1. Load custom sprite
-            CustomSprites.AddCustomSprite(modPath, "trait_axe");
+            CustomSprites.AddCustomSprite(modPath, "trait_axethrower");
 
             // 2. Register trait
             CustomTraits.RegisterTrait(

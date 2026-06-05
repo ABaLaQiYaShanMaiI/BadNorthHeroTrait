@@ -1,0 +1,7 @@
+C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthSweepingBlade\bin\Debug\Resources\trait_sweepingblade.png
+C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthSweepingBlade\bin\Debug\BadNorthSweepingBlade.dll
+C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthSweepingBlade\bin\Debug\BadNorthSweepingBlade.pdb
+C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthSweepingBlade\obj\Debug\BadNorthSweepingBlade.csproj.AssemblyReference.cache
+C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthSweepingBlade\obj\Debug\BadNorthSweepingBlade.csproj.CoreCompileInputs.cache
+C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthSweepingBlade\obj\Debug\BadNorthSweepingBlade.dll
+C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthSweepingBlade\obj\Debug\BadNorthSweepingBlade.pdb

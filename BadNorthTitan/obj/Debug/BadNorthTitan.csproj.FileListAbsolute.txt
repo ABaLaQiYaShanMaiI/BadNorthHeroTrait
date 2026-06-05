@@ -1,0 +1,7 @@
+C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthTitan\bin\Debug\Resources\trait_titan.png
+C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthTitan\bin\Debug\BadNorthTitan.dll
+C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthTitan\bin\Debug\BadNorthTitan.pdb
+C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthTitan\obj\Debug\BadNorthTitan.csproj.AssemblyReference.cache
+C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthTitan\obj\Debug\BadNorthTitan.csproj.CoreCompileInputs.cache
+C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthTitan\obj\Debug\BadNorthTitan.dll
+C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthTitan\obj\Debug\BadNorthTitan.pdb

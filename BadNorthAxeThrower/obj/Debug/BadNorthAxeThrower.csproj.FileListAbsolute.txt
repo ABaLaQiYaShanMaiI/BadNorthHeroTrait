@@ -5,10 +5,10 @@ f:\BadNorthProgram\BadNorthHeroTraits\BadNorthAxeThrower\bin\Debug\BadNorthAxeTh
 f:\BadNorthProgram\BadNorthHeroTraits\BadNorthAxeThrower\bin\Debug\BadNorthAxeThrower.pdb
 f:\BadNorthProgram\BadNorthHeroTraits\BadNorthAxeThrower\obj\Debug\BadNorthAxeThrower.dll
 f:\BadNorthProgram\BadNorthHeroTraits\BadNorthAxeThrower\obj\Debug\BadNorthAxeThrower.pdb
-c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthAxeThrower\bin\Debug\Resources\trait_axe.png
 c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthAxeThrower\bin\Debug\BadNorthAxeThrower.dll
 c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthAxeThrower\bin\Debug\BadNorthAxeThrower.pdb
 c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthAxeThrower\obj\Debug\BadNorthAxeThrower.csproj.AssemblyReference.cache
 c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthAxeThrower\obj\Debug\BadNorthAxeThrower.csproj.CoreCompileInputs.cache
 c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthAxeThrower\obj\Debug\BadNorthAxeThrower.dll
 c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthAxeThrower\obj\Debug\BadNorthAxeThrower.pdb
+C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthAxeThrower\bin\Debug\Resources\trait_axethrower.png

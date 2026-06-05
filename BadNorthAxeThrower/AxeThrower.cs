@@ -30,7 +30,7 @@ namespace BadNorthAxeThrower
             base.name = AXETHROWER_ID;
             this.nameTerm = "NACU/TRAIT/AXE/NAME";
             this.shortDescription = "NACU/TRAIT/AXE/DESCSHORT";
-            this.infoSprite = CustomSprites.Sprites["trait_axe"];
+this.infoSprite = CustomSprites.Sprites["trait_axethrower"];
             HeroUpgradeDefinition.Level[] array = new HeroUpgradeDefinition.Level[1];
             int num = 0;
             HeroUpgradeDefinition.Level level = default(HeroUpgradeDefinition.Level);
