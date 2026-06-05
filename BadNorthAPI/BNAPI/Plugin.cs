@@ -1,23 +1,29 @@
 ﻿using System;
 using System.Text;
 using BepInEx;
+using BepInEx.Configuration;
 using BepInEx.Logging;
 
-namespace BNAPI
+using BadNorthAPI;
+
+namespace BadNorthAPI
 {
-	// Token: 0x02000007 RID: 7
-	[BepInPlugin("nacu.bnapi", "BN Mod API", "1.0.1")]
+	[BepInPlugin("nacu.bnapi.modular", "BN Mod API (Modular)", "1.0.1")]
 	public class Plugin : BaseUnityPlugin
 	{
-		// Token: 0x0600000F RID: 15 RVA: 0x00002564 File Offset: 0x00000764
 		public void OnEnable()
 		{
 			Plugin.logger = base.Logger;
+			Plugin.ConfigRef = Config;
+
+			// 初始化全局调试日志开关（从 BepInEx 配置文件读取）
+			Debugger.Initialize(Config);
+
 			CustomText.ApplyHooks();
 			CustomTraits.ApplyHooks();
 
 			// 使用 StringBuilder 替代 string.Join 避免 Mono CLR 2.0 兼容性问题
-			StringBuilder sb = new StringBuilder("======== BNAPI 已就绪，特性ID: ");
+			StringBuilder sb = new StringBuilder("======== [BadNorthAPI] 已就绪，特性ID: ");
 			for (int i = 0; i < CustomTraits.startingTraits.Count; i++)
 			{
 				if (i > 0) sb.Append(", ");
@@ -27,10 +33,10 @@ namespace BNAPI
 			Plugin.logger.LogInfo(sb.ToString());
 		}
 
-		// Token: 0x04000005 RID: 5
 		public static ManualLogSource logger;
 
-		// Token: 0x04000006 RID: 6
+		public static ConfigFile ConfigRef;
+
 		public const string VERSION = "1.0.1";
 	}
 }

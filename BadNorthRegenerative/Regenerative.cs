@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using BepInEx.Logging;
-using BNAPI;
+using BadNorthAPI;
 using UnityEngine;
 using Voxels.TowerDefense;
 using Voxels.TowerDefense.Upgrades;
@@ -38,7 +38,7 @@ namespace BadNorthRegenerative
 
         public Regenerative()
         {
-            Plugin.Logger.LogInfo("REGENERATIVE CREATED");
+            Debugger.Log("REGENERATIVE CREATED");
             this.upgradeType = ScriptableObject.CreateInstance<HeroUpgradeType>();
             this.upgradeType.typeEnum = (HeroUpgradeTypeEnum)4;
             this.upgradeType.canBeStartItem = true;
@@ -65,38 +65,41 @@ namespace BadNorthRegenerative
         public override void OnAppliedToSquad(EnglishSquad squad, int upgradeLevel)
         {
             base.OnAppliedToSquad(squad, upgradeLevel);
-            ManualLogSource logger = Plugin.Logger;
-            string format = "[Regenerative] OnAppliedToSquad: squad={0}, agents.Count={1}, livingAgents.Count={2}";
-            object arg = (squad != null) ? squad.name : null;
-            int? num;
-            if (squad == null)
+            if (BadNorthAPI.Debugger.Enabled)
             {
-                num = null;
+                ManualLogSource logger = Plugin.Logger;
+                string format = "[Regenerative] OnAppliedToSquad: squad={0}, agents.Count={1}, livingAgents.Count={2}";
+                object arg = (squad != null) ? squad.name : null;
+                int? num;
+                if (squad == null)
+                {
+                    num = null;
+                }
+                else
+                {
+                    List<Agent> agents = squad.agents;
+                    num = ((agents != null) ? new int?(agents.Count) : null);
+                }
+                object arg2 = num;
+                int? num2;
+                if (squad == null)
+                {
+                    num2 = null;
+                }
+                else
+                {
+                    List<Agent> livingAgents = squad.livingAgents;
+                    num2 = ((livingAgents != null) ? new int?(livingAgents.Count) : null);
+                }
+                logger.LogInfo(string.Format(format, arg, arg2, num2));
             }
-            else
-            {
-                List<Agent> agents = squad.agents;
-                num = ((agents != null) ? new int?(agents.Count) : null);
-            }
-            object arg2 = num;
-            int? num2;
-            if (squad == null)
-            {
-                num2 = null;
-            }
-            else
-            {
-                List<Agent> livingAgents = squad.livingAgents;
-                num2 = ((livingAgents != null) ? new int?(livingAgents.Count) : null);
-            }
-            logger.LogInfo(string.Format(format, arg, arg2, num2));
             if (!this.IsShieldInfantry(squad) && !this.IsSpearInfantry(squad))
             {
-                Plugin.Logger.LogInfo("[Regenerative] 非盾兵/非矛兵，跳过改造");
+                Debugger.Log("[Regenerative] 非盾兵/非矛兵，跳过改造");
                 return;
             }
             bool flag = this.IsShieldInfantry(squad);
-            Plugin.Logger.LogInfo(flag ? "[Regenerative] 盾兵小队，执行双刀改造" : "[Regenerative] 矛兵小队，执行不抬枪改造");
+            Debugger.Log(flag ? "[Regenerative] 盾兵小队，执行双刀改造" : "[Regenerative] 矛兵小队，执行不抬枪改造");
             int num3 = 0;
             foreach (Agent agent in squad.agents)
             {
@@ -122,16 +125,16 @@ namespace BadNorthRegenerative
         {
             if (squad == null)
             {
-                Plugin.Logger.LogWarning("[Regenerative] IsShieldInfantry: squad为null");
+                Debugger.Log("[Regenerative] IsShieldInfantry: squad为null");
                 return false;
             }
             if (squad.minionPrefab == null)
             {
-                Plugin.Logger.LogWarning("[Regenerative] IsShieldInfantry: minionPrefab为null");
+                Debugger.Log("[Regenerative] IsShieldInfantry: minionPrefab为null");
                 return false;
             }
             bool flag = squad.minionPrefab.GetComponent<Swordsman>() != null;
-            Plugin.Logger.LogInfo(string.Format("[Regenerative] IsShieldInfantry: minionPrefab={0}, hasSwordsman={1}", squad.minionPrefab.name, flag));
+            Debugger.Log(string.Format("[Regenerative] IsShieldInfantry: minionPrefab={0}, hasSwordsman={1}", squad.minionPrefab.name, flag));
             return flag;
         }
 
@@ -172,63 +175,23 @@ namespace BadNorthRegenerative
                 return;
             }
             AnimatorOverrideController animatorOverrideController = new AnimatorOverrideController(component.runtimeAnimatorController);
-            Dictionary<string, AnimationClip> dictionary = new Dictionary<string, AnimationClip>
+
+            var clipMap = new Dictionary<string, string>
             {
-                { "Swordsman_Idle", null },
-                { "Swordsman_Walk", null },
-                { "Swordsman_Run", null },
-                { "Swordsman_Attack", null },
-                { "Swordsman_Ragdoll", null },
-                { "Swordsman_Death", null }
+                { "Twohanded_Idle", "Swordsman_Idle" },
+                { "Twohanded_Walk", "Swordsman_Walk" },
+                { "Twohanded_Run", "Swordsman_Run" },
+                { "Twohanded_Attack", "Swordsman_Attack" },
+                { "Twohanded_Ragdoll", "Swordsman_Ragdoll" },
+                { "Twohanded_Death", "Swordsman_Death" }
             };
+
             foreach (AnimationClip animationClip in Resources.FindObjectsOfTypeAll<AnimationClip>())
             {
-                string name = animationClip.name;
-                if (!(name == "Twohanded_Idle"))
+                string clipKey;
+                if (clipMap.TryGetValue(animationClip.name, out clipKey))
                 {
-                    if (!(name == "Twohanded_Walk"))
-                    {
-                        if (!(name == "Twohanded_Run"))
-                        {
-                            if (!(name == "Twohanded_Attack"))
-                            {
-                                if (!(name == "Twohanded_Ragdoll"))
-                                {
-                                    if (name == "Twohanded_Death")
-                                    {
-                                        dictionary["Swordsman_Death"] = animationClip;
-                                    }
-                                }
-                                else
-                                {
-                                    dictionary["Swordsman_Ragdoll"] = animationClip;
-                                }
-                            }
-                            else
-                            {
-                                dictionary["Swordsman_Attack"] = animationClip;
-                            }
-                        }
-                        else
-                        {
-                            dictionary["Swordsman_Run"] = animationClip;
-                        }
-                    }
-                    else
-                    {
-                        dictionary["Swordsman_Walk"] = animationClip;
-                    }
-                }
-                else
-                {
-                    dictionary["Swordsman_Idle"] = animationClip;
-                }
-            }
-            foreach (KeyValuePair<string, AnimationClip> keyValuePair in dictionary)
-            {
-                if (keyValuePair.Value != null)
-                {
-                    animatorOverrideController[keyValuePair.Key] = keyValuePair.Value;
+                    animatorOverrideController[clipKey] = animationClip;
                 }
             }
             component.runtimeAnimatorController = animatorOverrideController;
@@ -248,43 +211,37 @@ namespace BadNorthRegenerative
             this.ApplyDualWieldAnimations(agent);
         }
 
-        // 使用字符串名称引用可能不存在的类型，避免 JIT 编译时 TypeLoadException
         private static readonly string SpearShieldTypeName = "Voxels.TowerDefense.SpearShield";
 
         private void RemoveSpearShieldIfPresent(Agent agent)
         {
             try
             {
-                // 使用 GameObject.GetComponent(string) 通过字符串查找组件
                 Component shield = agent.GetComponent(SpearShieldTypeName);
                 if (shield != null)
                 {
-                    // 禁用组件并关闭其 GameObject，防止渲染引用崩溃
                     ((MonoBehaviour)shield).enabled = false;
                     shield.gameObject.SetActive(false);
-                    // 不再需要 RefreshRenderers
                 }
             }
             catch (System.Exception ex)
             {
-                Plugin.Logger.LogWarning(string.Format("[Regenerative] 移除 SpearShield 失败：{0}", ex.Message));
+                Debugger.Log(string.Format("[Regenerative] 移除 SpearShield 失败：{0}", ex.Message));
             }
         }
 
-        // 控制 isGiant 警告仅输出一次
         private static bool _isGiantWarningLogged = false;
 
         private void ModifyAgentProperties(Agent agent, int squadLevel)
         {
             if (agent == null)
             {
-                Plugin.Logger.LogWarning("[Regenerative] ModifyAgentProperties: agent为null");
+                Debugger.Log("[Regenerative] ModifyAgentProperties: agent为null");
                 return;
             }
             Swordsman component = agent.GetComponent<Swordsman>();
             if (component != null)
             {
-                // 使用反射安全设置 isGiant，避免因版本差异导致 MissingFieldException
                 var isGiantField = typeof(Swordsman).GetField("isGiant", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                 if (!ReferenceEquals(isGiantField, null))
                 {
@@ -293,7 +250,7 @@ namespace BadNorthRegenerative
                 else if (!_isGiantWarningLogged)
                 {
                     _isGiantWarningLogged = true;
-                    Plugin.Logger.LogWarning("[Regenerative] Swordsman.isGiant field not found, skipping. (此警告仅显示一次)");
+                    Debugger.Log("[Regenerative] Swordsman.isGiant field not found, skipping. (此警告仅显示一次)");
                 }
                 for (int i = 0; i < component.stunLevels.Length; i++)
                 {
@@ -319,11 +276,10 @@ namespace BadNorthRegenerative
                 {
                     agent.gameObject.AddComponent<RegenerativeSpearBuff>();
                 }
-                // 使用反射方式移除 SpearShield，避免硬编码类型引用导致 JIT 崩溃
                 this.RemoveSpearShieldIfPresent(agent);
                 return;
             }
-            Plugin.Logger.LogWarning("[Regenerative] " + agent.name + " 无Swordsman/无Spear组件，跳过改造");
+            Debugger.Log("[Regenerative] " + agent.name + " 无Swordsman/无Spear组件，跳过改造");
         }
 
         private void RemoveShield(Swordsman swordsman, Agent agent)
@@ -333,12 +289,10 @@ namespace BadNorthRegenerative
             {
                 if (shield.shield != null)
                 {
-                    // 不再销毁，改为禁用，避免 AgentSelected 访问已销毁的渲染器
                     shield.shield.gameObject.SetActive(false);
                 }
-                shield.enabled = false;          // 禁止盾牌逻辑
+                shield.enabled = false;
                 swordsman.shield = null;
-                // 不再调用 RefreshRenderers（该版本无此方法）
             }
         }
 
@@ -346,16 +300,16 @@ namespace BadNorthRegenerative
         {
             if (squad == null)
             {
-                Plugin.Logger.LogWarning("[Regenerative] IsSpearInfantry: squad为null");
+                Debugger.Log("[Regenerative] IsSpearInfantry: squad为null");
                 return false;
             }
             if (squad.minionPrefab == null)
             {
-                Plugin.Logger.LogWarning("[Regenerative] IsSpearInfantry: minionPrefab为null");
+                Debugger.Log("[Regenerative] IsSpearInfantry: minionPrefab为null");
                 return false;
             }
             bool flag = squad.minionPrefab.GetComponent<Spear>() != null;
-            Plugin.Logger.LogInfo(string.Format("[Regenerative] IsSpearInfantry: minionPrefab={0}, hasSpear={1}", squad.minionPrefab.name, flag));
+            Debugger.Log(string.Format("[Regenerative] IsSpearInfantry: minionPrefab={0}, hasSpear={1}", squad.minionPrefab.name, flag));
             return flag;
         }
     }

@@ -3,12 +3,12 @@ using System.IO;
 using System.Reflection;
 using BepInEx;
 using BepInEx.Logging;
-using BNAPI;
+using BadNorthAPI;
 using UnityEngine;
 
 namespace BadNorthCheaperClass
 {
-    [BepInDependency("nacu.bnapi", BepInDependency.DependencyFlags.HardDependency)]
+    [BepInDependency("nacu.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
     [BepInPlugin("nacu.badnorthcheaperclass", "Bad North - Cheaper Class Trait", "1.0")]
     public class Plugin : BaseUnityPlugin
     {
@@ -17,7 +17,7 @@ namespace BadNorthCheaperClass
         public void OnEnable()
         {
             Logger = base.Logger;
-            string modPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\";
+            string modPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + Path.DirectorySeparatorChar;
 
             // 1. Load custom sprite
             CustomSprites.AddCustomSprite(modPath, "trait_cheaperclass");

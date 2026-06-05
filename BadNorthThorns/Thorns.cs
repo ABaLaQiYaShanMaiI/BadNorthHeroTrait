@@ -1,4 +1,4 @@
-using BNAPI;
+using BadNorthAPI;
 using UnityEngine;
 using Voxels.TowerDefense;
 
@@ -10,7 +10,7 @@ namespace BadNorthThorns
 
         public Thorns()
         {
-            Plugin.Logger.LogInfo("THORNS CREATED");
+            Debugger.Log("THORNS CREATED");
             this.upgradeType = ScriptableObject.CreateInstance<HeroUpgradeType>();
             this.upgradeType.typeEnum = (HeroUpgradeTypeEnum)4;
             this.upgradeType.canBeStartItem = true;
@@ -36,7 +36,7 @@ namespace BadNorthThorns
         {
             base.OnAppliedToSquad(squad, upgradeLevel);
             squad.onAgentCreated += this.AddThing;
-            Plugin.Logger.LogInfo($"[Thorns] 已应用到小队 {squad.name}");
+            Debugger.Log($"[Thorns] 已应用到小队 {squad?.name}");
         }
 
         public void AddThing(Agent agent)
@@ -44,19 +44,18 @@ namespace BadNorthThorns
             if (!agent.attackResponders.Contains(this))
             {
                 agent.attackResponders.Add(this);
-                Plugin.Logger.LogInfo($"[Thorns] 已为 {agent.name} 添加反伤响应器");
+                Debugger.Log($"[Thorns] 已为 {agent?.name} 添加反伤响应器");
             }
         }
 
         public void ModifyAttack(ref Attack attack)
         {
-            // 改为 Info 级别，确保能看到
-            Plugin.Logger.LogInfo($"[Thorns] ModifyAttack called, monoAttacker type={attack.monoAttacker?.GetType().ToString()}, name={attack.monoAttacker?.name}");
+            Debugger.Log($"[Thorns] ModifyAttack called, monoAttacker type={attack.monoAttacker?.GetType().ToString()}, name={attack.monoAttacker?.name}");
 
             CloseCombatBrain closeCombatBrain = attack.monoAttacker as CloseCombatBrain;
             if (closeCombatBrain != null)
             {
-                Plugin.Logger.LogInfo($"[Thorns] 反伤触发: {closeCombatBrain.agent.name} 受到荆棘伤害");
+                Debugger.Log($"[Thorns] 反伤触发: {closeCombatBrain.agent.name} 受到荆棘伤害");
                 closeCombatBrain.agent.DealDamage(new Attack(
                     1.5f, 1f, 1f, -attack.direction, attack.pos,
                     closeCombatBrain, closeCombatBrain.enSquad,
@@ -66,8 +65,7 @@ namespace BadNorthThorns
             }
             else
             {
-                // 帮助判断攻击来源是否为其他类型
-                Plugin.Logger.LogInfo("[Thorns] 攻击者不是 CloseCombatBrain，跳过反伤");
+                Debugger.Log("[Thorns] 攻击者不是 CloseCombatBrain，跳过反伤");
             }
         }
     }

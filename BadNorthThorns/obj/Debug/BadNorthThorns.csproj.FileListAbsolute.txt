@@ -5,3 +5,10 @@ f:\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns\obj\Debug\BadNorthThorns.cs
 f:\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns\obj\Debug\BadNorthThorns.csproj.CoreCompileInputs.cache
 f:\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns\obj\Debug\BadNorthThorns.dll
 f:\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns\obj\Debug\BadNorthThorns.pdb
+c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns\bin\Debug\Resources\trait_thorns.png
+c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns\bin\Debug\BadNorthThorns.dll
+c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns\bin\Debug\BadNorthThorns.pdb
+c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns\obj\Debug\BadNorthThorns.csproj.AssemblyReference.cache
+c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns\obj\Debug\BadNorthThorns.csproj.CoreCompileInputs.cache
+c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns\obj\Debug\BadNorthThorns.dll
+c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns\obj\Debug\BadNorthThorns.pdb

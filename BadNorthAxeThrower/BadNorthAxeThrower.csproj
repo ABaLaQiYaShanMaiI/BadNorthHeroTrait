@@ -43,8 +43,8 @@
       <HintPath>..\..\BadNorth\BepInEx\core\BepInEx.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="BNAPI">
-      <HintPath>..\BNAPI\BNAPI\bin\Debug\BNAPI.dll</HintPath>
+    <Reference Include="BadNorthAPI">
+      <HintPath>..\BadNorthAPI\BNAPI\bin\Debug\BadNorthAPI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="MMHOOK-Assembly-CSharp">

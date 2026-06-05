@@ -6,7 +6,7 @@ using System.Text;
 using Voxels.TowerDefense;
 using Voxels.TowerDefense.ProfileInternals;
 
-namespace BNAPI
+namespace BadNorthAPI
 {
     public static class CustomTraits
     {
@@ -39,11 +39,11 @@ namespace BNAPI
                 _upgradeEntryUpgradeField = _upgradeEntryType.GetField("upgrade");
                 _upgradeEntryIsStartingField = _upgradeEntryType.GetField("isStarting");
 
-                Plugin.logger.LogInfo("[BNAPI] Listing UpgradeEntry constructors:");
+                Plugin.logger.LogInfo("[BadNorthAPI] Listing UpgradeEntry constructors:");
                 foreach (ConstructorInfo ctor in _upgradeEntryType.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
                 {
                     ParameterInfo[] parameters = ctor.GetParameters();
-                    StringBuilder sb = new StringBuilder("[BNAPI]   ctor(");
+                    StringBuilder sb = new StringBuilder("[BadNorthAPI]   ctor(");
                     for (int i = 0; i < parameters.Length; i++)
                     {
                         if (i > 0) sb.Append(", ");
@@ -64,7 +64,7 @@ namespace BNAPI
                          parameters[1].ParameterType.Equals(typeof(object))))
                     {
                         _upgradeEntryConstructor = ctor;
-                        StringBuilder sb = new StringBuilder("[BNAPI] Found UpgradeEntry constructor with signature (");
+                        StringBuilder sb = new StringBuilder("[BadNorthAPI] Found UpgradeEntry constructor with signature (");
                         for (int i = 0; i < parameters.Length; i++)
                         {
                             if (i > 0) sb.Append(", ");
@@ -78,13 +78,13 @@ namespace BNAPI
 
                 if (ReferenceEquals(_upgradeEntryConstructor, null))
                 {
-                    Plugin.logger.LogError("[BNAPI] Failed to find compatible UpgradeEntry constructor. Custom traits will be disabled.");
+                    Plugin.logger.LogError("[BadNorthAPI] Failed to find compatible UpgradeEntry constructor. Custom traits will be disabled.");
                     _reflectionFailed = true;
                 }
             }
             else
             {
-                Plugin.logger.LogError("[BNAPI] Failed to find nested type UpgradeEntry. Game version may be incompatible. Custom traits will be disabled.");
+                Plugin.logger.LogError("[BadNorthAPI] Failed to find nested type UpgradeEntry. Game version may be incompatible. Custom traits will be disabled.");
                 _reflectionFailed = true;
             }
         }
@@ -94,7 +94,7 @@ namespace BNAPI
             EnsureReflectionInit();
             if (_reflectionFailed || ReferenceEquals(_upgradesField, null))
             {
-                Plugin.logger.LogError("[BNAPI] Cannot get upgrades: reflection initialization failed.");
+                Plugin.logger.LogError("[BadNorthAPI] Cannot get upgrades: reflection initialization failed.");
                 return null;
             }
             return (IList)_upgradesField.GetValue(self);
@@ -105,7 +105,7 @@ namespace BNAPI
             EnsureReflectionInit();
             if (_reflectionFailed || ReferenceEquals(_upgradeEntryConstructor, null))
             {
-                Plugin.logger.LogError("[BNAPI] Cannot create UpgradeEntry: constructor not found. Game version may be incompatible.");
+                Plugin.logger.LogError("[BadNorthAPI] Cannot create UpgradeEntry: constructor not found. Game version may be incompatible.");
                 return null;
             }
 
@@ -135,7 +135,7 @@ namespace BNAPI
             }
             else
             {
-                Plugin.logger.LogError($"[BNAPI] Unexpected UpgradeEntry constructor parameter count: {parameters.Length}");
+                Plugin.logger.LogError($"[BadNorthAPI] Unexpected UpgradeEntry constructor parameter count: {parameters.Length}");
                 return null;
             }
 
@@ -147,7 +147,7 @@ namespace BNAPI
             EnsureReflectionInit();
             if (_reflectionFailed || ReferenceEquals(_upgradeEntryUpgradeField, null))
             {
-                Plugin.logger.LogError("[BNAPI] Cannot get upgrade entry upgrade: reflection initialization failed.");
+                Plugin.logger.LogError("[BadNorthAPI] Cannot get upgrade entry upgrade: reflection initialization failed.");
                 return null;
             }
             return _upgradeEntryUpgradeField.GetValue(entry);
@@ -158,7 +158,7 @@ namespace BNAPI
             EnsureReflectionInit();
             if (_reflectionFailed || ReferenceEquals(_upgradeEntryIsStartingField, null))
             {
-                Plugin.logger.LogError("[BNAPI] Cannot get upgrade entry isStarting: reflection initialization failed.");
+                Plugin.logger.LogError("[BadNorthAPI] Cannot get upgrade entry isStarting: reflection initialization failed.");
                 return false;
             }
             return (bool)_upgradeEntryIsStartingField.GetValue(entry);
@@ -169,7 +169,7 @@ namespace BNAPI
             EnsureReflectionInit();
             if (_reflectionFailed || ReferenceEquals(_upgradeEntryIsStartingField, null))
             {
-                Plugin.logger.LogError("[BNAPI] Cannot set upgrade entry isStarting: reflection initialization failed.");
+                Plugin.logger.LogError("[BadNorthAPI] Cannot set upgrade entry isStarting: reflection initialization failed.");
                 return;
             }
             _upgradeEntryIsStartingField.SetValue(entry, value);
@@ -191,7 +191,7 @@ namespace BNAPI
             EnsureReflectionInit();
             if (_reflectionFailed)
             {
-                Plugin.logger.LogError("[BNAPI] Reflection initialization failed. Skipping custom traits processing.");
+                Plugin.logger.LogError("[BadNorthAPI] Reflection initialization failed. Skipping custom traits processing.");
                 orig.Invoke(self);
                 return;
             }
@@ -225,7 +225,7 @@ namespace BNAPI
                     }
                     else
                     {
-                        Plugin.logger.LogWarning("[BNAPI] Skipping starting trait " + traitID + " because UpgradeEntry creation failed.");
+                        Plugin.logger.LogWarning("[BadNorthAPI] Skipping starting trait " + traitID + " because UpgradeEntry creation failed.");
                     }
                 }
                 else if (!GetUpgradeEntryIsStarting(upgradeEntry))

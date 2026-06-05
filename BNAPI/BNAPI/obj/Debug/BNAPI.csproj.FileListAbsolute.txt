@@ -1,6 +1,0 @@
-f:\BadNorthProgram\BadNorthHeroTraits\BNAPI\BNAPI\bin\Debug\BNAPI.dll
-f:\BadNorthProgram\BadNorthHeroTraits\BNAPI\BNAPI\bin\Debug\BNAPI.pdb
-f:\BadNorthProgram\BadNorthHeroTraits\BNAPI\BNAPI\obj\Debug\BNAPI.csproj.AssemblyReference.cache
-f:\BadNorthProgram\BadNorthHeroTraits\BNAPI\BNAPI\obj\Debug\BNAPI.csproj.CoreCompileInputs.cache
-f:\BadNorthProgram\BadNorthHeroTraits\BNAPI\BNAPI\obj\Debug\BNAPI.dll
-f:\BadNorthProgram\BadNorthHeroTraits\BNAPI\BNAPI\obj\Debug\BNAPI.pdb

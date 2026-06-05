@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-namespace BNAPI
+namespace BadNorthAPI
 {
     public static class CustomSprites
     {

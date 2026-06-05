@@ -1,5 +1,5 @@
 using System.Reflection;
-using BNAPI;
+using BadNorthAPI;
 using UnityEngine;
 using Voxels.TowerDefense;
 using Voxels.TowerDefense.Ballistics;
@@ -10,7 +10,6 @@ namespace BadNorthAxeThrower
     {
         public static readonly string AXETHROWER_ID = "Hero_Trait_AxeThrower";
 
-        // 反射字段名称（AxeThrowing 的私有字段）
         private const string FIELD_PREPARE_SOUND = "prepareSound";
         private const string FIELD_THROWING_AXE_PREFAB = "throwingAxePrefab";
         private const string FIELD_TRAJECTORY_UTILITY = "trajectoryUtility";
@@ -41,9 +40,6 @@ namespace BadNorthAxeThrower
             this.levels = array;
         }
 
-        /// <summary>
-        /// 获取或添加组件（Unity 扩展方法替代品）
-        /// </summary>
         private static T GetOrAddComponent<T>(GameObject go) where T : Component
         {
             T comp = go.GetComponent<T>();
@@ -54,10 +50,6 @@ namespace BadNorthAxeThrower
             return comp;
         }
 
-        /// <summary>
-        /// 通过反射获取 AxeThrowing 的字段值（非泛型，避免类型转换错误）
-        /// 使用 ReferenceEquals 避免 Mono 2.0 下 FieldInfo.op_Inequality 缺失问题
-        /// </summary>
         private static object GetFieldValue(AxeThrowing instance, string fieldName)
         {
             FieldInfo field = typeof(AxeThrowing).GetField(fieldName,
@@ -70,10 +62,6 @@ namespace BadNorthAxeThrower
             return field.GetValue(instance);
         }
 
-        /// <summary>
-        /// 通过反射设置 AxeThrowing 的字段值（非泛型，避免类型转换错误）
-        /// 使用 ReferenceEquals 避免 Mono 2.0 下 FieldInfo.op_Inequality 缺失问题
-        /// </summary>
         private static void SetFieldValue(AxeThrowing instance, string fieldName, object value)
         {
             FieldInfo field = typeof(AxeThrowing).GetField(fieldName,
@@ -86,23 +74,15 @@ namespace BadNorthAxeThrower
             field.SetValue(instance, value);
         }
 
-        /// <summary>
-        /// 安全获取 AxeThrowing 模板，支持多级容错：
-        /// 1. 尝试从 LevelStateObjectReferences.dict 获取
-        /// 2. 失败时遍历 Resources 查找
-        /// 3. 均失败则返回 null
-        /// </summary>
+        // 三级容错获取 AxeThrowing 模板
         private static AxeThrowing GetAxeThrowingTemplate()
         {
-            // 方法1: 从 LevelStateObjectReferences.dict 获取
             try
             {
                 if (!ReferenceEquals(LevelStateObjectReferences.dict, null) &&
                     LevelStateObjectReferences.dict.TryGetValue("Viking_AxeThrower", out UnityEngine.Object reference) &&
                     reference is VikingReference vikingRef)
                 {
-                    // 通过反射访问 VikingReference 的字段（不同游戏版本字段名可能不同）
-                    // 使用 ReferenceEquals 和显式 null 检查避免 FieldInfo.op_Inequality 缺失
                     GameObject agentObj = null;
                     try
                     {
@@ -145,7 +125,6 @@ namespace BadNorthAxeThrower
                 Plugin.Logger.LogWarning("[AxeThrower] LevelStateObjectReferences 获取失败: " + ex.Message);
             }
 
-            // 方法2: 遍历 Resources 查找 AxeThrowing 组件
             try
             {
                 AxeThrowing[] allAxeThrowings = Resources.FindObjectsOfTypeAll<AxeThrowing>();
@@ -160,20 +139,19 @@ namespace BadNorthAxeThrower
                 Plugin.Logger.LogWarning("[AxeThrower] Resources.FindObjectsOfTypeAll 获取失败: " + ex.Message);
             }
 
-            // 方法3: 均失败，返回 null
             Plugin.Logger.LogWarning("[AxeThrower] 无法获取 AxeThrowing 模板");
             return null;
         }
 
-        /// <summary>
-        /// 根据小队等级应用等级缩放（使用反射访问私有字段）
-        /// </summary>
         private static void ApplyLevelScaling(AxeThrowing comp, int squadLevel)
         {
-            // 获取 attackSettings 的副本（AttackSettings 是结构体）
-            AttackSettings attackSettings = (AttackSettings)GetFieldValue(comp, FIELD_ATTACK_SETTINGS);
-
-            // 记录模板原始值以便诊断
+            object settingsObj = GetFieldValue(comp, FIELD_ATTACK_SETTINGS);
+            if (ReferenceEquals(settingsObj, null))
+            {
+                Plugin.Logger.LogWarning("[AxeThrower] 无法获取 attackSettings，跳过等级缩放");
+                return;
+            }
+            AttackSettings attackSettings = (AttackSettings)settingsObj;
             Plugin.Logger.LogInfo($"[AxeThrower] 应用缩放前: launchImpulse={attackSettings.launchImpulse}, damage={attackSettings.damage}, knockback={attackSettings.knockback}, stun={attackSettings.stun}");
 
             switch (squadLevel)
@@ -204,14 +182,12 @@ namespace BadNorthAxeThrower
                     break;
             }
 
-            // 确保 launchImpulse 不为零（如果模板值为 0，设为合理默认值）
             if (attackSettings.launchImpulse <= 0f)
             {
                 Plugin.Logger.LogWarning($"[AxeThrower] launchImpulse 为 {attackSettings.launchImpulse}（来自模板），设置为默认值 1.0f");
                 attackSettings.launchImpulse = 1.0f;
             }
 
-            // 将修改后的结构体写回
             SetFieldValue(comp, FIELD_ATTACK_SETTINGS, attackSettings);
         }
 
@@ -219,19 +195,13 @@ namespace BadNorthAxeThrower
         {
             base.OnAppliedToSquad(squad, upgradeLevel);
 
-            // 添加 LineOfSight 组件（掷斧手需要视线系统）
             GetOrAddComponent<LineOfSight>(squad.heroAgent.gameObject);
-
-            // 获取模板（带容错）
             AxeThrowing template = GetAxeThrowingTemplate();
-
-            // 添加 AxeThrowing 组件
             squad.heroAgent.gameObject.AddComponent<AxeThrowing>();
             AxeThrowing comp = squad.heroAgent.GetComponent<AxeThrowing>();
 
             if (!ReferenceEquals(template, null))
             {
-                // 从模板复制所有关键战斗属性（使用非泛型反射，避免类型转换错误）
                 SetFieldValue(comp, FIELD_PREPARE_SOUND, GetFieldValue(template, FIELD_PREPARE_SOUND));
                 SetFieldValue(comp, FIELD_THROWING_AXE_PREFAB, GetFieldValue(template, FIELD_THROWING_AXE_PREFAB));
                 SetFieldValue(comp, FIELD_TRAJECTORY_UTILITY, GetFieldValue(template, FIELD_TRAJECTORY_UTILITY));
@@ -241,22 +211,24 @@ namespace BadNorthAxeThrower
             }
             else
             {
-                // 使用内置默认值
                 Plugin.Logger.LogWarning("[AxeThrower] 无模板可用，使用默认值");
             }
-
-            // 应用等级缩放
             ApplyLevelScaling(comp, squad.hero.squadLevel);
 
             Plugin.Logger.LogInfo("[AxeThrower] 等级缩放已应用, 等级=" + squad.hero.squadLevel);
 
-            // 初始化组件
             comp.Setup();
-
-            // 验证实际设置的值
             object finalAmmo = GetFieldValue(comp, FIELD_AMMO);
-            AttackSettings finalSettings = (AttackSettings)GetFieldValue(comp, FIELD_ATTACK_SETTINGS);
-            Plugin.Logger.LogInfo($"[AxeThrower] 验证：ammo={finalAmmo}, damage={finalSettings.damage}, knockback={finalSettings.knockback}, stun={finalSettings.stun}, launchImpulse={finalSettings.launchImpulse}");
+            object finalSettingsObj = GetFieldValue(comp, FIELD_ATTACK_SETTINGS);
+            if (!ReferenceEquals(finalSettingsObj, null))
+            {
+                AttackSettings finalSettings = (AttackSettings)finalSettingsObj;
+                Plugin.Logger.LogInfo($"[AxeThrower] 验证：ammo={finalAmmo}, damage={finalSettings.damage}, knockback={finalSettings.knockback}, stun={finalSettings.stun}, launchImpulse={finalSettings.launchImpulse}");
+            }
+            else
+            {
+                Plugin.Logger.LogWarning($"[AxeThrower] 验证：ammo={finalAmmo}, attackSettings 获取失败");
+            }
 
             Plugin.Logger.LogInfo($"[AxeThrower] 已应用到小队 {squad.name}，等级={squad.hero.squadLevel}");
         }

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using BNAPI;
+using BadNorthAPI;
 using UnityEngine;
 using Voxels.TowerDefense;
 
@@ -11,10 +11,8 @@ namespace BadNorthCheaperClass
     {
         public static readonly string CHEAPERCLASS_ID = "Hero_Trait_CheaperClass";
 
-        // 折扣率：40% off
         private const float DISCOUNT = 0.4f;
 
-        // 防止重复应用折扣（实例级 + 静态级双重保障）
         private bool discountApplied = false;
         private static bool _globalDiscountApplied = false;
 
@@ -40,60 +38,8 @@ namespace BadNorthCheaperClass
             level.description = "NACU/TRAIT/CCLASS/DESC";
             array[num] = level;
             this.levels = array;
-
-            // 构造时尝试自动触发全局折扣（绕过 SpawnSquad MissingMethodException）
-            TryTriggerGlobalDiscount();
         }
 
-        /// <summary>
-        /// 尝试在构造时自动触发全局折扣。
-        /// 用纯反射避免对 MetaInventory 等不可引用类型的直接依赖。
-        /// </summary>
-        private void TryTriggerGlobalDiscount()
-        {
-
-            if (_globalDiscountApplied)
-                return;
-
-            try
-            {
-                // 方案 A：通过反射查找所有 HeroDefinition（HeroDefinition 继承 ScriptableObject，可用 FindObjectsOfTypeAll）
-                // 注意：HeroDefinition 是 ScriptableObject，因此可以通过 Resources.FindObjectsOfTypeAll 使用 typeof
-
-                Type heroDefType = typeof(HeroDefinition);
-                MethodInfo findMethod = typeof(Resources).GetMethod("FindObjectsOfTypeAll", Type.EmptyTypes);
-                if (!ReferenceEquals(findMethod, null))
-                {
-                    MethodInfo genericFind = findMethod.MakeGenericMethod(heroDefType);
-                    object result = genericFind.Invoke(null, null);
-                    Array heroDefs = result as Array;
-                    if (!ReferenceEquals(heroDefs, null) && heroDefs.Length > 0)
-                    {
-                        Plugin.Logger.LogInfo("[CheaperClass] 构造器触发全局折扣：找到 " + heroDefs.Length + " 个 HeroDefinition");
-                        int appliedCount = 0;
-                        foreach (var heroDef in heroDefs)
-                        {
-                            if (ApplyDiscountToHeroDef(heroDef as HeroDefinition))
-                                appliedCount++;
-                        }
-                        _globalDiscountApplied = true;
-                        Plugin.Logger.LogInfo("[CheaperClass] 构造器全局折扣完成，共处理 " + appliedCount + " 个 HeroDefinition");
-                        return;
-                    }
-                }
-
-                Plugin.Logger.LogInfo("[CheaperClass] 构造器暂无可处理 HeroDefinition，稍后由 OnAppliedToSquad 触发");
-            }
-            catch (Exception ex)
-            {
-                Plugin.Logger.LogWarning("[CheaperClass] TryTriggerGlobalDiscount 异常: " + ex.Message);
-            }
-        }
-
-        /// <summary>
-        /// 对单个 HeroDefinition 应用折扣。
-        /// 这是核心执行逻辑，被 OnAppliedToSquad 和 构造器共用。
-        /// </summary>
         public static bool ApplyDiscountToHeroDef(HeroDefinition heroDef)
         {
 
@@ -105,7 +51,6 @@ namespace BadNorthCheaperClass
 
             try
             {
-                // 用反射获取 HeroDefinition 的 name（因为它是 ScriptableObject 的 name 属性，但可能在编译时不可见）
                 string heroName = "(unknown)";
 
                 try 
@@ -226,20 +171,20 @@ namespace BadNorthCheaperClass
             }
         }
 
-        /// <summary>
-        /// 当特质应用到实装小队时，通过反射修改英雄的升级定义，应用折扣
-        /// 使用 OnAppliedToSquad 而非 OnAttachedToHero，因为后者不是虚方法
-        /// </summary>
         public override void OnAppliedToSquad(EnglishSquad squad, int upgradeLevel)
         {
             base.OnAppliedToSquad(squad, upgradeLevel);
 
             Plugin.Logger.LogInfo("[CheaperClass] OnAppliedToSquad entered - squad=" + (squad?.name ?? "null") + ", upgradeLevel=" + upgradeLevel);
 
-            // 防止重复应用
             if (discountApplied)
             {
-                Plugin.Logger.LogInfo("[CheaperClass] 跳过：折扣已应用 (discountApplied=true)");
+                Plugin.Logger.LogInfo("[CheaperClass] 跳过：实例折扣已应用 (discountApplied=true)");
+                return;
+            }
+            if (_globalDiscountApplied)
+            {
+                Plugin.Logger.LogInfo("[CheaperClass] 跳过：全局折扣已应用 (_globalDiscountApplied=true)");
                 return;
             }
             if (ReferenceEquals(squad, null))
@@ -257,7 +202,6 @@ namespace BadNorthCheaperClass
             {
                 var heroDef = squad.hero;
 
-                // 如果全局折扣尚未应用，在此处触发
                 bool result = ApplyDiscountToHeroDef(heroDef);
                 if (result)
                 {

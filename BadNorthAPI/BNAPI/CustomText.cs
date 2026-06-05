@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 
-namespace BNAPI
+namespace BadNorthAPI
 {
     // 自定义委托，替代 System.Action
     public delegate void CustomTermsAddedDelegate();
