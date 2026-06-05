@@ -332,7 +332,7 @@ namespace BadNorthTitan
             squad.maxCount = squad.maxCount / 2 + 1;
 
             // 为新生成的 Agent 应用泰坦化
-            squad.onAgentSpawned += this.Titanize;
+            squad.onAgentCreated += this.Titanize;
 
             // 对现有 Agent 应用泰坦化
             foreach (Agent agent in squad.agents)

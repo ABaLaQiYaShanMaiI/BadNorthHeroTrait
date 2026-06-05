@@ -313,10 +313,28 @@ namespace BadNorthSweepingBlade
 
         /// <summary>
         /// 清理冷却记录（当组件被销毁时）
+        /// 注意：仅清理属于已销毁 Squad 的条目，避免影响其他正在使用横扫的小队。
         /// </summary>
         private void OnDestroy()
         {
-            _lastCleaveTime.Clear();
+            try
+            {
+                // 清理已失效的引用（Agent 为 null 的条目）
+                List<Agent> keysToRemove = new List<Agent>();
+                foreach (var kvp in _lastCleaveTime)
+                {
+                    if (ReferenceEquals(kvp.Key, null))
+                        keysToRemove.Add(kvp.Key);
+                }
+                foreach (Agent key in keysToRemove)
+                {
+                    _lastCleaveTime.Remove(key);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Plugin.Logger.LogWarning("[SweepingBlade] OnDestroy 清理冷却记录异常: " + ex.Message);
+            }
         }
     }
 }

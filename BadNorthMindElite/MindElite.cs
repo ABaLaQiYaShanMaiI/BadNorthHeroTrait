@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using BadNorthAPI;
 using UnityEngine;
@@ -31,8 +32,8 @@ namespace BadNorthMindElite
         private static bool _fearFieldAttempted = false;
         private static FieldInfo _fearImmunityField = null;
 
-        // ── 避免重复应用 ──
-        private static bool _mindEliteApplied = false;
+        // ── 避免重复应用（按小队记录） ──
+        private static HashSet<EnglishSquad> _mindEliteAppliedSquads = new HashSet<EnglishSquad>();
 
         public MindElite()
         {
@@ -295,9 +296,9 @@ namespace BadNorthMindElite
         {
             base.OnAppliedToSquad(squad, upgradeLevel);
 
-            if (_mindEliteApplied)
+            if (_mindEliteAppliedSquads.Contains(squad))
             {
-                Plugin.Logger.LogInfo("[MindElite] 心灵强化已全局应用，跳过");
+                Plugin.Logger.LogInfo("[MindElite] 心灵强化已应用于该小队，跳过");
                 return;
             }
 
@@ -305,7 +306,7 @@ namespace BadNorthMindElite
             EnhanceHero(squad.heroAgent);
 
             // 为新生成的 Agent 应用心灵强化
-            squad.onAgentSpawned += this.ApplyMindBuff;
+            squad.onAgentCreated += this.ApplyMindBuff;
 
             // 对现有 Agent 应用心灵强化
             foreach (Agent agent in squad.agents)
@@ -320,7 +321,7 @@ namespace BadNorthMindElite
                 }
             }
 
-            _mindEliteApplied = true;
+            _mindEliteAppliedSquads.Add(squad);
             Plugin.Logger.LogInfo(string.Format("[MindElite] 已应用到小队 {0}", squad.name));
         }
     }

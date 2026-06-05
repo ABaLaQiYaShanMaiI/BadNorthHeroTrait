@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using BadNorthAPI;
 using UnityEngine;
@@ -62,8 +63,8 @@ namespace BadNorthUltimateForce
             this.levels = array;
         }
 
-        // ── 避免重复应用 ──
-        private static bool _ultimateApplied = false;
+        // ── 避免重复应用（按小队记录） ──
+        private static HashSet<EnglishSquad> _ultimateAppliedSquads = new HashSet<EnglishSquad>();
 
         /// <summary>
         /// 安全获取或添加组件
@@ -438,9 +439,9 @@ namespace BadNorthUltimateForce
         {
             base.OnAppliedToSquad(squad, upgradeLevel);
 
-            if (_ultimateApplied)
+            if (_ultimateAppliedSquads.Contains(squad))
             {
-                Plugin.Logger.LogInfo("[UltimateForce] 终极强化已全局应用，跳过");
+                Plugin.Logger.LogInfo("[UltimateForce] 终极强化已应用于该小队，跳过");
                 return;
             }
 
@@ -450,7 +451,7 @@ namespace BadNorthUltimateForce
             Plugin.Logger.LogInfo("[UltimateForce] 小队人数调整为: " + newCount);
 
             // 为新生成的 Agent 应用强化
-            squad.onAgentSpawned += this.ApplyUltimate;
+            squad.onAgentCreated += this.ApplyUltimate;
 
             // 对现有 Agent 应用强化
             foreach (Agent agent in squad.agents)
@@ -465,7 +466,7 @@ namespace BadNorthUltimateForce
                 }
             }
 
-            _ultimateApplied = true;
+            _ultimateAppliedSquads.Add(squad);
             Plugin.Logger.LogInfo(string.Format("[UltimateForce] 已应用到小队 {0}，精英人数: {1}", squad.name, newCount));
         }
     }
