@@ -6,16 +6,16 @@ using UnityEngine;
 using Voxels.TowerDefense;
 using Voxels.TowerDefense.Ballistics;
 
-namespace BadNorthUltimateForce
+namespace BadNorthUltimateSquad
 {
     /// <summary>
-    /// 终极部队 (Ultimate Force) - 打造超精英全能战士。
+    /// 终极部队 (Ultimate Squad) - 打造超精英全能战士。
     /// 小队人数大幅减少，但每个单位都拥有巨人般的体型、极高的伤害和护甲。
     /// 所有单位获得飞斧投掷能力和跳劈能力。
     /// </summary>
-    public class UltimateForce : HeroUpgradeDefinition
+    public class UltimateSquad : HeroUpgradeDefinition
     {
-        public static readonly string ULTIMATEFORCE_ID = "Hero_Trait_UltimateForce";
+        public static readonly string ULTIMATESQUAD_ID = "Hero_Trait_UltimateSquad";
 
         // ── 通用属性 ──
         private const float SCALE = 1.4f;
@@ -39,9 +39,9 @@ namespace BadNorthUltimateForce
         private static FieldInfo _stunField = null;
         private static bool _stunFieldAttempted = false;
 
-        public UltimateForce()
+        public UltimateSquad()
         {
-            Debugger.Log("ULTIMATEFORCE CREATED");
+            Debugger.Log("ULTIMATESQUAD CREATED");
             this.upgradeType = ScriptableObject.CreateInstance<HeroUpgradeType>();
             this.upgradeType.typeEnum = (HeroUpgradeTypeEnum)4; // Trait
             this.upgradeType.canBeStartItem = true;
@@ -50,10 +50,10 @@ namespace BadNorthUltimateForce
             this.upgradeType.startItemLockedTerm = "META_INVENTORY/START/TRAIT/LOCKED";
             this.upgradeType.startItemUnlockedTerm = "META_INVENTORY/START/TRAIT/UNLOCKED";
             this.affectsPortrait = false;
-            base.name = ULTIMATEFORCE_ID;
+            base.name = ULTIMATESQUAD_ID;
             this.nameTerm = "NACU/TRAIT/ULTIMATE/NAME";
             this.shortDescription = "NACU/TRAIT/ULTIMATE/DESCSHORT";
-            this.infoSprite = CustomSprites.Sprites["trait_ultimateforce"];
+            this.infoSprite = CustomSprites.Sprites["trait_ultimatesquad"];
             HeroUpgradeDefinition.Level[] array = new HeroUpgradeDefinition.Level[1];
             int num = 0;
             HeroUpgradeDefinition.Level level = default(HeroUpgradeDefinition.Level);
@@ -217,16 +217,16 @@ namespace BadNorthUltimateForce
                         agent.gameObject.AddComponent<JumpComponent>();
                     }
 
-                    Debugger.Log("[UltimateForce] 为 " + agent.name + " 添加跳劈能力");
+                    Debugger.Log("[UltimateSquad] 为 " + agent.name + " 添加跳劈能力");
                 }
                 else
                 {
-                    Plugin.Logger.LogWarning("[UltimateForce] 无法获取 JumpAttack 模板，跳过跳劈添加");
+                    Plugin.Logger.LogWarning("[UltimateSquad] 无法获取 JumpAttack 模板，跳过跳劈添加");
                 }
             }
             catch (Exception ex)
             {
-                Plugin.Logger.LogWarning("[UltimateForce] 添加跳劈失败: " + ex.Message);
+                Plugin.Logger.LogWarning("[UltimateSquad] 添加跳劈失败: " + ex.Message);
             }
         }
 
@@ -254,7 +254,7 @@ namespace BadNorthUltimateForce
             // 添加跳劈
             AddJumpAttack(agent);
 
-            Debugger.Log("[UltimateForce] 步兵终极强化完成: dmg=" + SWORD_DAMAGE_MULT + "x, kb=" + SWORD_KNOCKBACK_MULT + "x");
+            Debugger.Log("[UltimateSquad] 步兵终极强化完成: dmg=" + SWORD_DAMAGE_MULT + "x, kb=" + SWORD_KNOCKBACK_MULT + "x");
         }
 
         /// <summary>
@@ -322,7 +322,7 @@ namespace BadNorthUltimateForce
             }
             catch (Exception ex)
             {
-                Plugin.Logger.LogWarning("[UltimateForce] 强化弓箭手模板失败: " + ex.Message);
+                Plugin.Logger.LogWarning("[UltimateSquad] 强化弓箭手模板失败: " + ex.Message);
             }
 
             // 调整射击参数 - 更高伤害、更快冷却、更精准
@@ -382,7 +382,7 @@ namespace BadNorthUltimateForce
             }
 
             component.Setup();
-            Debugger.Log("[UltimateForce] 弓箭手终极强化完成");
+            Debugger.Log("[UltimateSquad] 弓箭手终极强化完成");
         }
 
         /// <summary>
@@ -413,7 +413,7 @@ namespace BadNorthUltimateForce
             }
             else
             {
-                Debugger.Log("[UltimateForce] " + agent.name + " 不支持的兵种类型，仅应用基础强化");
+                Debugger.Log("[UltimateSquad] " + agent.name + " 不支持的兵种类型，仅应用基础强化");
             }
 
             // 更换移动和死亡音效为坦克风格（如果有 Swordsman）
@@ -441,14 +441,14 @@ namespace BadNorthUltimateForce
 
             if (_ultimateAppliedSquads.Contains(squad))
             {
-                Plugin.Logger.LogInfo("[UltimateForce] 终极强化已应用于该小队，跳过");
+                Plugin.Logger.LogInfo("[UltimateSquad] 终极强化已应用于该小队，跳过");
                 return;
             }
 
             // 大幅削减小队人数
             int newCount = Mathf.Max(MIN_SQUAD_COUNT, Mathf.FloorToInt(squad.maxCount * SQUAD_COUNT_RATIO));
             squad.maxCount = newCount;
-            Plugin.Logger.LogInfo("[UltimateForce] 小队人数调整为: " + newCount);
+            Plugin.Logger.LogInfo("[UltimateSquad] 小队人数调整为: " + newCount);
 
             // 为新生成的 Agent 应用强化
             squad.onAgentCreated += this.ApplyUltimate;
@@ -467,7 +467,7 @@ namespace BadNorthUltimateForce
             }
 
             _ultimateAppliedSquads.Add(squad);
-            Plugin.Logger.LogInfo(string.Format("[UltimateForce] 已应用到小队 {0}，精英人数: {1}", squad.name, newCount));
+            Plugin.Logger.LogInfo(string.Format("[UltimateSquad] 已应用到小队 {0}，精英人数: {1}", squad.name, newCount));
         }
     }
 }

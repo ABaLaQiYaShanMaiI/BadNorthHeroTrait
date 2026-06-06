@@ -6,8 +6,8 @@
     <ProjectGuid>{E1F2A3B4-C5D6-7890-EF12-34567890CDEF}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>BadNorthUltimateForce</RootNamespace>
-    <AssemblyName>BadNorthUltimateForce</AssemblyName>
+    <RootNamespace>BadNorthUltimateSquad</RootNamespace>
+    <AssemblyName>BadNorthUltimateSquad</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
@@ -93,12 +93,12 @@
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="UltimateForce.cs" />
+    <Compile Include="UltimateSquad.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Resources\trait_ultimateforce.png">
+    <Content Include="Resources\trait_ultimatesquad.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

@@ -6,10 +6,10 @@ using BepInEx.Logging;
 using BadNorthAPI;
 using UnityEngine;
 
-namespace BadNorthUltimateForce
+namespace BadNorthUltimateSquad
 {
     [BepInDependency("nacu.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("nacu.badnorthultimateforce", "Bad North - Ultimate Force Trait", "1.0")]
+    [BepInPlugin("nacu.badnorthultimatesquad", "Bad North - Ultimate Squad Trait", "1.0")]
     public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource Logger;
@@ -19,17 +19,17 @@ namespace BadNorthUltimateForce
             Logger = base.Logger;
             string modPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + Path.DirectorySeparatorChar;
 
-            CustomSprites.AddCustomSprite(modPath, "trait_ultimateforce");
+            CustomSprites.AddCustomSprite(modPath, "trait_ultimatesquad");
 
             CustomTraits.RegisterTrait(
-                ScriptableObject.CreateInstance<UltimateForce>(),
-                UltimateForce.ULTIMATEFORCE_ID,
+                ScriptableObject.CreateInstance<UltimateSquad>(),
+                UltimateSquad.ULTIMATESQUAD_ID,
                 true
             );
 
             CustomText.CustomTermsAdded += AddCustomTerms;
 
-            Logger.LogInfo(string.Format("======== BadNorthUltimateForce 已就绪，特性ID: {0} ========", UltimateForce.ULTIMATEFORCE_ID));
+            Logger.LogInfo(string.Format("======== BadNorthUltimateSquad 已就绪，特性ID: {0} ========", UltimateSquad.ULTIMATESQUAD_ID));
         }
 
         private void AddCustomTerms()
