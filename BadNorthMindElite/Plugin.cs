@@ -6,10 +6,10 @@ using BepInEx.Logging;
 using BadNorthAPI;
 using UnityEngine;
 
-namespace BadNorthMindElite
+namespace BadNorthYuri
 {
     [BepInDependency("nacu.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("nacu.badnorthmindelite", "Bad North - Mind Elite Trait", "1.0")]
+    [BepInPlugin("nacu.badnorthyuri", "Bad North - Yuri Trait", "1.0")]
     public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource Logger;
@@ -19,7 +19,7 @@ namespace BadNorthMindElite
             Logger = base.Logger;
             string modPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + Path.DirectorySeparatorChar;
 
-            CustomSprites.AddCustomSprite(modPath, "trait_mindelite");
+            CustomSprites.AddCustomSprite(modPath, "trait_yuri");
 
             CustomTraits.RegisterTrait(
                 ScriptableObject.CreateInstance<MindElite>(),
@@ -29,7 +29,7 @@ namespace BadNorthMindElite
 
             CustomText.CustomTermsAdded += AddCustomTerms;
 
-            Logger.LogInfo(string.Format("======== BadNorthMindElite 已就绪，特性ID: {0} ========", MindElite.MINDELITE_ID));
+            Logger.LogInfo(string.Format("======== BadNorthYuri 已就绪，特性ID: {0} ========", MindElite.MINDELITE_ID));
         }
 
         private void AddCustomTerms()

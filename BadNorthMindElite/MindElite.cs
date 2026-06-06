@@ -5,7 +5,7 @@ using BadNorthAPI;
 using UnityEngine;
 using Voxels.TowerDefense;
 
-namespace BadNorthMindElite
+namespace BadNorthYuri
 {
     /// <summary>
     /// 心灵精英 (Mind Elite) - 指挥官的强大精神力辐射整个小队。
@@ -13,7 +13,7 @@ namespace BadNorthMindElite
     /// </summary>
     public class MindElite : HeroUpgradeDefinition
     {
-        public static readonly string MINDELITE_ID = "Hero_Trait_MindElite";
+        public static readonly string MINDELITE_ID = "Hero_Trait_Yuri";
 
         // ── 光环效果参数 ──
         private const float DAMAGE_MULT = 1.4f;
@@ -49,7 +49,7 @@ namespace BadNorthMindElite
             base.name = MINDELITE_ID;
             this.nameTerm = "NACU/TRAIT/MIND/NAME";
             this.shortDescription = "NACU/TRAIT/MIND/DESCSHORT";
-            this.infoSprite = CustomSprites.Sprites["trait_mindelite"];
+            this.infoSprite = CustomSprites.Sprites["trait_yuri"];
             HeroUpgradeDefinition.Level[] array = new HeroUpgradeDefinition.Level[1];
             int num = 0;
             HeroUpgradeDefinition.Level level = default(HeroUpgradeDefinition.Level);
