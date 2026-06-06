@@ -13,7 +13,7 @@ namespace BadNorthSweepingBlade
     /// </summary>
     public class SweepingBlade : HeroUpgradeDefinition, IAttackResponder
     {
-        public static readonly string SWEEPINGBLADE_ID = "Hero_Trait_SweepingBlade";
+        public static readonly string SWEEPINGBLADE_ID = "Hero_Trait_Slash";
 
         // ── 横扫参数 ──
         private const float CLEAVE_RADIUS = 2.5f;       // 溅射范围
@@ -43,7 +43,7 @@ namespace BadNorthSweepingBlade
             base.name = SWEEPINGBLADE_ID;
             this.nameTerm = "NACU/TRAIT/SWEEP/NAME";
             this.shortDescription = "NACU/TRAIT/SWEEP/DESCSHORT";
-            this.infoSprite = CustomSprites.Sprites["trait_sweepingblade"];
+            this.infoSprite = CustomSprites.Sprites["trait_slash"];
             HeroUpgradeDefinition.Level[] array = new HeroUpgradeDefinition.Level[1];
             int num = 0;
             HeroUpgradeDefinition.Level level = default(HeroUpgradeDefinition.Level);

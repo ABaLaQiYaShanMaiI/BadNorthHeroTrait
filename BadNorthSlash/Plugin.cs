@@ -19,11 +19,11 @@ namespace BadNorthSweepingBlade
             Logger = base.Logger;
             string modPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + Path.DirectorySeparatorChar;
 
-            CustomSprites.AddCustomSprite(modPath, "trait_sweepingblade");
+            CustomSprites.AddCustomSprite(modPath, "trait_slash");
 
             CustomTraits.RegisterTrait(
                 ScriptableObject.CreateInstance<SweepingBlade>(),
-                SweepingBlade.SWEEPINGBLADE_ID,
+                "Hero_Trait_Slash",
                 true
             );
 
