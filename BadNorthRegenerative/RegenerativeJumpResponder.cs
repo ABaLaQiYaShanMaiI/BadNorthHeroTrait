@@ -628,6 +628,14 @@ namespace BadNorthRegenerative
                 return;
             }
 
+            // 验证目标的 NavPos 是否有效（飞行单位或特殊状态的目标可能没有有效的 NavPos）
+            if (ReferenceEquals(attackerAgent.navPos, null) || ReferenceEquals(attackerAgent.navPos.tri, null))
+            {
+                if (BadNorthAPI.Debugger.Enabled)
+                    Plugin.Logger.LogInfo("[JumpResponder] 目标 " + attackerAgent.name + " NavPos 无效，跳过跳劈反击");
+                return;
+            }
+
             pendingJumpTarget = attackerAgent;
             cooldownTimer = cooldownDuration;
             if (BadNorthAPI.Debugger.Enabled)
@@ -642,6 +650,15 @@ namespace BadNorthRegenerative
                     Plugin.Logger.LogWarning("[RegenerativeJumpResponder] ExecuteJump 失败：jumpAttack=" + (jumpAttack == null ? "null" : "ok") + ", target=" + (target == null ? "null" : target.name));
                 return;
             }
+
+            // 验证目标的 NavPos 是否有效（飞行单位或特殊状态的目标可能没有有效的 NavPos）
+            if (ReferenceEquals(target.navPos, null) || ReferenceEquals(target.navPos.tri, null))
+            {
+                if (BadNorthAPI.Debugger.Enabled)
+                    Plugin.Logger.LogWarning("[RegenerativeJumpResponder] 跳过跳劈：目标 " + target.name + " 的 NavPos 无效（可能为飞行单位或处于特殊状态），无法执行跳劈");
+                return;
+            }
+
             try
             {
                 jumpAttack.enabled = true;
