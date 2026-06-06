@@ -23,20 +23,20 @@ namespace BadNorthYuri
 
             CustomTraits.RegisterTrait(
                 ScriptableObject.CreateInstance<MindElite>(),
-                MindElite.MINDELITE_ID,
+                MindElite.YURI_ID,
                 true
             );
 
             CustomText.CustomTermsAdded += AddCustomTerms;
 
-            Logger.LogInfo(string.Format("======== BadNorthYuri 已就绪，特性ID: {0} ========", MindElite.MINDELITE_ID));
+            Logger.LogInfo("Fancy Traits loaded");
         }
 
         private void AddCustomTerms()
         {
-            CustomText.AddCustomTerm("NACU/TRAIT/MIND/NAME", "心灵精英");
-            CustomText.AddCustomTerm("NACU/TRAIT/MIND/DESCSHORT", "指挥官的精神力辐射全队。");
-            CustomText.AddCustomTerm("NACU/TRAIT/MIND/DESC", "指挥官强大的精神力提升全队战力。\n所有单位获得伤害提升、攻击加速、精准度提高、移速提升和恐惧免疫。\n英雄自身获得额外增强。");
+            CustomText.AddCustomTerm("YYYYY/TRAIT/YURI/NAME", "心灵精英");
+            CustomText.AddCustomTerm("YYYYY/TRAIT/YURI/DESCSHORT", "不能心控，但能念力晕人");
+            CustomText.AddCustomTerm("YYYYY/TRAIT/YURI/DESC", "指挥官每隔一段时间发动超能力\n伤害并眩晕附近的敌人\n效果随队伍等级提高\n人数低时攻速加快");
         }
     }
 }

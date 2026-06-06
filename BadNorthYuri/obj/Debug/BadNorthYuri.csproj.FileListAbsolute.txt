@@ -1,7 +1,7 @@
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthYuri\bin\Debug\Resources\trait_yuri.png
 C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthYuri\bin\Debug\BadNorthYuri.dll
 C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthYuri\bin\Debug\BadNorthYuri.pdb
 C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthYuri\obj\Debug\BadNorthYuri.csproj.AssemblyReference.cache
 C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthYuri\obj\Debug\BadNorthYuri.csproj.CoreCompileInputs.cache
 C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthYuri\obj\Debug\BadNorthYuri.dll
 C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthYuri\obj\Debug\BadNorthYuri.pdb
+C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthYuri\bin\Debug\Resources\trait_yuri.png

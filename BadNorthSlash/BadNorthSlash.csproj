@@ -90,6 +90,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="SweepingBlade.cs" />
+    <Compile Include="SlashSword.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

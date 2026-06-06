@@ -6,7 +6,7 @@ using BepInEx.Logging;
 using BadNorthAPI;
 using UnityEngine;
 
-namespace BadNorthSweepingBlade
+namespace BadNorthSlash
 {
     [BepInDependency("nacu.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
     [BepInPlugin("nacu.badnorthsweepingblade", "Bad North - Sweeping Blade Trait", "1.0")]
@@ -23,20 +23,20 @@ namespace BadNorthSweepingBlade
 
             CustomTraits.RegisterTrait(
                 ScriptableObject.CreateInstance<SweepingBlade>(),
-                "Hero_Trait_Slash",
+                SweepingBlade.Slash_ID,
                 true
             );
 
             CustomText.CustomTermsAdded += AddCustomTerms;
 
-            Logger.LogInfo(string.Format("======== BadNorthSweepingBlade 已就绪，特性ID: {0} ========", SweepingBlade.SWEEPINGBLADE_ID));
+            Logger.LogInfo("Fancy Traits loaded");
         }
 
         private void AddCustomTerms()
         {
-            CustomText.AddCustomTerm("NACU/TRAIT/SWEEP/NAME", "横扫之刃");
-            CustomText.AddCustomTerm("NACU/TRAIT/SWEEP/DESCSHORT", "近战攻击变为范围伤害。");
-            CustomText.AddCustomTerm("NACU/TRAIT/SWEEP/DESC", "所有近战单位的攻击会对其攻击方向120度扇形范围内2.5米内的额外敌人造成伤害。\n英雄拥有更大的横扫范围（3.5米）和更高的溅射伤害比例。");
+            CustomText.AddCustomTerm("YYYYY/TRAIT/SLASH/NAME", "横扫之刃");
+            CustomText.AddCustomTerm("YYYYY/TRAIT/SLASH/DESCSHORT", "命中额外目标");
+            CustomText.AddCustomTerm("YYYYY/TRAIT/SLASH/DESC", "单位的攻击能击中多个敌人");
         }
     }
 }

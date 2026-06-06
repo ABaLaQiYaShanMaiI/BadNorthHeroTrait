@@ -23,20 +23,20 @@ namespace BadNorthUltimateSquad
 
             CustomTraits.RegisterTrait(
                 ScriptableObject.CreateInstance<UltimateSquad>(),
-                UltimateSquad.ULTIMATESQUAD_ID,
+                UltimateSquad.ULTIMATE_ID,
                 true
             );
 
             CustomText.CustomTermsAdded += AddCustomTerms;
 
-            Logger.LogInfo(string.Format("======== BadNorthUltimateSquad 已就绪，特性ID: {0} ========", UltimateSquad.ULTIMATESQUAD_ID));
+            Logger.LogInfo("Fancy Traits loaded");
         }
 
         private void AddCustomTerms()
         {
-            CustomText.AddCustomTerm("NACU/TRAIT/ULTIMATE/NAME", "终极部队");
-            CustomText.AddCustomTerm("NACU/TRAIT/ULTIMATE/DESCSHORT", "少数精锐，极限战力。");
-            CustomText.AddCustomTerm("NACU/TRAIT/ULTIMATE/DESC", "小队人数大幅削减为原来的1/3，但每个单位都拥有巨大的体型、极高的伤害、护甲和抗性。\n步兵获得跳劈能力，弓箭手大幅强化射速与精准度。");
+            CustomText.AddCustomTerm("YYYYY/TRAIT/ULTIMATE/NAME", "终极部队");
+            CustomText.AddCustomTerm("YYYYY/TRAIT/ULTIMATE/DESCSHORT", "部队力量提升，但升级很贵");
+            CustomText.AddCustomTerm("YYYYY/TRAIT/ULTIMATE/DESC", "部队大幅提高实力\n升级价格非常高");
         }
     }
 }

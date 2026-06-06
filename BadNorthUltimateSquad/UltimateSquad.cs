@@ -1,473 +1,227 @@
 using System;
-using System.Collections.Generic;
-using System.Reflection;
 using BadNorthAPI;
 using UnityEngine;
 using Voxels.TowerDefense;
-using Voxels.TowerDefense.Ballistics;
+using Voxels.TowerDefense.Flag;
 
 namespace BadNorthUltimateSquad
 {
     /// <summary>
-    /// 终极部队 (Ultimate Squad) - 打造超精英全能战士。
-    /// 小队人数大幅减少，但每个单位都拥有巨人般的体型、极高的伤害和护甲。
-    /// 所有单位获得飞斧投掷能力和跳劈能力。
+    /// 终极部队 (Ultimate Squad) - 忠实还原魔改版 FancyTraits/UltimateSquad.cs
+    /// 英雄获得坦克化改造（复制 Tank 动画、scale=1.28、护甲{6,8,11,14}、高伤害/击退/眩晕、免疫击退），
+    /// 额外获得购买折扣和额外使用次数；小兵获得温和的全面强化。
     /// </summary>
-    public class UltimateSquad : HeroUpgradeDefinition
+    public class UltimateSquad : HeroUpgradeDefinition, IAttackResponder
     {
-        public static readonly string ULTIMATESQUAD_ID = "Hero_Trait_UltimateSquad";
-
-        // ── 通用属性 ──
-        private const float SCALE = 1.4f;
-        private const float HEALTH_MULT = 4f;
-        private const float MAX_SPEED = 3f;
-        private const float STUN_MULTIPLIER = 1E-06f; // 免疫眩晕
-
-        // ── 步兵 (Swordsman) 增强 ──
-        private const float SWORD_DAMAGE_MULT = 3f;
-        private const float SWORD_KNOCKBACK_MULT = 3f;
-        private const float SWORD_STUN_MULT = 3f;
-        private readonly float[] EliteArmorLevels = { 10f, 15f, 20f, 25f };
-
-        // ── 小队人数削减 ──
-        private const float SQUAD_COUNT_RATIO = 0.33f; // 人数变为原来的1/3
-        private const int MIN_SQUAD_COUNT = 2;          // 最少保留2人
-
-        // ── 反射缓存 ──
-        private static FieldInfo _armorField = null;
-        private static bool _armorFieldAttempted = false;
-        private static FieldInfo _stunField = null;
-        private static bool _stunFieldAttempted = false;
+        public static readonly string ULTIMATE_ID = "Hero_Trait_UltimateSquad";
 
         public UltimateSquad()
         {
-            Debugger.Log("ULTIMATESQUAD CREATED");
+            Plugin.Logger.LogInfo("UltimateSquad CREATED");
             this.upgradeType = ScriptableObject.CreateInstance<HeroUpgradeType>();
-            this.upgradeType.typeEnum = (HeroUpgradeTypeEnum)4; // Trait
+            this.upgradeType.typeEnum = HeroUpgradeTypeEnum.Trait;
             this.upgradeType.canBeStartItem = true;
             this.upgradeType.unknownNameTerm = "META_INVENTORY/UNKNOWN/TRAIT/NAME";
             this.upgradeType.unknownDescriptionTerm = "META_INVENTORY/UNKNOWN/TRAIT/DESC";
             this.upgradeType.startItemLockedTerm = "META_INVENTORY/START/TRAIT/LOCKED";
             this.upgradeType.startItemUnlockedTerm = "META_INVENTORY/START/TRAIT/UNLOCKED";
             this.affectsPortrait = false;
-            base.name = ULTIMATESQUAD_ID;
-            this.nameTerm = "NACU/TRAIT/ULTIMATE/NAME";
-            this.shortDescription = "NACU/TRAIT/ULTIMATE/DESCSHORT";
+            base.name = ULTIMATE_ID;
+            this.nameTerm = "YYYYY/TRAIT/ULTIMATE/NAME";
+            this.shortDescription = "YYYYY/TRAIT/ULTIMATE/DESCSHORT";
             this.infoSprite = CustomSprites.Sprites["trait_ultimatesquad"];
-            HeroUpgradeDefinition.Level[] array = new HeroUpgradeDefinition.Level[1];
-            int num = 0;
-            HeroUpgradeDefinition.Level level = default(HeroUpgradeDefinition.Level);
-            level.cost = 0;
-            level.description = "NACU/TRAIT/ULTIMATE/DESC";
-            array[num] = level;
-            this.levels = array;
+            this.levels = new HeroUpgradeDefinition.Level[]
+            {
+                new HeroUpgradeDefinition.Level
+                {
+                    cost = 0,
+                    description = "YYYYY/TRAIT/ULTIMATE/DESC"
+                }
+            };
         }
 
-        // ── 避免重复应用（按小队记录） ──
-        private static HashSet<EnglishSquad> _ultimateAppliedSquads = new HashSet<EnglishSquad>();
+        // ── 主入口：应用到小队 ──
 
-        /// <summary>
-        /// 安全获取或添加组件
-        /// </summary>
-        private static T GetOrAddComponent<T>(GameObject go) where T : Component
-        {
-            T comp = go.GetComponent<T>();
-            if (ReferenceEquals(comp, null))
-            {
-                comp = go.AddComponent<T>();
-            }
-            return comp;
-        }
-
-        /// <summary>
-        /// 设置护甲值
-        /// </summary>
-        private static void SetAgentArmor(Agent agent, float[] armorValues)
-        {
-            if (ReferenceEquals(agent, null) || armorValues == null) return;
-
-            if (!_armorFieldAttempted)
-            {
-                _armorFieldAttempted = true;
-                _armorField = typeof(Armor).GetField("armor",
-                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            }
-
-            if (!ReferenceEquals(_armorField, null))
-            {
-                Armor armorComp = agent.GetComponent<Armor>();
-                if (!ReferenceEquals(armorComp, null))
-                {
-                    _armorField.SetValue(armorComp, armorValues);
-                }
-            }
-        }
-
-        /// <summary>
-        /// 设置眩晕免疫
-        /// </summary>
-        private static void SetAgentStunMultiplier(Agent agent, float value)
-        {
-            if (ReferenceEquals(agent, null)) return;
-
-            if (!_stunFieldAttempted)
-            {
-                _stunFieldAttempted = true;
-                _stunField = typeof(Stun).GetField("stunMultiplier",
-                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            }
-
-            if (!ReferenceEquals(_stunField, null))
-            {
-                Stun stunComp = agent.GetComponent<Stun>();
-                if (!ReferenceEquals(stunComp, null))
-                {
-                    _stunField.SetValue(stunComp, value);
-                }
-            }
-        }
-
-        /// <summary>
-        /// 为步兵添加跳劈能力（从 Viking_Twohanded 获取模板）
-        /// </summary>
-        private static void AddJumpAttack(Agent agent)
-        {
-            Swordsman swordsman = agent.GetComponent<Swordsman>();
-            if (swordsman == null) return;
-            if (agent.GetComponent<JumpAttack>() != null) return;
-
-            try
-            {
-                JumpAttack template = null;
-
-                // 尝试从 LevelStateObjectReferences 获取
-                if (!ReferenceEquals(LevelStateObjectReferences.dict, null) &&
-                    LevelStateObjectReferences.dict.TryGetValue("Viking_Twohanded", out UnityEngine.Object reference) &&
-                    reference is VikingReference vikingRef)
-                {
-                    GameObject templateObj = null;
-                    try
-                    {
-                        FieldInfo vikingCloneField = typeof(VikingReference).GetField("vikingClone",
-                            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-                        FieldInfo vikingField = typeof(VikingReference).GetField("viking",
-                            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-
-                        Component vikingClone = null;
-                        if (!ReferenceEquals(vikingCloneField, null))
-                            vikingClone = vikingCloneField.GetValue(vikingRef) as Component;
-                        Component viking = null;
-                        if (!ReferenceEquals(vikingField, null))
-                            viking = vikingField.GetValue(vikingRef) as Component;
-
-                        if (!ReferenceEquals(vikingClone, null))
-                            templateObj = vikingClone.gameObject;
-                        else if (!ReferenceEquals(viking, null))
-                            templateObj = viking.gameObject;
-                    }
-                    catch { }
-
-                    if (!ReferenceEquals(templateObj, null))
-                    {
-                        template = templateObj.GetComponent<JumpAttack>();
-                    }
-                }
-
-                // 备用方案
-                if (ReferenceEquals(template, null))
-                {
-                    JumpAttack[] allJumps = Resources.FindObjectsOfTypeAll<JumpAttack>();
-                    if (!ReferenceEquals(allJumps, null) && allJumps.Length > 0)
-                    {
-                        foreach (var ja in allJumps)
-                        {
-                            if (!ReferenceEquals(ja.gameObject, agent.gameObject))
-                            {
-                                template = ja;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                if (!ReferenceEquals(template, null))
-                {
-                    JumpAttack newJump = agent.gameObject.AddComponent<JumpAttack>();
-                    // 复制关键字段
-                    FieldInfo[] fields = typeof(JumpAttack).GetFields(
-                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                    foreach (FieldInfo fi in fields)
-                    {
-                        if (fi.Name != "agent" && fi.Name != "enSquad" && !fi.Name.Contains("target"))
-                        {
-                            try { fi.SetValue(newJump, fi.GetValue(template)); }
-                            catch { }
-                        }
-                    }
-                    newJump.Setup(agent);
-
-                    if (!swordsman.actions.Contains(newJump))
-                    {
-                        swordsman.actions.Add(newJump);
-                    }
-
-                    // 添加 JumpComponent
-                    if (agent.GetComponent<JumpComponent>() == null)
-                    {
-                        agent.gameObject.AddComponent<JumpComponent>();
-                    }
-
-                    Debugger.Log("[UltimateSquad] 为 " + agent.name + " 添加跳劈能力");
-                }
-                else
-                {
-                    Plugin.Logger.LogWarning("[UltimateSquad] 无法获取 JumpAttack 模板，跳过跳劈添加");
-                }
-            }
-            catch (Exception ex)
-            {
-                Plugin.Logger.LogWarning("[UltimateSquad] 添加跳劈失败: " + ex.Message);
-            }
-        }
-
-        /// <summary>
-        /// 强化步兵单位
-        /// </summary>
-        private void EnhanceSwordsman(Agent agent)
-        {
-            Swordsman component = agent.GetComponent<Swordsman>();
-            if (component == null) return;
-
-            for (int i = 0; i < component.damageLevels.Length; i++)
-            {
-                component.damageLevels[i] *= SWORD_DAMAGE_MULT;
-            }
-            for (int i = 0; i < component.knockbackLevels.Length; i++)
-            {
-                component.knockbackLevels[i] *= SWORD_KNOCKBACK_MULT;
-            }
-            for (int i = 0; i < component.stunLevels.Length; i++)
-            {
-                component.stunLevels[i] *= SWORD_STUN_MULT;
-            }
-
-            // 添加跳劈
-            AddJumpAttack(agent);
-
-            Debugger.Log("[UltimateSquad] 步兵终极强化完成: dmg=" + SWORD_DAMAGE_MULT + "x, kb=" + SWORD_KNOCKBACK_MULT + "x");
-        }
-
-        /// <summary>
-        /// 强化弓箭手单位
-        /// </summary>
-        private void EnhanceArchery(Agent agent)
-        {
-            Archery component = agent.GetComponent<Archery>();
-            if (component == null) return;
-
-            // 尝试从重装弓箭手获取模板
-            try
-            {
-                if (!ReferenceEquals(LevelStateObjectReferences.dict, null) &&
-                    LevelStateObjectReferences.dict.TryGetValue("Viking_TankArcher", out UnityEngine.Object reference) &&
-                    reference is VikingReference vikingRef)
-                {
-                    GameObject templateObj = null;
-                    try
-                    {
-                        FieldInfo vikingCloneField = typeof(VikingReference).GetField("vikingClone",
-                            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-                        FieldInfo vikingField = typeof(VikingReference).GetField("viking",
-                            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-
-                        Component vikingClone = null;
-                        if (!ReferenceEquals(vikingCloneField, null))
-                            vikingClone = vikingCloneField.GetValue(vikingRef) as Component;
-                        Component viking = null;
-                        if (!ReferenceEquals(vikingField, null))
-                            viking = vikingField.GetValue(vikingRef) as Component;
-
-                        if (!ReferenceEquals(vikingClone, null))
-                            templateObj = vikingClone.gameObject;
-                        else if (!ReferenceEquals(viking, null))
-                            templateObj = viking.gameObject;
-                    }
-                    catch { }
-
-                    if (!ReferenceEquals(templateObj, null))
-                    {
-                        Archery template = templateObj.GetComponent<Archery>();
-                        if (!ReferenceEquals(template, null))
-                        {
-                            FieldInfo arrowPrefabField = typeof(Archery).GetField("arrowPrefab",
-                                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                            FieldInfo drawSoundField = typeof(Archery).GetField("drawSound",
-                                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                            FieldInfo shootSoundField = typeof(Archery).GetField("shootSound",
-                                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                            FieldInfo trajectoryField = typeof(Archery).GetField("trajectoryCalculator",
-                                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-                            if (!ReferenceEquals(arrowPrefabField, null))
-                                arrowPrefabField.SetValue(component, arrowPrefabField.GetValue(template));
-                            if (!ReferenceEquals(drawSoundField, null))
-                                drawSoundField.SetValue(component, drawSoundField.GetValue(template));
-                            if (!ReferenceEquals(shootSoundField, null))
-                                shootSoundField.SetValue(component, shootSoundField.GetValue(template));
-                            if (!ReferenceEquals(trajectoryField, null))
-                                trajectoryField.SetValue(component, trajectoryField.GetValue(template));
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Plugin.Logger.LogWarning("[UltimateSquad] 强化弓箭手模板失败: " + ex.Message);
-            }
-
-            // 调整射击参数 - 更高伤害、更快冷却、更精准
-            FieldInfo archerySettingsField = typeof(Archery).GetField("_archerySettings",
-                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-
-            if (!ReferenceEquals(archerySettingsField, null))
-            {
-                var settings = archerySettingsField.GetValue(component);
-                if (settings != null && settings is Array settingsArray)
-                {
-                    Type settingType = settingsArray.GetType().GetElementType();
-                    if (!ReferenceEquals(settingType, null))
-                    {
-                        FieldInfo cooldownField = settingType.GetField("cooldown",
-                            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                        FieldInfo spreadField = settingType.GetField("spread",
-                            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                        FieldInfo attackSettingsField = settingType.GetField("attackSettings",
-                            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-                        for (int i = 0; i < settingsArray.Length; i++)
-                        {
-                            object setting = settingsArray.GetValue(i);
-                            if (ReferenceEquals(setting, null)) continue;
-
-                            if (!ReferenceEquals(cooldownField, null))
-                            {
-                                float cd = (float)cooldownField.GetValue(setting);
-                                cooldownField.SetValue(setting, cd * 0.7f); // 更快的冷却
-                            }
-                            if (!ReferenceEquals(spreadField, null))
-                            {
-                                float sp = (float)spreadField.GetValue(setting);
-                                spreadField.SetValue(setting, sp * 0.3f); // 更精准
-                            }
-                            if (!ReferenceEquals(attackSettingsField, null))
-                            {
-                                object atk = attackSettingsField.GetValue(setting);
-                                if (!ReferenceEquals(atk, null))
-                                {
-                                    Type atkType = atk.GetType();
-                                    FieldInfo dmgField = atkType.GetField("damage",
-                                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                                    FieldInfo kbField = atkType.GetField("knockback",
-                                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-                                    if (!ReferenceEquals(dmgField, null))
-                                        dmgField.SetValue(atk, (float)dmgField.GetValue(atk) * 2.5f);
-                                    if (!ReferenceEquals(kbField, null))
-                                        kbField.SetValue(atk, (float)kbField.GetValue(atk) * 2f);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            component.Setup();
-            Debugger.Log("[UltimateSquad] 弓箭手终极强化完成");
-        }
-
-        /// <summary>
-        /// 执行单个 Agent 的终极强化
-        /// </summary>
-        private void ApplyUltimate(Agent agent)
-        {
-            if (ReferenceEquals(agent, null)) return;
-
-            agent.scale = SCALE;
-            agent.maxHealth *= HEALTH_MULT;
-            agent.health = agent.maxHealth;
-            agent.maxSpeed = MAX_SPEED;
-
-            SetAgentStunMultiplier(agent, STUN_MULTIPLIER);
-            SetAgentArmor(agent, EliteArmorLevels);
-
-            Swordsman swordsman = agent.GetComponent<Swordsman>();
-            Archery archery = agent.GetComponent<Archery>();
-
-            if (swordsman != null)
-            {
-                EnhanceSwordsman(agent);
-            }
-            else if (archery != null)
-            {
-                EnhanceArchery(agent);
-            }
-            else
-            {
-                Debugger.Log("[UltimateSquad] " + agent.name + " 不支持的兵种类型，仅应用基础强化");
-            }
-
-            // 更换移动和死亡音效为坦克风格（如果有 Swordsman）
-            if (swordsman != null)
-            {
-                agent.hurtSound = "Sfx/English/Tank/Hurt";
-                if (agent.body != null)
-                {
-                    agent.body.baseMoveSoundRef = "Sfx/English/Tank/Move";
-                }
-                Death death = agent.GetComponent<Death>();
-                if (death != null)
-                {
-                    death.deathSound = "Sfx/English/Tank/Die";
-                }
-                swordsman.swordSound = "Sfx/English/Tank";
-                swordsman.swingSound = "Sfx/English/Tank/Swing";
-            }
-        }
-
-        // ── 主入口 ──
         public override void OnAppliedToSquad(EnglishSquad squad, int upgradeLevel)
         {
-            base.OnAppliedToSquad(squad, upgradeLevel);
+            this.HeroEffect(squad.heroAgent);
+            squad.onAgentCreated += this.UltimateEffect;
+        }
 
-            if (_ultimateAppliedSquads.Contains(squad))
+        // ── 购买时额外效果 ──
+
+        public override void OnPurchased(HeroDefinition hero, int level)
+        {
+            hero.maxUsesPerTurn += 1;
+            hero.discount = -0.5f;
+            hero.discountType = HeroUpgradeTypeEnum.Class;
+        }
+
+        // ── 英雄坦克化改造 ──
+
+        private void HeroEffect(Agent agent)
+        {
+            Swordsman component = agent.GetComponent<Swordsman>();
+            if (component)
             {
-                Plugin.Logger.LogInfo("[UltimateSquad] 终极强化已应用于该小队，跳过");
-                return;
-            }
+                this.CopyTank(agent);
+                agent.GetComponent<Animator>().speed *= 1.125f;
+                float scale = agent.scale;
+                agent.scale = 1.28f;
+                agent.maxSpeed *= 1.3f;
 
-            // 大幅削减小队人数
-            int newCount = Mathf.Max(MIN_SQUAD_COUNT, Mathf.FloorToInt(squad.maxCount * SQUAD_COUNT_RATIO));
-            squad.maxCount = newCount;
-            Plugin.Logger.LogInfo("[UltimateSquad] 小队人数调整为: " + newCount);
-
-            // 为新生成的 Agent 应用强化
-            squad.onAgentCreated += this.ApplyUltimate;
-
-            // 对现有 Agent 应用强化
-            foreach (Agent agent in squad.agents)
-            {
-                this.ApplyUltimate(agent);
-            }
-            foreach (Agent agent in squad.livingAgents)
-            {
-                if (!squad.agents.Contains(agent))
+                // 调整旗帜大小以补偿缩放变化
+                FlagPole flagPole = agent.GetComponentInChildren<FlagPole>(true);
+                if (flagPole != null)
                 {
-                    this.ApplyUltimate(agent);
+                    flagPole.transform.localScale *= scale / agent.scale;
+                }
+
+                int i = 0;
+                int num = component.damageLevels.Length;
+                while (i < num)
+                {
+                    component.damageLevels[i] *= 2.5f;
+                    component.knockbackLevels[i] *= 5f;
+                    component.stunLevels[i] *= 2f;
+                    i++;
+                }
+
+                agent.GetComponent<Armor>().armor = new float[] { 6f, 8f, 11f, 14f };
+                agent.GetComponent<Stun>().stunMultiplier = 0.1f;
+
+                TankBrain tankBrain = (LevelStateObjectReferences.dict["Viking_Tank"] as VikingReference).vikingClone.agent.GetComponent<TankBrain>();
+                component.swingSound = tankBrain.swingSound;
+                component.swordSound = tankBrain.swordSound;
+
+                Body tankBody = (LevelStateObjectReferences.dict["Viking_Tank"] as VikingReference).vikingClone.agent.GetComponent<Body>();
+                agent.body.baseMoveSoundRef = tankBody.baseMoveSoundRef;
+
+                if (!agent.attackResponders.Contains(this))
+                {
+                    agent.attackResponders.Add(this);
+                }
+            }
+        }
+
+        // ── 小兵全面强化 ──
+
+        private void UltimateEffect(Agent agent)
+        {
+            agent.scale *= 1.1f;
+            agent.GetComponent<Death>().deathSound = "Sfx/Viking/Twohanded/Die";
+
+            Body tankBody = (LevelStateObjectReferences.dict["Viking_Tank"] as VikingReference).vikingClone.agent.GetComponent<Body>();
+            agent.body.baseMoveSoundRef = tankBody.baseMoveSoundRef;
+
+            agent.maxHealth *= 1.8f;
+            agent.health = agent.maxHealth;
+            agent.maxSpeed *= 1.25f;
+            agent.GetComponent<Stun>().stunMultiplier = 0.5f;
+
+            // ── 步兵 (Swordsman) ──
+            Swordsman swordsman = agent.GetComponent<Swordsman>();
+            if (swordsman)
+            {
+                agent.GetComponent<Animator>().speed *= 1.1f;
+
+                TankBrain tankBrain = (LevelStateObjectReferences.dict["Viking_Tank"] as VikingReference).vikingClone.agent.GetComponent<TankBrain>();
+                swordsman.swingSound = tankBrain.swingSound;
+                swordsman.swordSound = tankBrain.swordSound;
+
+                int i = 0;
+                int num = swordsman.damageLevels.Length;
+                while (i < num)
+                {
+                    swordsman.damageLevels[i] *= 1.3f;
+                    swordsman.knockbackLevels[i] *= 1.5f;
+                    swordsman.stunLevels[i] *= 1.5f;
+                    i++;
                 }
             }
 
-            _ultimateAppliedSquads.Add(squad);
-            Plugin.Logger.LogInfo(string.Format("[UltimateSquad] 已应用到小队 {0}，精英人数: {1}", squad.name, newCount));
+            // ── 弓箭手 (Archery) ──
+            Archery archery = agent.GetComponent<Archery>();
+            if (archery)
+            {
+                int j = 0;
+                int num2 = archery._archerySettings.Length;
+                while (j < num2)
+                {
+                    archery._archerySettings[j].attackSettings.damage = archery._archerySettings[j].attackSettings.damage * 1.2f;
+                    archery._archerySettings[j].attackSettings.stun = archery._archerySettings[j].attackSettings.stun * 1.3f;
+                    archery._archerySettings[j].attackSettings.knockback = archery._archerySettings[j].attackSettings.knockback * 1.4f;
+                    archery._archerySettings[j].spread = archery._archerySettings[j].spread * 0.5f;
+                    archery._archerySettings[j].holdTime = archery._archerySettings[j].holdTime * 0.6f;
+                    archery._archerySettings[j].cooldown = archery._archerySettings[j].cooldown * 0.8f;
+                    j++;
+                }
+            }
+
+            // ── 矛兵 (Spear) ──
+            Spear spear = agent.GetComponent<Spear>();
+            if (spear)
+            {
+                spear.spearLength *= 1.3f;
+                agent.attackResponders.Remove(spear);
+
+                int k = 0;
+                int num3 = spear.attackSettings.Length;
+                while (k < num3)
+                {
+                    spear.attackSettings[k].damage = spear.attackSettings[k].damage * 1.5f;
+                    spear.attackSettings[k].stun = spear.attackSettings[k].stun * 1.5f;
+                    spear.attackSettings[k].knockback = spear.attackSettings[k].knockback * 1.5f;
+                    k++;
+                }
+            }
+        }
+
+        // ── 复制 Tank 动画 ──
+
+        private void CopyTank(Agent myAgent)
+        {
+            if (myAgent.GetComponent<Swordsman>())
+            {
+                Animator tankAnimator = (LevelStateObjectReferences.dict["Viking_Tank"] as VikingReference).vikingClone.agent.GetComponent<Animator>();
+                RuntimeAnimatorController tankController = tankAnimator.runtimeAnimatorController;
+                Animator myAnimator = myAgent.GetComponent<Animator>();
+                myAnimator.runtimeAnimatorController = tankController;
+                this.CopyAnimatorParameters(tankAnimator, myAnimator);
+                myAnimator.updateMode = tankAnimator.updateMode;
+                myAnimator.cullingMode = tankAnimator.cullingMode;
+                myAnimator.applyRootMotion = tankAnimator.applyRootMotion;
+            }
+        }
+
+        private void CopyAnimatorParameters(Animator source, Animator target)
+        {
+            foreach (AnimatorControllerParameter param in source.parameters)
+            {
+                if (param.type == AnimatorControllerParameterType.Bool)
+                {
+                    target.SetBool(param.name, source.GetBool(param.name));
+                }
+                else if (param.type == AnimatorControllerParameterType.Float)
+                {
+                    target.SetFloat(param.name, source.GetFloat(param.name));
+                }
+                else if (param.type == AnimatorControllerParameterType.Int)
+                {
+                    target.SetInteger(param.name, source.GetInteger(param.name));
+                }
+                else if (param.type == AnimatorControllerParameterType.Trigger && source.GetBool(param.name))
+                {
+                    target.SetTrigger(param.name);
+                }
+            }
+        }
+
+        // ── IAttackResponder：英雄免疫击退 ──
+
+        public void ModifyAttack(ref Attack attack)
+        {
+            attack.knockback = 0f;
         }
     }
 }

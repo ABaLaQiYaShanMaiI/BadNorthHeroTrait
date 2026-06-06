@@ -90,6 +90,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MindElite.cs" />
+    <Compile Include="YuriComponent.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
