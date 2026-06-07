@@ -1,0 +1,45 @@
+using System;
+using System.IO;
+using System.Reflection;
+using BepInEx;
+using BepInEx.Logging;
+using BadNorthAPI;
+using UnityEngine;
+
+namespace BadNorthAxeThrower
+{
+    [BepInDependency("nacu.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
+    [BepInPlugin("nacu.badnorthaxethrower1.0", "Bad North - Axe Thrower Trait 1.0", "1.0")]
+    public class Plugin : BaseUnityPlugin
+    {
+        public static ManualLogSource Logger;
+
+        public void OnEnable()
+        {
+            Logger = base.Logger;
+            string modPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + Path.DirectorySeparatorChar;
+
+            // 1. Load custom sprite
+            CustomSprites.AddCustomSprite(modPath, "trait_axethrower");
+
+            // 2. Register trait
+            CustomTraits.RegisterTrait(
+                ScriptableObject.CreateInstance<AxeThrower>(),
+                AxeThrower.AXETHROWER_ID,
+                true  // alwaysUnlocked
+            );
+
+            // 3. Add localization
+            CustomText.CustomTermsAdded += AddCustomTerms;
+
+            Logger.LogInfo("BadNorthAxeThrower 1.0 loaded");
+        }
+
+        private void AddCustomTerms()
+        {
+            CustomText.AddCustomTerm("NACU/TRAIT/AXE/NAME", "掷斧手");
+            CustomText.AddCustomTerm("NACU/TRAIT/AXE/DESCSHORT", "指挥官可以投掷战斧");
+            CustomText.AddCustomTerm("NACU/TRAIT/AXE/DESC", "指挥官会投掷战斧。\n战斧的数量与威力会随小队等级变化。");
+        }
+    }
+}

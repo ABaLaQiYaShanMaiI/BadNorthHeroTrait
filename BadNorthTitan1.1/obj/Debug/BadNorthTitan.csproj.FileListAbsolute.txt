@@ -5,3 +5,10 @@ C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits1.
 C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits1.1\BadNorthTitan1.1\bin\Debug\BadNorthTitan1.1.pdb
 C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits1.1\BadNorthTitan1.1\obj\Debug\BadNorthTitan1.1.dll
 C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits1.1\BadNorthTitan1.1\obj\Debug\BadNorthTitan1.1.pdb
+c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthTitan1.1\bin\Debug\Resources\trait_titan.png
+c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthTitan1.1\bin\Debug\BadNorthTitan1.1.dll
+c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthTitan1.1\bin\Debug\BadNorthTitan1.1.pdb
+c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthTitan1.1\obj\Debug\BadNorthTitan.csproj.AssemblyReference.cache
+c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthTitan1.1\obj\Debug\BadNorthTitan.csproj.CoreCompileInputs.cache
+c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthTitan1.1\obj\Debug\BadNorthTitan1.1.dll
+c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthTitan1.1\obj\Debug\BadNorthTitan1.1.pdb

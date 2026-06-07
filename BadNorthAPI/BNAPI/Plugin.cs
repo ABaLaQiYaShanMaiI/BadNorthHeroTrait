@@ -8,7 +8,7 @@ using BadNorthAPI;
 
 namespace BadNorthAPI
 {
-	[BepInPlugin("nacu.bnapi.modular", "BN Mod API (Modular)", "1.0.1")]
+	[BepInPlugin("nacu.bnapi.modular", "BN Mod API (Modular)", "1.0")]
 	public class Plugin : BaseUnityPlugin
 	{
 		public void OnEnable()
@@ -29,7 +29,7 @@ namespace BadNorthAPI
 				if (i > 0) sb.Append(", ");
 				sb.Append(CustomTraits.startingTraits[i]);
 			}
-			sb.Append(" ========");
+			sb.Append(" (API 1.0) ========");
 			Plugin.logger.LogInfo(sb.ToString());
 		}
 
@@ -37,6 +37,6 @@ namespace BadNorthAPI
 
 		public static ConfigFile ConfigRef;
 
-		public const string VERSION = "1.0.1";
+		public const string VERSION = "1.0";
 	}
 }
