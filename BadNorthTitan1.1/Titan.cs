@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using BadNorthAPI;
 using UnityEngine;
 using Voxels.TowerDefense;
+using Voxels.TowerDefense.Ballistics;
 
 namespace BadNorthTitan
 {
@@ -286,6 +288,26 @@ namespace BadNorthTitan
             component.Setup();
             SetAgentArmor(agent, ArcherArmorLevels);
 
+            // ── v1.2: 安装自建专注射击技能 ──
+            // 获取弹道计算器并从 component 中反射获取
+            TrajectoryUtility trajectoryCalc = null;
+            try
+            {
+                FieldInfo trajField = typeof(Archery).GetField("trajectoryCalculator",
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (!ReferenceEquals(trajField, null))
+                {
+                    trajectoryCalc = trajField.GetValue(component) as TrajectoryUtility;
+                }
+            }
+            catch (Exception ex)
+            {
+                Plugin.Logger.LogWarning("[Titan] 获取 trajectoryCalculator 失败: " + ex.Message);
+            }
+
+            // 安装 TitanFocusAbility + TitanFocusComponent
+            TitanFocusHandler.SetupTitanFocus(agent, trajectoryCalc, 0); // 初始等级为0，后续升级时更新
+
             Debugger.Log("[Titan] 弓箭手泰坦化完成: damageMult=" + ARCHER_DAMAGE_MULT + ", spreadMult=" + ARCHER_SPREAD_MULT);
         }
 
@@ -331,8 +353,20 @@ namespace BadNorthTitan
             // 减少小队人数（因为个体更强）
             squad.maxCount = squad.maxCount / 2 + 1;
 
-            // 为新生成的 Agent 应用泰坦化
-            squad.onAgentCreated += this.Titanize;
+            // ★ v1.2: 将 Archery Agent 提前注册到 TitanAgentRegistry
+            // 这样 Harmony DoSquadSpawnActionPrefix 在 Titanize() 设置 scale 之前就能识别泰坦弓箭手
+            foreach (Agent agent in squad.agents)
+            {
+                if (!ReferenceEquals(agent, null)
+                    && agent.isEnglish
+                    && agent.GetComponent<Archery>() != null)
+                {
+                    TitanAgentRegistry.Register(agent);
+                }
+            }
+
+            // 为新生成的 Agent 应用泰坦化（Titanize 内部也注册）
+            squad.onAgentCreated += this.TitanizeWithRegistry;
 
             // 对现有 Agent 应用泰坦化
             foreach (Agent agent in squad.agents)
@@ -341,6 +375,61 @@ namespace BadNorthTitan
             }
 
             Plugin.Logger.LogInfo(string.Format("[Titan] 已应用到小队 {0}，小队人数: {1}", squad.name, squad.maxCount));
+        }
+
+        /// <summary>
+        /// Agent 创建回调包装：先注册再 Titanize。
+        /// </summary>
+        private void TitanizeWithRegistry(Agent agent)
+        {
+            if (!ReferenceEquals(agent, null)
+                && agent.isEnglish
+                && agent.GetComponent<Archery>() != null)
+            {
+                TitanAgentRegistry.Register(agent);
+            }
+            this.Titanize(agent);
+        }
+    }
+
+    /// <summary>
+    /// 泰坦弓箭手 Agent 注册表。
+    /// 
+    /// 目的：在 Titan.OnAppliedToSquad 中提前注册 Agent 实例 ID，
+    /// 使 TitanArcheryFixes 的 Harmony 补丁（DoSquadSpawnActionPrefix / MaybeSetupPrefix 等）
+    /// 能在 Titanize() 设置 agent.scale 之前就识别出泰坦弓箭手，从而正确拦截原版回调。
+    /// 
+    /// 线程安全：仅在 Unity 主线程使用，不需要锁。
+    /// </summary>
+    public static class TitanAgentRegistry
+    {
+        private static HashSet<int> _archeryAgentIds = new HashSet<int>();
+
+        public static void Register(Agent agent)
+        {
+            if (ReferenceEquals(agent, null)) return;
+            _archeryAgentIds.Add(agent.GetInstanceID());
+        }
+
+        public static void Unregister(Agent agent)
+        {
+            if (ReferenceEquals(agent, null)) return;
+            _archeryAgentIds.Remove(agent.GetInstanceID());
+        }
+
+        public static bool IsTitanArcherAgent(Agent agent)
+        {
+            if (ReferenceEquals(agent, null)) return false;
+            // 优先使用 scale 检测（Titanize 之后）
+            if (agent.scale > 1.1f && agent.isEnglish && agent.GetComponent<Archery>() != null)
+                return true;
+            // 回退：使用注册表（Titanize 之前，OnAppliedToSquad 已注册）
+            return _archeryAgentIds.Contains(agent.GetInstanceID());
+        }
+
+        public static int Count
+        {
+            get { return _archeryAgentIds.Count; }
         }
     }
 }

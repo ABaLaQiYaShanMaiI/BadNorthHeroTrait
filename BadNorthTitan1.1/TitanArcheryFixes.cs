@@ -10,21 +10,19 @@ using Voxels.TowerDefense.Upgrades;
 namespace BadNorthTitan
 {
     /// <summary>
-    /// 泰坦弓箭手索敌、瞄准与弹道修复 v8。
+    /// 泰坦弓箭手索敌、瞄准与弹道修复 v10 — 专注射击自建技能版。
     /// 
-    /// 策略：
+    /// v10 策略（巨弓手专注射击）：
     /// - 5个核心补丁保持高速直线弹道（GetSight/AimAt/SetupLoS/InSight/Shoot）
-    /// - MaybeSetup 阻止 → ArcheryFocusComponent 不初始化，m__1 lambda 不创建（根除 ModifyArrow NPE）
-    /// - ShootAt 阻止 → 专注技能不可用
-    /// - DoSquadSpawnAction prefix → 处理 m__0 lambda 的空引用
-    /// - DirectUpdate finalizer → 兜底抑制异常
+    /// - 新增 TitanFocusAbility + TitanFocusComponent 替代原版 ArcheryFocusAbility/ArcheryFocusComponent
+    /// - MaybeSetup Prefix → 对泰坦弓箭手重定向到 TitanFocusComponent.SetupFocusState()
+    /// - ShootAt Prefix → 对泰坦弓箭手重定向到 TitanFocusComponent.CustomShootAt()
+    /// - DoSquadSpawnAction Prefix → 使用 TitanAgentRegistry 识别（解决 scale 时序问题）
+    /// - DoTargetedAction Prefix → 使用 TitanAgentRegistry 识别，重定向到 TitanFocusAbility
     /// 
-    /// 【v8 策略】
-    /// MaybeSetup 内部创建 m__1 lambda（per-frame 回调），该 lambda 每帧调用 ModifyArrow 
-    /// 并触发 NPE，导致 DirectUpdate 中断 → Agent 更新停滞 → 士兵死亡。
-    /// Harmony 在 Mono 2.0 CLR 下无法 patch ModifyArrow。
-    /// v8 彻底阻止 MaybeSetup（return false），从根源消除 m__1 lambda。
-    /// 专注技能对泰坦弓箭手不可用，但5个核心补丁提供的自定义索敌/弹道系统正常工作。
+    /// v10 关键修复：
+    /// - TitanAgentRegistry 在 OnAppliedToSquad 中提前注册 Agent，确保 Harmony 前缀在 Titanize() 设置 scale 之前即可正确拦截
+    /// - TitanFocusHandler.RemoveOriginalFocusComponents 在 Destroy 原版组件前清理 AgentState.OnUpdate 委托，根除 m__0 NPE 循环
     /// </summary>
     public static class TitanArcheryFixes
     {
@@ -59,8 +57,6 @@ namespace BadNorthTitan
         private static bool _sqRadiusFieldAttempted = false;
         private static FieldInfo _coolDownTimeField = null;
         private static bool _coolDownTimeFieldAttempted = false;
-        private static FieldInfo _agentStateAgentField = null;
-        private static bool _agentStateAgentFieldAttempted = false;
 
         private static bool IsTitanArcher(Agent agent)
         {
@@ -70,8 +66,27 @@ namespace BadNorthTitan
                 && agent.GetComponent<Archery>() != null;
         }
 
+        /// <summary>
+        /// 通过反射从 ArcheryFocusComponent 获取其关联的 Agent。
+        /// </summary>
+        private static Agent GetAgentFromFocusComponent(Component focusComp)
+        {
+            if (ReferenceEquals(focusComp, null)) return null;
+
+            // 先尝试直接获取 Archery
+            Archery archery = focusComp.GetComponent<Archery>();
+            if (!ReferenceEquals(archery, null) && !ReferenceEquals(archery.agent, null))
+                return archery.agent;
+
+            // 回退：向上查找 Agent
+            Agent agent = focusComp.GetComponentInParent<Agent>();
+            return agent;
+        }
+
         public static void ApplyPatches(Harmony harmony)
         {
+            // ── 5个核心补丁：索敌与弹道 ──
+
             // 索敌
             harmony.Patch(
                 original: AccessTools.Method(typeof(LineOfSight), "GetSight"),
@@ -102,19 +117,21 @@ namespace BadNorthTitan
                 prefix: new HarmonyMethod(typeof(TitanArcheryFixes), nameof(ShootPrefix))
             );
 
-            // 阻止 MaybeSetup — 根除 m__1 lambda 及 ModifyArrow NPE（v8）
+            // ── 专注射击重定向补丁（v10） ──
+
+            // MaybeSetup → 重定向到 TitanFocusComponent.SetupFocusState
             harmony.Patch(
                 original: AccessTools.Method(typeof(ArcheryFocusComponent), "MaybeSetup"),
-                prefix: new HarmonyMethod(typeof(TitanArcheryFixes), nameof(MaybeSetupPrefix))
+                prefix: new HarmonyMethod(typeof(TitanArcheryFixes), nameof(MaybeSetupRedirectPrefix))
             );
 
-            // 阻止 ShootAt — 专注技能对泰坦不可用（v8）
+            // ShootAt → 重定向到 TitanFocusComponent.CustomShootAt
             harmony.Patch(
                 original: AccessTools.Method(typeof(ArcheryFocusComponent), "ShootAt"),
-                prefix: new HarmonyMethod(typeof(TitanArcheryFixes), nameof(ShootAtPrefix))
+                prefix: new HarmonyMethod(typeof(TitanArcheryFixes), nameof(ShootAtRedirectPrefix))
             );
 
-            // DoSquadSpawnAction null 检查 — 处理 m__0 lambda 空引用（v8）
+            // DoSquadSpawnAction → 使用 TitanAgentRegistry 识别，对泰坦跳过原版流程
             MethodInfo doSquadSpawnActionMethod = AccessTools.Method(typeof(ArcheryFocusAbility), "DoSquadSpawnAction_Implementation");
             if (!ReferenceEquals(doSquadSpawnActionMethod, null))
             {
@@ -139,13 +156,32 @@ namespace BadNorthTitan
                 }
             }
 
-            // 兜底保护 — AgentState.DirectUpdate 异常抑制
-            harmony.Patch(
-                original: AccessTools.Method(typeof(AgentState), "DirectUpdate"),
-                finalizer: new HarmonyMethod(typeof(TitanArcheryFixes), nameof(DirectUpdateFinalizer))
-            );
+            // DoTargetedAction → 使用 TitanAgentRegistry 识别，重定向到 TitanFocusAbility
+            MethodInfo doTargetedActionMethod = AccessTools.Method(typeof(ArcheryFocusAbility), "DoTargetedAction_Implementation");
+            if (!ReferenceEquals(doTargetedActionMethod, null))
+            {
+                harmony.Patch(
+                    original: doTargetedActionMethod,
+                    prefix: new HarmonyMethod(typeof(TitanArcheryFixes), nameof(DoTargetedActionRedirectPrefix))
+                );
+            }
+            else
+            {
+                doTargetedActionMethod = AccessTools.Method(typeof(ArcheryFocusAbility), "DoTargetedAction");
+                if (!ReferenceEquals(doTargetedActionMethod, null))
+                {
+                    harmony.Patch(
+                        original: doTargetedActionMethod,
+                        prefix: new HarmonyMethod(typeof(TitanArcheryFixes), nameof(DoTargetedActionRedirectPrefix))
+                    );
+                }
+                else
+                {
+                    Plugin.Logger.LogWarning("[TitanArcheryFixes] DoTargetedAction 方法未找到，跳过该补丁");
+                }
+            }
 
-            Plugin.Logger.LogInfo("[TitanArcheryFixes] 9个补丁（v8）: GetSight | AimAt | SetupLoS | InSight | Shoot | MaybeSetup(阻止) | ShootAt(阻止) | DoSquadSpawnAction | DirectUpdate兜底");
+            Plugin.Logger.LogInfo("[TitanArcheryFixes] 10个补丁（v10）: GetSight | AimAt | SetupLoS | InSight | Shoot | MaybeSetup(重定向) | ShootAt(重定向) | DoSquadSpawnAction | DoTargetedAction(重定向) | 自建TitanFocusAbility");
         }
 
         // ────────── 索敌 ──────────
@@ -262,6 +298,13 @@ namespace BadNorthTitan
         {
             if (!IsTitanArcher(__instance.agent)) return true;
 
+            // 检查是否处于自建专注状态 → 放行，保留 TitanFocusComponent 自身的 ProjectileSettings
+            TitanFocusComponent tfComp = TitanFocusHandler.FindFocusComponent(__instance.agent);
+            if (!ReferenceEquals(tfComp, null) && tfComp.IsActive)
+            {
+                return true; // 不修改弹道参数，专注使用自身设置
+            }
+
             ProjectileSettings newSettings = new ProjectileSettings();
             FieldInfo[] fields = typeof(ProjectileSettings).GetFields();
             foreach (FieldInfo fi in fields)
@@ -316,57 +359,172 @@ namespace BadNorthTitan
             return true;
         }
 
-        // ────────── 阻止 MaybeSetup（v8） ──────────
-        /// <summary>
-        /// v8: 彻底阻止泰坦弓箭手的 MaybeSetup。
-        /// 阻止后 m__1 lambda 不创建 → ModifyArrow NPE 从根源消除。
-        /// 专注技能对泰坦弓箭手不可用。
-        /// </summary>
-        private static bool MaybeSetupPrefix(ArcheryFocusComponent __instance)
+        // ────────── MaybeSetup 重定向（v10） ──────────
+        private static bool MaybeSetupRedirectPrefix(ArcheryFocusComponent __instance)
         {
             if (__instance == null || __instance.gameObject == null) return true;
 
-            Archery archery = __instance.GetComponent<Archery>();
-            if (archery == null || !IsTitanArcher(archery.agent)) return true;
+            Agent agent = GetAgentFromFocusComponent(__instance);
+            if (agent == null || !IsTitanArcher(agent)) return true;
 
-            int agentId = archery.agent.GetInstanceID();
+            TitanFocusComponent titanFocus = TitanFocusHandler.FindFocusComponent(agent);
+            if (ReferenceEquals(titanFocus, null))
+            {
+                Plugin.Logger.LogWarning(string.Format(
+                    "[Titan FocusFix] Archer#{0} 缺失 TitanFocusComponent，跳过 MaybeSetup 重定向",
+                    agent.GetInstanceID()));
+                return false;
+            }
+
+            titanFocus.SetupFocusState();
+
+            int agentId = agent.GetInstanceID();
             if (_blockedMaybeSetupAgents.Add(agentId))
             {
                 Plugin.Logger.LogInfo(string.Format(
-                    "[Titan FocusFix] Archer#{0} MaybeSetup 已阻止（v8）",
+                    "[Titan FocusFix] Archer#{0} MaybeSetup 已重定向到 TitanFocusComponent（v10）",
                     agentId));
             }
-            return false; // 阻止 MaybeSetup → 根除 m__1 lambda
+            return false;
         }
 
-        // ────────── 阻止 ShootAt（v8） ──────────
-        /// <summary>
-        /// v8: 阻止 ShootAt，专注技能对泰坦弓箭手不可用。
-        /// </summary>
-        private static bool ShootAtPrefix(ArcheryFocusComponent __instance)
+        // ────────── ShootAt 重定向（v10） ──────────
+        private static bool ShootAtRedirectPrefix(ArcheryFocusComponent __instance,
+            object focusAbility, object settings, Vector3 targetPos, Vector3 targetDelta)
         {
             if (__instance == null || __instance.gameObject == null) return true;
 
-            Archery archery = __instance.GetComponent<Archery>();
-            if (archery == null || !IsTitanArcher(archery.agent)) return true;
+            Agent agent = GetAgentFromFocusComponent(__instance);
+            if (agent == null || !IsTitanArcher(agent)) return true;
 
-            return false; // 阻止 ShootAt → 专注技能不可用
+            TitanFocusComponent titanFocus = TitanFocusHandler.FindFocusComponent(agent);
+            TitanFocusAbility titanAbility = agent.GetComponent<TitanFocusAbility>();
+
+            if (ReferenceEquals(titanFocus, null) || ReferenceEquals(titanAbility, null))
+            {
+                return false;
+            }
+
+            TitanFocusSettings focusSettings = titanAbility.CurrentSettings;
+
+            // 修复 3：仅从原版 settings 中提取 attackSettings，不覆盖 ammo
+            // ammo 由 TitanFocusSettings.CreateDefault(level) 定义（3+level）
+            if (!ReferenceEquals(settings, null))
+            {
+                try
+                {
+                    Type settingsType = settings.GetType();
+                    FieldInfo atkField = settingsType.GetField("attackSettings",
+                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                    if (!ReferenceEquals(atkField, null))
+                    {
+                        object atkObj = atkField.GetValue(settings);
+                        if (atkObj is AttackSettings atk)
+                        {
+                            focusSettings.attackSettings = atk;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Logger.LogWarning("[Titan FocusFix] ShootAt 设置提取异常: " + ex.Message);
+                }
+            }
+
+            titanFocus.CustomShootAt(titanAbility, focusSettings, targetPos, targetDelta);
+
+            Plugin.Logger.LogInfo(string.Format(
+                "[Titan FocusFix] Archer#{0} ShootAt 已重定向到 TitanFocusComponent（v10）",
+                agent.GetInstanceID()));
+
+            return false;
         }
 
-        // ────────── DoSquadSpawnAction null 检查（v8） ──────────
+        // ────────── DoSquadSpawnAction 跳过（v11） ──────────
         /// <summary>
-        /// v8: DoSquadSpawnAction_Implementation 内部创建 m__0 lambda，
-        /// 捕获 ArcheryFocusComponent 引用。MaybeSetup 被阻止时组件未初始化，
-        /// 导致 m__0 空引用。此 prefix 对泰坦弓箭手跳过 DoSquadSpawnAction。
+        /// v11: 通过 Hero → Squad 检测是否具有 Titan 特质，不再依赖 Agent 反射。
+        /// TitanFocusAbility 自己管理初始化和生命周期。
         /// </summary>
         private static bool DoSquadSpawnActionPrefix(ArcheryFocusAbility __instance)
         {
+            if (TryGetSquadFromAbility(__instance, out EnglishSquad squad))
+            {
+                if (SquadHasTitanTrait(squad))
+                {
+                    Plugin.Logger.LogInfo("[Titan FocusFix] DoSquadSpawnAction 已阻止（通过英雄特质检测）");
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// 从 ArcheryFocusAbility 通过反射 hero 字段获取所属 Squad。
+        /// </summary>
+        private static bool TryGetSquadFromAbility(ArcheryFocusAbility ability, out EnglishSquad squad)
+        {
+            squad = null;
+            if (ability == null) return false;
+
+            // 反射获取 NavSpotTargetableAbility.hero
+            var heroField = typeof(NavSpotTargetableAbility).GetField("hero",
+                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            if (!ReferenceEquals(heroField, null))
+            {
+                var hero = heroField.GetValue(ability);
+                if (hero != null)
+                {
+                    var squadField = hero.GetType().GetField("squad",
+                        BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                    if (!ReferenceEquals(squadField, null))
+                    {
+                        squad = squadField.GetValue(hero) as EnglishSquad;
+                        if (squad != null) return true;
+                    }
+
+                    // 回退：尝试 _squad 字段名
+                    var squadField2 = hero.GetType().GetField("_squad",
+                        BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                    if (!ReferenceEquals(squadField2, null))
+                    {
+                        squad = squadField2.GetValue(hero) as EnglishSquad;
+                        if (squad != null) return true;
+                    }
+                }
+            }
+
+            return squad != null;
+        }
+
+        /// <summary>
+        /// 检查 Squad 是否含有 Titan 特质（通过 TitanAgentRegistry 检测 squad 中的 archery agent）。
+        /// </summary>
+        private static bool SquadHasTitanTrait(EnglishSquad squad)
+        {
+            if (squad == null) return false;
+
+            foreach (Agent agent in squad.agents)
+            {
+                if (TitanAgentRegistry.IsTitanArcherAgent(agent))
+                    return true;
+            }
+            return false;
+        }
+
+        // ────────── DoTargetedAction 重定向（v10） ──────────
+        /// <summary>
+        /// v10: 使用 TitanAgentRegistry 识别泰坦弓箭手。
+        /// 当玩家点击专注技能按钮时，原版 DoTargetedAction 会被拦截，
+        /// 转而调用自建 TitanFocusAbility 的逻辑。
+        /// </summary>
+        private static bool DoTargetedActionRedirectPrefix(ArcheryFocusAbility __instance,
+            NavSpot heroNavSpot, NavSpot target)
+        {
             if (__instance == null) return true;
 
-            // 尝试多种可能的字段名找到 agent 引用
-            string[] candidateFields = { "agent", "_agent", "heroAgent", "_heroAgent", "owner", "_owner" };
             Agent foundAgent = null;
 
+            string[] candidateFields = { "agent", "_agent", "heroAgent", "_heroAgent", "owner", "_owner" };
             foreach (string fieldName in candidateFields)
             {
                 FieldInfo fi = typeof(ArcheryFocusAbility).GetField(fieldName,
@@ -380,7 +538,6 @@ namespace BadNorthTitan
 
             if (foundAgent == null)
             {
-                // 回退: 通过组件链查找
                 FieldInfo compField = typeof(ArcheryFocusAbility).GetField("archery",
                     BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                 if (!ReferenceEquals(compField, null))
@@ -391,47 +548,38 @@ namespace BadNorthTitan
                 }
             }
 
-            if (foundAgent != null && foundAgent.isEnglish && foundAgent.scale > 1.1f
-                && foundAgent.GetComponent<Archery>() != null)
+            // v10: 使用 TitanAgentRegistry 代替 scale > 1.1f 检测
+            if (foundAgent != null && TitanAgentRegistry.IsTitanArcherAgent(foundAgent))
             {
-                int agentId = foundAgent.GetInstanceID();
-                if (_blockedDoSquadSpawnAgents.Add(agentId))
+                TitanFocusAbility titanAbility = foundAgent.GetComponent<TitanFocusAbility>();
+                if (!ReferenceEquals(titanAbility, null))
                 {
+                    try
+                    {
+                        MethodInfo dtAction = typeof(TitanFocusAbility).GetMethod("DoTargetedAction",
+                            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                        if (!ReferenceEquals(dtAction, null))
+                        {
+                            dtAction.Invoke(titanAbility, new object[] { heroNavSpot, target });
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Plugin.Logger.LogWarning("[Titan FocusFix] DoTargetedAction 反射调用失败: " + ex.Message);
+                    }
+
                     Plugin.Logger.LogInfo(string.Format(
-                        "[Titan FocusFix] Archer#{0} DoSquadSpawnAction 已阻止（v8）",
-                        agentId));
+                        "[Titan FocusFix] Archer#{0} DoTargetedAction 已重定向到 TitanFocusAbility（v10）",
+                        foundAgent.GetInstanceID()));
+                    return false;
                 }
-                return false;
+                else
+                {
+                    // 缺失自有 TitanFocusAbility，阻止原版流程（兜底安全）
+                    return false;
+                }
             }
             return true;
-        }
-
-        // ────────── DirectUpdate 兜底保护 ──────────
-        private static Exception DirectUpdateFinalizer(AgentState __instance, Exception __exception)
-        {
-            if (__exception != null && __instance != null)
-            {
-                if (!_agentStateAgentFieldAttempted)
-                {
-                    _agentStateAgentFieldAttempted = true;
-                    _agentStateAgentField = typeof(AgentState).GetField("agent",
-                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                }
-
-                Agent agent = null;
-                if (!ReferenceEquals(_agentStateAgentField, null))
-                    agent = _agentStateAgentField.GetValue(__instance) as Agent;
-
-                if (agent != null && agent.isEnglish && agent.scale > 1.1f && agent.GetComponent<Archery>() != null)
-                {
-                    Plugin.Logger.LogWarning(string.Format(
-                        "[Titan FocusFix] Archer#{0} DirectUpdate 异常已抑制: {1}",
-                        agent.GetInstanceID(),
-                        __exception.GetType().Name));
-                    return null;
-                }
-            }
-            return __exception;
         }
     }
 }
