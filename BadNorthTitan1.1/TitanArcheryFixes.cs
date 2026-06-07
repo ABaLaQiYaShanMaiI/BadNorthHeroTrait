@@ -10,24 +10,21 @@ using Voxels.TowerDefense.Upgrades;
 namespace BadNorthTitan
 {
     /// <summary>
-    /// 泰坦弓箭手索敌、瞄准与弹道修复 v6。
+    /// 泰坦弓箭手索敌、瞄准与弹道修复 v8。
     /// 
     /// 策略：
     /// - 5个核心补丁保持高速直线弹道（GetSight/AimAt/SetupLoS/InSight/Shoot）
-    /// - MaybeSetup 放行 → ArcheryFocusComponent 正常初始化（修复 NPE 循环）
-    /// - ShootAt 放行 → 允许使用专注技能
+    /// - MaybeSetup 阻止 → ArcheryFocusComponent 不初始化，m__1 lambda 不创建（根除 ModifyArrow NPE）
+    /// - ShootAt 阻止 → 专注技能不可用
+    /// - DoSquadSpawnAction prefix → 处理 m__0 lambda 的空引用
     /// - DirectUpdate finalizer → 兜底抑制异常
     /// 
-    /// 【根因分析】
-    /// v5 阻止 MaybeSetup 导致 ArcheryFocusComponent 未初始化。
-    /// ArcheryFocusAbility.DoSquadSpawnAction_Implementation 创建的 lambda (m__0)
-    /// 捕获了未初始化的组件引用，在 AgentState.DirectUpdate 中每帧触发 NPE。
-    /// v6 放行 MaybeSetup 让组件正常初始化，从根源消除空引用。
-    /// 
-    /// 【ModifyArrow】
-    /// Harmony 在 Mono 2.0 CLR 下无法打补丁到 ArcheryFocusAbility.ModifyArrow。
-    /// v6 放行 MaybeSetup 后 ModifyArrow 正常执行，若泰坦的高速弹道参数
-    /// 与其不兼容导致崩溃，由 DirectUpdate finalizer 兜底抑制。
+    /// 【v8 策略】
+    /// MaybeSetup 内部创建 m__1 lambda（per-frame 回调），该 lambda 每帧调用 ModifyArrow 
+    /// 并触发 NPE，导致 DirectUpdate 中断 → Agent 更新停滞 → 士兵死亡。
+    /// Harmony 在 Mono 2.0 CLR 下无法 patch ModifyArrow。
+    /// v8 彻底阻止 MaybeSetup（return false），从根源消除 m__1 lambda。
+    /// 专注技能对泰坦弓箭手不可用，但5个核心补丁提供的自定义索敌/弹道系统正常工作。
     /// </summary>
     public static class TitanArcheryFixes
     {
@@ -49,6 +46,7 @@ namespace BadNorthTitan
         private static HashSet<int> _loggedAimAgents = new HashSet<int>();
         private static HashSet<int> _loggedSetupAgents = new HashSet<int>();
         private static HashSet<int> _blockedMaybeSetupAgents = new HashSet<int>();
+        private static HashSet<int> _blockedDoSquadSpawnAgents = new HashSet<int>();
         private static int _shotCountSinceLastLog = 0;
         private static float _lastShotLogTime = 0f;
         private const float ShotLogInterval = 3f;
@@ -104,25 +102,50 @@ namespace BadNorthTitan
                 prefix: new HarmonyMethod(typeof(TitanArcheryFixes), nameof(ShootPrefix))
             );
 
-            // 放行 MaybeSetup — 允许组件初始化（v6 修复 DoSquadSpawnAction 空引用）
+            // 阻止 MaybeSetup — 根除 m__1 lambda 及 ModifyArrow NPE（v8）
             harmony.Patch(
                 original: AccessTools.Method(typeof(ArcheryFocusComponent), "MaybeSetup"),
                 prefix: new HarmonyMethod(typeof(TitanArcheryFixes), nameof(MaybeSetupPrefix))
             );
 
-            // 放行 ShootAt — 允许使用专注技能（v6 修复）
+            // 阻止 ShootAt — 专注技能对泰坦不可用（v8）
             harmony.Patch(
                 original: AccessTools.Method(typeof(ArcheryFocusComponent), "ShootAt"),
                 prefix: new HarmonyMethod(typeof(TitanArcheryFixes), nameof(ShootAtPrefix))
             );
 
-            // 兜底保护 — AgentState.DirectUpdate 异常抑制（ModifyArrow 不兼容时兜底）
+            // DoSquadSpawnAction null 检查 — 处理 m__0 lambda 空引用（v8）
+            MethodInfo doSquadSpawnActionMethod = AccessTools.Method(typeof(ArcheryFocusAbility), "DoSquadSpawnAction_Implementation");
+            if (!ReferenceEquals(doSquadSpawnActionMethod, null))
+            {
+                harmony.Patch(
+                    original: doSquadSpawnActionMethod,
+                    prefix: new HarmonyMethod(typeof(TitanArcheryFixes), nameof(DoSquadSpawnActionPrefix))
+                );
+            }
+            else
+            {
+                doSquadSpawnActionMethod = AccessTools.Method(typeof(ArcheryFocusAbility), "DoSquadSpawnAction");
+                if (!ReferenceEquals(doSquadSpawnActionMethod, null))
+                {
+                    harmony.Patch(
+                        original: doSquadSpawnActionMethod,
+                        prefix: new HarmonyMethod(typeof(TitanArcheryFixes), nameof(DoSquadSpawnActionPrefix))
+                    );
+                }
+                else
+                {
+                    Plugin.Logger.LogWarning("[TitanArcheryFixes] DoSquadSpawnAction 方法未找到，跳过该补丁");
+                }
+            }
+
+            // 兜底保护 — AgentState.DirectUpdate 异常抑制
             harmony.Patch(
                 original: AccessTools.Method(typeof(AgentState), "DirectUpdate"),
                 finalizer: new HarmonyMethod(typeof(TitanArcheryFixes), nameof(DirectUpdateFinalizer))
             );
 
-            Plugin.Logger.LogInfo("[TitanArcheryFixes] 8个补丁（v6）: GetSight | AimAt | SetupLoS | InSight | Shoot | MaybeSetup(放行) | ShootAt(放行) | DirectUpdate兜底");
+            Plugin.Logger.LogInfo("[TitanArcheryFixes] 9个补丁（v8）: GetSight | AimAt | SetupLoS | InSight | Shoot | MaybeSetup(阻止) | ShootAt(阻止) | DoSquadSpawnAction | DirectUpdate兜底");
         }
 
         // ────────── 索敌 ──────────
@@ -293,11 +316,11 @@ namespace BadNorthTitan
             return true;
         }
 
-        // ────────── 放行 MaybeSetup（v6） ──────────
+        // ────────── 阻止 MaybeSetup（v8） ──────────
         /// <summary>
-        /// v6 修复：放行 MaybeSetup，允许 ArcheryFocusComponent 正常初始化。
-        /// 阻止 MaybeSetup 会导致 SquadSpawn 状态机的 lambda 捕获未初始化的
-        /// 组件引用，进而每帧触发 NullReferenceException。
+        /// v8: 彻底阻止泰坦弓箭手的 MaybeSetup。
+        /// 阻止后 m__1 lambda 不创建 → ModifyArrow NPE 从根源消除。
+        /// 专注技能对泰坦弓箭手不可用。
         /// </summary>
         private static bool MaybeSetupPrefix(ArcheryFocusComponent __instance)
         {
@@ -310,16 +333,15 @@ namespace BadNorthTitan
             if (_blockedMaybeSetupAgents.Add(agentId))
             {
                 Plugin.Logger.LogInfo(string.Format(
-                    "[Titan FocusFix] Archer#{0} MaybeSetup 已放行（v6）",
+                    "[Titan FocusFix] Archer#{0} MaybeSetup 已阻止（v8）",
                     agentId));
             }
-            return true;
+            return false; // 阻止 MaybeSetup → 根除 m__1 lambda
         }
 
-        // ────────── 放行 ShootAt（v6） ──────────
+        // ────────── 阻止 ShootAt（v8） ──────────
         /// <summary>
-        /// v6 修复：放行 ShootAt，允许使用专注技能。
-        /// 签名: ShootAt(ArcheryFocusAbility, Settings, Vector3, Vector3)
+        /// v8: 阻止 ShootAt，专注技能对泰坦弓箭手不可用。
         /// </summary>
         private static bool ShootAtPrefix(ArcheryFocusComponent __instance)
         {
@@ -328,15 +350,63 @@ namespace BadNorthTitan
             Archery archery = __instance.GetComponent<Archery>();
             if (archery == null || !IsTitanArcher(archery.agent)) return true;
 
+            return false; // 阻止 ShootAt → 专注技能不可用
+        }
+
+        // ────────── DoSquadSpawnAction null 检查（v8） ──────────
+        /// <summary>
+        /// v8: DoSquadSpawnAction_Implementation 内部创建 m__0 lambda，
+        /// 捕获 ArcheryFocusComponent 引用。MaybeSetup 被阻止时组件未初始化，
+        /// 导致 m__0 空引用。此 prefix 对泰坦弓箭手跳过 DoSquadSpawnAction。
+        /// </summary>
+        private static bool DoSquadSpawnActionPrefix(ArcheryFocusAbility __instance)
+        {
+            if (__instance == null) return true;
+
+            // 尝试多种可能的字段名找到 agent 引用
+            string[] candidateFields = { "agent", "_agent", "heroAgent", "_heroAgent", "owner", "_owner" };
+            Agent foundAgent = null;
+
+            foreach (string fieldName in candidateFields)
+            {
+                FieldInfo fi = typeof(ArcheryFocusAbility).GetField(fieldName,
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (!ReferenceEquals(fi, null))
+                {
+                    foundAgent = fi.GetValue(__instance) as Agent;
+                    if (foundAgent != null) break;
+                }
+            }
+
+            if (foundAgent == null)
+            {
+                // 回退: 通过组件链查找
+                FieldInfo compField = typeof(ArcheryFocusAbility).GetField("archery",
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (!ReferenceEquals(compField, null))
+                {
+                    Archery archery = compField.GetValue(__instance) as Archery;
+                    if (archery != null)
+                        foundAgent = archery.agent;
+                }
+            }
+
+            if (foundAgent != null && foundAgent.isEnglish && foundAgent.scale > 1.1f
+                && foundAgent.GetComponent<Archery>() != null)
+            {
+                int agentId = foundAgent.GetInstanceID();
+                if (_blockedDoSquadSpawnAgents.Add(agentId))
+                {
+                    Plugin.Logger.LogInfo(string.Format(
+                        "[Titan FocusFix] Archer#{0} DoSquadSpawnAction 已阻止（v8）",
+                        agentId));
+                }
+                return false;
+            }
             return true;
         }
 
-        // ────────── DirectUpdate 兜底保护（v6 新增） ──────────
-        /// <summary>
-        /// 捕获并抑制 AgentState.DirectUpdate 中因 SquadSpawn 状态机残留学循环
-        /// 而抛出的任何异常（主要是 NullReferenceException）。
-        /// 这是最后兜底，在 DoSquadSpawnAction 补丁找不到方法时提供安全保护。
-        /// </summary>
+        // ────────── DirectUpdate 兜底保护 ──────────
         private static Exception DirectUpdateFinalizer(AgentState __instance, Exception __exception)
         {
             if (__exception != null && __instance != null)
@@ -358,10 +428,10 @@ namespace BadNorthTitan
                         "[Titan FocusFix] Archer#{0} DirectUpdate 异常已抑制: {1}",
                         agent.GetInstanceID(),
                         __exception.GetType().Name));
-                    return null; // 抑制异常
+                    return null;
                 }
             }
-            return __exception; // 非泰坦的异常正常抛出
+            return __exception;
         }
     }
 }
