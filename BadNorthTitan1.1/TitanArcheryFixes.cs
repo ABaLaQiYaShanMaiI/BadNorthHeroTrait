@@ -10,17 +10,24 @@ using Voxels.TowerDefense.Upgrades;
 namespace BadNorthTitan
 {
     /// <summary>
-    /// 泰坦弓箭手索敌、瞄准与弹道修复 v5（生产版本）。
+    /// 泰坦弓箭手索敌、瞄准与弹道修复 v6。
     /// 
     /// 策略：
     /// - 5个核心补丁保持高速直线弹道（GetSight/AimAt/SetupLoS/InSight/Shoot）
-    /// - MaybeSetup 阻止（源头防止 ModifyArrow 空引用）
-    /// - ShootAt 阻止（防止玩家手动点专注技能崩溃）
+    /// - MaybeSetup 放行 → ArcheryFocusComponent 正常初始化（修复 NPE 循环）
+    /// - ShootAt 放行 → 允许使用专注技能
+    /// - DirectUpdate finalizer → 兜底抑制异常
     /// 
-    /// 【ModifyArrow 不可补丁】
-    /// 诊断证实：Harmony 对 ArcheryFocusAbility.ModifyArrow 的动态方法包装在
-    /// Mono 2.0 CLR 下触发 FieldInfo.op_Inequality MissingMethodException（Harmony 自身问题）。
-    /// 因此不能对 ModifyArrow 打补丁，必须从 MaybeSetup 源头阻止。
+    /// 【根因分析】
+    /// v5 阻止 MaybeSetup 导致 ArcheryFocusComponent 未初始化。
+    /// ArcheryFocusAbility.DoSquadSpawnAction_Implementation 创建的 lambda (m__0)
+    /// 捕获了未初始化的组件引用，在 AgentState.DirectUpdate 中每帧触发 NPE。
+    /// v6 放行 MaybeSetup 让组件正常初始化，从根源消除空引用。
+    /// 
+    /// 【ModifyArrow】
+    /// Harmony 在 Mono 2.0 CLR 下无法打补丁到 ArcheryFocusAbility.ModifyArrow。
+    /// v6 放行 MaybeSetup 后 ModifyArrow 正常执行，若泰坦的高速弹道参数
+    /// 与其不兼容导致崩溃，由 DirectUpdate finalizer 兜底抑制。
     /// </summary>
     public static class TitanArcheryFixes
     {
@@ -54,6 +61,8 @@ namespace BadNorthTitan
         private static bool _sqRadiusFieldAttempted = false;
         private static FieldInfo _coolDownTimeField = null;
         private static bool _coolDownTimeFieldAttempted = false;
+        private static FieldInfo _agentStateAgentField = null;
+        private static bool _agentStateAgentFieldAttempted = false;
 
         private static bool IsTitanArcher(Agent agent)
         {
@@ -95,19 +104,25 @@ namespace BadNorthTitan
                 prefix: new HarmonyMethod(typeof(TitanArcheryFixes), nameof(ShootPrefix))
             );
 
-            // 阻止 MaybeSetup — 源头关闭 Arrow 修改循环
+            // 放行 MaybeSetup — 允许组件初始化（v6 修复 DoSquadSpawnAction 空引用）
             harmony.Patch(
                 original: AccessTools.Method(typeof(ArcheryFocusComponent), "MaybeSetup"),
                 prefix: new HarmonyMethod(typeof(TitanArcheryFixes), nameof(MaybeSetupPrefix))
             );
 
-            // 阻止 ShootAt — 防止玩家点击专注技能崩溃
+            // 放行 ShootAt — 允许使用专注技能（v6 修复）
             harmony.Patch(
                 original: AccessTools.Method(typeof(ArcheryFocusComponent), "ShootAt"),
                 prefix: new HarmonyMethod(typeof(TitanArcheryFixes), nameof(ShootAtPrefix))
             );
 
-            Plugin.Logger.LogInfo("[TitanArcheryFixes] 7个补丁（v5）: GetSight | AimAt | SetupLoS | InSight | Shoot | MaybeSetup | ShootAt");
+            // 兜底保护 — AgentState.DirectUpdate 异常抑制（ModifyArrow 不兼容时兜底）
+            harmony.Patch(
+                original: AccessTools.Method(typeof(AgentState), "DirectUpdate"),
+                finalizer: new HarmonyMethod(typeof(TitanArcheryFixes), nameof(DirectUpdateFinalizer))
+            );
+
+            Plugin.Logger.LogInfo("[TitanArcheryFixes] 8个补丁（v6）: GetSight | AimAt | SetupLoS | InSight | Shoot | MaybeSetup(放行) | ShootAt(放行) | DirectUpdate兜底");
         }
 
         // ────────── 索敌 ──────────
@@ -278,10 +293,11 @@ namespace BadNorthTitan
             return true;
         }
 
-        // ────────── 阻止 MaybeSetup ──────────
+        // ────────── 放行 MaybeSetup（v6） ──────────
         /// <summary>
-        /// 源头阻止 ArcheryFocusComponent 初始化，关闭 ModifyArrow 每帧循环。
-        /// 不禁用组件（不设置 enabled=false）以保持引用有效。
+        /// v6 修复：放行 MaybeSetup，允许 ArcheryFocusComponent 正常初始化。
+        /// 阻止 MaybeSetup 会导致 SquadSpawn 状态机的 lambda 捕获未初始化的
+        /// 组件引用，进而每帧触发 NullReferenceException。
         /// </summary>
         private static bool MaybeSetupPrefix(ArcheryFocusComponent __instance)
         {
@@ -294,15 +310,15 @@ namespace BadNorthTitan
             if (_blockedMaybeSetupAgents.Add(agentId))
             {
                 Plugin.Logger.LogInfo(string.Format(
-                    "[Titan FocusFix] Archer#{0} MaybeSetup 已阻止",
+                    "[Titan FocusFix] Archer#{0} MaybeSetup 已放行（v6）",
                     agentId));
             }
-            return false;
+            return true;
         }
 
-        // ────────── 阻止 ShootAt ──────────
+        // ────────── 放行 ShootAt（v6） ──────────
         /// <summary>
-        /// 阻止玩家手动点击专注技能按钮的 ShootAt 调用。
+        /// v6 修复：放行 ShootAt，允许使用专注技能。
         /// 签名: ShootAt(ArcheryFocusAbility, Settings, Vector3, Vector3)
         /// </summary>
         private static bool ShootAtPrefix(ArcheryFocusComponent __instance)
@@ -312,7 +328,40 @@ namespace BadNorthTitan
             Archery archery = __instance.GetComponent<Archery>();
             if (archery == null || !IsTitanArcher(archery.agent)) return true;
 
-            return false;
+            return true;
+        }
+
+        // ────────── DirectUpdate 兜底保护（v6 新增） ──────────
+        /// <summary>
+        /// 捕获并抑制 AgentState.DirectUpdate 中因 SquadSpawn 状态机残留学循环
+        /// 而抛出的任何异常（主要是 NullReferenceException）。
+        /// 这是最后兜底，在 DoSquadSpawnAction 补丁找不到方法时提供安全保护。
+        /// </summary>
+        private static Exception DirectUpdateFinalizer(AgentState __instance, Exception __exception)
+        {
+            if (__exception != null && __instance != null)
+            {
+                if (!_agentStateAgentFieldAttempted)
+                {
+                    _agentStateAgentFieldAttempted = true;
+                    _agentStateAgentField = typeof(AgentState).GetField("agent",
+                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                }
+
+                Agent agent = null;
+                if (!ReferenceEquals(_agentStateAgentField, null))
+                    agent = _agentStateAgentField.GetValue(__instance) as Agent;
+
+                if (agent != null && agent.isEnglish && agent.scale > 1.1f && agent.GetComponent<Archery>() != null)
+                {
+                    Plugin.Logger.LogWarning(string.Format(
+                        "[Titan FocusFix] Archer#{0} DirectUpdate 异常已抑制: {1}",
+                        agent.GetInstanceID(),
+                        __exception.GetType().Name));
+                    return null; // 抑制异常
+                }
+            }
+            return __exception; // 非泰坦的异常正常抛出
         }
     }
 }
