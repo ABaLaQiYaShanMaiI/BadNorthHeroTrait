@@ -4,12 +4,13 @@ using System.Reflection;
 using BepInEx;
 using BepInEx.Logging;
 using BadNorthAPI;
+using HarmonyLib;
 using UnityEngine;
 
 namespace BadNorthTitan
 {
     [BepInDependency("nacu.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("nacu.badnorthtitan", "Bad North - Titan Trait", "1.0")]
+    [BepInPlugin("nacu.badnorthtitan1.1", "Bad North - Titan Trait 1.1", "1.1")]
     public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource Logger;
@@ -32,7 +33,11 @@ namespace BadNorthTitan
             // 3. Add localization
             CustomText.CustomTermsAdded += AddCustomTerms;
 
-            Logger.LogInfo(string.Format("======== BadNorthTitan 已就绪，特性ID: {0} ========", Titan.Titan_ID));
+            // 4. Apply Titan archery fixes (sight/aim patches for giant archers)
+            Harmony harmony = new Harmony("nacu.badnorthtitan1.1.archeryfix");
+            TitanArcheryFixes.ApplyPatches(harmony);
+
+            Logger.LogInfo(string.Format("======== BadNorthTitan 1.1 已就绪，特性ID: {0} ========", Titan.Titan_ID));
         }
 
         private void AddCustomTerms()
