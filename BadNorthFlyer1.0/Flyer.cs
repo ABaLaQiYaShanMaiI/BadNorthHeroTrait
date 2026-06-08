@@ -43,61 +43,23 @@ namespace BadNorthFlyer
 
         public Flyer()
         {
-            Debugger.Log("FLYER CREATED");
-            this.upgradeType = ScriptableObject.CreateInstance<HeroUpgradeType>();
-            this.upgradeType.typeEnum = (HeroUpgradeTypeEnum)4; // Trait
-            this.upgradeType.canBeStartItem = true;
-            this.upgradeType.unknownNameTerm = "META_INVENTORY/UNKNOWN/TRAIT/NAME";
-            this.upgradeType.unknownDescriptionTerm = "META_INVENTORY/UNKNOWN/TRAIT/DESC";
-            this.upgradeType.startItemLockedTerm = "META_INVENTORY/START/TRAIT/LOCKED";
-            this.upgradeType.startItemUnlockedTerm = "META_INVENTORY/START/TRAIT/UNLOCKED";
-            this.affectsPortrait = false;
-            base.name = FLYER_ID;
-            this.nameTerm = "YYYYY/TRAIT/FLYER/NAME";
-            this.shortDescription = "YYYYY/TRAIT/FLYER/DESCSHORT";
-            this.infoSprite = CustomSprites.Sprites["trait_flyer"];
-            HeroUpgradeDefinition.Level[] array = new HeroUpgradeDefinition.Level[1];
-            int num = 0;
-            HeroUpgradeDefinition.Level level = default(HeroUpgradeDefinition.Level);
-            level.cost = 0;
-            level.description = "YYYYY/TRAIT/FLYER/DESC";
-            array[num] = level;
-            this.levels = array;
+            this.upgradeType = TraitHelper.CreateTraitUpgradeType();
+            TraitHelper.SetupBaseDefinition(this, FLYER_ID,
+                "YYYYY/TRAIT/FLYER/NAME",
+                "YYYYY/TRAIT/FLYER/DESCSHORT",
+                CustomSprites.Sprites["trait_flyer"],
+                TraitHelper.CreateSingleLevel("YYYYY/TRAIT/FLYER/DESC"));
         }
 
         // ── 反射辅助 ──
         private static object GetFieldValue(AxeThrowing instance, string fieldName)
         {
-            FieldInfo field = typeof(AxeThrowing).GetField(fieldName,
-                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-            if (ReferenceEquals(field, null))
-            {
-                Plugin.Logger.LogWarning(string.Format("[Flyer] 反射字段 {0} 未找到", fieldName));
-                return null;
-            }
-            return field.GetValue(instance);
+            return ReflectionHelper.GetFieldValue(instance, fieldName, "Flyer");
         }
 
-        private static void SetFieldValue(AxeThrowing instance, string fieldName, object value)
+        private static bool SetFieldValue(AxeThrowing instance, string fieldName, object value)
         {
-            FieldInfo field = typeof(AxeThrowing).GetField(fieldName,
-                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-            if (ReferenceEquals(field, null))
-            {
-                Plugin.Logger.LogWarning(string.Format("[Flyer] 反射字段 {0} 未找到，无法设置", fieldName));
-                return;
-            }
-            field.SetValue(instance, value);
-        }
-
-        private static T GetOrAddComponent<T>(GameObject go) where T : Component
-        {
-            T comp = go.GetComponent<T>();
-            if (ReferenceEquals(comp, null))
-            {
-                comp = go.AddComponent<T>();
-            }
-            return comp;
+            return ReflectionHelper.SetFieldValue(instance, fieldName, value, "Flyer");
         }
 
         // ── 三级容错获取 AxeThrowing 模板 ──
@@ -170,17 +132,17 @@ namespace BadNorthFlyer
         }
 
         /// <summary>
-        /// 为英雄添加飞斧能力
+        /// 为英雄添加飞斧能力（检查重复组件）
         /// </summary>
         private void HeroAxe(Agent agent)
         {
-            if (agent.GetComponent<AxeThrowing>() != null)
+            if (!ReferenceEquals(agent.GetComponent<AxeThrowing>(), null))
                 return;
 
-            GetOrAddComponent<LineOfSight>(agent.gameObject);
+            ComponentHelper.GetOrAddComponent<LineOfSight>(agent.gameObject);
             AxeThrowing template = GetAxeThrowingTemplate();
 
-            AxeThrowing axeThrowing = agent.gameObject.AddComponent<AxeThrowing>();
+            AxeThrowing axeThrowing = ComponentHelper.GetOrAddComponent<AxeThrowing>(agent.gameObject);
             if (!ReferenceEquals(template, null))
             {
                 SetFieldValue(axeThrowing, FIELD_PREPARE_SOUND, GetFieldValue(template, FIELD_PREPARE_SOUND));

@@ -38,28 +38,12 @@ namespace BadNorthRegenerative
 
         public Regenerative()
         {
-            Debugger.Log("REGENERATIVE CREATED");
-            this.upgradeType = ScriptableObject.CreateInstance<HeroUpgradeType>();
-            this.upgradeType.typeEnum = (HeroUpgradeTypeEnum)4;
-            this.upgradeType.canBeStartItem = true;
-            this.upgradeType.unknownNameTerm = "META_INVENTORY/UNKNOWN/TRAIT/NAME";
-            this.upgradeType.unknownDescriptionTerm = "META_INVENTORY/UNKNOWN/TRAIT/DESC";
-            this.upgradeType.startItemLockedTerm = "META_INVENTORY/START/TRAIT/LOCKED";
-            this.upgradeType.startItemUnlockedTerm = "META_INVENTORY/START/TRAIT/UNLOCKED";
-            this.affectsPortrait = false;
-            base.name = REGENERATIVE_ID;
-            this.nameTerm = "NACU/TRAIT/REGENERATIVE/NAME";
-            this.shortDescription = "NACU/TRAIT/REGENERATIVE/DESCSHORT";
-            this.infoSprite = CustomSprites.Sprites["trait_regenerative"];
-            HeroUpgradeDefinition.Level[] array = new HeroUpgradeDefinition.Level[1];
-            int num = 0;
-            HeroUpgradeDefinition.Level[] array2 = array;
-            int num2 = num;
-            HeroUpgradeDefinition.Level level = default(HeroUpgradeDefinition.Level);
-            level.cost = 0;
-            level.description = "NACU/TRAIT/REGENERATIVE/DESC";
-            array2[num2] = level;
-            this.levels = array;
+            this.upgradeType = TraitHelper.CreateTraitUpgradeType();
+            TraitHelper.SetupBaseDefinition(this, REGENERATIVE_ID,
+                "NACU/TRAIT/REGENERATIVE/NAME",
+                "NACU/TRAIT/REGENERATIVE/DESCSHORT",
+                CustomSprites.Sprites["trait_regenerative"],
+                TraitHelper.CreateSingleLevel("NACU/TRAIT/REGENERATIVE/DESC"));
         }
 
         public override void OnAppliedToSquad(EnglishSquad squad, int upgradeLevel)
@@ -256,14 +240,8 @@ namespace BadNorthRegenerative
                 {
                     component.stunLevels[i] *= 0.1f;
                 }
-                if (agent.GetComponent<RegenerativeBuff>() == null)
-                {
-                    agent.gameObject.AddComponent<RegenerativeBuff>();
-                }
-                if (agent.GetComponent<RegenerativeJumpResponder>() == null)
-                {
-                    agent.gameObject.AddComponent<RegenerativeJumpResponder>();
-                }
+                ComponentHelper.GetOrAddComponent<RegenerativeBuff>(agent.gameObject);
+                ComponentHelper.GetOrAddComponent<RegenerativeJumpResponder>(agent.gameObject);
                 this.RemoveShield(component, agent);
                 int num = Mathf.Clamp(squadLevel, 0, this.speedLevels.Length - 1);
                 agent.maxSpeed = this.speedLevels[num];
@@ -272,10 +250,7 @@ namespace BadNorthRegenerative
             }
             if (agent.GetComponent<Spear>() != null)
             {
-                if (agent.GetComponent<RegenerativeSpearBuff>() == null)
-                {
-                    agent.gameObject.AddComponent<RegenerativeSpearBuff>();
-                }
+                ComponentHelper.GetOrAddComponent<RegenerativeSpearBuff>(agent.gameObject);
                 this.RemoveSpearShieldIfPresent(agent);
                 return;
             }

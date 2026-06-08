@@ -21,6 +21,7 @@ namespace BadNorthFlyer
 
             // 1. Load custom sprite
             CustomSprites.AddCustomSprite(modPath, "trait_flyer");
+            Logger.LogInfo("[Flyer] Sprite loaded");
 
             // 2. Register trait
             CustomTraits.RegisterTrait(
@@ -28,11 +29,20 @@ namespace BadNorthFlyer
                 Flyer.FLYER_ID,
                 true  // alwaysUnlocked
             );
+            Logger.LogInfo("[Flyer] Trait registered: " + Flyer.FLYER_ID);
 
-            // 3. Add localization
+            // 3. Add localization (防重复订阅)
+            CustomText.CustomTermsAdded -= AddCustomTerms;
             CustomText.CustomTermsAdded += AddCustomTerms;
+            Logger.LogInfo("[Flyer] Localization callback added");
 
-            Logger.LogInfo(string.Format("======== BadNorthFlyer 1.0 已就绪，特性ID: {0} ========", Flyer.FLYER_ID));
+            Logger.LogInfo("======== [Flyer] Ready (1.0) ========");
+        }
+
+        public void OnDisable()
+        {
+            CustomText.CustomTermsAdded -= AddCustomTerms;
+            Logger.LogInfo("[Flyer] Disabled");
         }
 
         private void AddCustomTerms()

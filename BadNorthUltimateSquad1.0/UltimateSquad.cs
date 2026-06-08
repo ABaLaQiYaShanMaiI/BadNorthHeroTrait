@@ -17,27 +17,12 @@ namespace BadNorthUltimateSquad
 
         public UltimateSquad()
         {
-            Plugin.Logger.LogInfo("UltimateSquad CREATED");
-            this.upgradeType = ScriptableObject.CreateInstance<HeroUpgradeType>();
-            this.upgradeType.typeEnum = HeroUpgradeTypeEnum.Trait;
-            this.upgradeType.canBeStartItem = true;
-            this.upgradeType.unknownNameTerm = "META_INVENTORY/UNKNOWN/TRAIT/NAME";
-            this.upgradeType.unknownDescriptionTerm = "META_INVENTORY/UNKNOWN/TRAIT/DESC";
-            this.upgradeType.startItemLockedTerm = "META_INVENTORY/START/TRAIT/LOCKED";
-            this.upgradeType.startItemUnlockedTerm = "META_INVENTORY/START/TRAIT/UNLOCKED";
-            this.affectsPortrait = false;
-            base.name = ULTIMATE_ID;
-            this.nameTerm = "YYYYY/TRAIT/ULTIMATE/NAME";
-            this.shortDescription = "YYYYY/TRAIT/ULTIMATE/DESCSHORT";
-            this.infoSprite = CustomSprites.Sprites["trait_ultimatesquad"];
-            this.levels = new HeroUpgradeDefinition.Level[]
-            {
-                new HeroUpgradeDefinition.Level
-                {
-                    cost = 0,
-                    description = "YYYYY/TRAIT/ULTIMATE/DESC"
-                }
-            };
+            this.upgradeType = TraitHelper.CreateTraitUpgradeType();
+            TraitHelper.SetupBaseDefinition(this, ULTIMATE_ID,
+                "YYYYY/TRAIT/ULTIMATE/NAME",
+                "YYYYY/TRAIT/ULTIMATE/DESCSHORT",
+                CustomSprites.Sprites["trait_ultimatesquad"],
+                TraitHelper.CreateSingleLevel("YYYYY/TRAIT/ULTIMATE/DESC"));
         }
 
         // ── 主入口：应用到小队 ──
@@ -45,6 +30,7 @@ namespace BadNorthUltimateSquad
         public override void OnAppliedToSquad(EnglishSquad squad, int upgradeLevel)
         {
             this.HeroEffect(squad.heroAgent);
+            squad.onAgentCreated -= this.UltimateEffect;
             squad.onAgentCreated += this.UltimateEffect;
         }
 

@@ -21,6 +21,7 @@ namespace BadNorthAxeThrower
 
             // 1. Load custom sprite
             CustomSprites.AddCustomSprite(modPath, "trait_axethrower");
+            Logger.LogInfo("[AxeThrower] Sprite loaded");
 
             // 2. Register trait
             CustomTraits.RegisterTrait(
@@ -28,11 +29,20 @@ namespace BadNorthAxeThrower
                 AxeThrower.AXETHROWER_ID,
                 true  // alwaysUnlocked
             );
+            Logger.LogInfo("[AxeThrower] Trait registered: " + AxeThrower.AXETHROWER_ID);
 
-            // 3. Add localization
+            // 3. Add localization (防重复订阅)
+            CustomText.CustomTermsAdded -= AddCustomTerms;
             CustomText.CustomTermsAdded += AddCustomTerms;
+            Logger.LogInfo("[AxeThrower] Localization callback added");
 
-            Logger.LogInfo("BadNorthAxeThrower 1.0 loaded");
+            Logger.LogInfo("======== [AxeThrower] Ready (1.0) ========");
+        }
+
+        public void OnDisable()
+        {
+            CustomText.CustomTermsAdded -= AddCustomTerms;
+            Logger.LogInfo("[AxeThrower] Disabled");
         }
 
         private void AddCustomTerms()

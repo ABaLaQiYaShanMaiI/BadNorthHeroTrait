@@ -21,6 +21,7 @@ namespace BadNorthThorns
 
             // 1. Load custom sprite
             CustomSprites.AddCustomSprite(modPath, "trait_thorns");
+            Logger.LogInfo("[Thorns] Sprite loaded");
 
             // 2. Register trait
             CustomTraits.RegisterTrait(
@@ -28,11 +29,20 @@ namespace BadNorthThorns
                 Thorns.THORNS_ID,
                 false  // not alwaysUnlocked
             );
+            Logger.LogInfo("[Thorns] Trait registered: " + Thorns.THORNS_ID);
 
-            // 3. Add localization
+            // 3. Add localization (防重复订阅)
+            CustomText.CustomTermsAdded -= AddCustomTerms;
             CustomText.CustomTermsAdded += AddCustomTerms;
+            Logger.LogInfo("[Thorns] Localization callback added");
 
-            Logger.LogInfo($"======== BadNorthThorns 1.0 已就绪，特性ID: {Thorns.THORNS_ID} ========");
+            Logger.LogInfo("======== [Thorns] Ready (1.0) ========");
+        }
+
+        public void OnDisable()
+        {
+            CustomText.CustomTermsAdded -= AddCustomTerms;
+            Logger.LogInfo("[Thorns] Disabled");
         }
 
         private void AddCustomTerms()

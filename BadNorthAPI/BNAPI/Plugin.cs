@@ -11,9 +11,14 @@ namespace BadNorthAPI
 	[BepInPlugin("nacu.bnapi.modular", "BN Mod API (Modular)", "1.0")]
 	public class Plugin : BaseUnityPlugin
 	{
+		public static ManualLogSource Logger;
+		public static ManualLogSource logger;
+		public static ConfigFile ConfigRef;
+
 		public void OnEnable()
 		{
-			Plugin.logger = base.Logger;
+			Logger = base.Logger;
+			logger = Logger;
 			Plugin.ConfigRef = Config;
 
 			// 初始化全局调试日志开关（从 BepInEx 配置文件读取）
@@ -30,12 +35,8 @@ namespace BadNorthAPI
 				sb.Append(CustomTraits.startingTraits[i]);
 			}
 			sb.Append(" (API 1.0) ========");
-			Plugin.logger.LogInfo(sb.ToString());
+			Logger.LogInfo(sb.ToString());
 		}
-
-		public static ManualLogSource logger;
-
-		public static ConfigFile ConfigRef;
 
 		public const string VERSION = "1.0";
 	}

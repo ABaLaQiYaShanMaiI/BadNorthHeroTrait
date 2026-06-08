@@ -20,16 +20,26 @@ namespace BadNorthUltimateSquad
             string modPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + Path.DirectorySeparatorChar;
 
             CustomSprites.AddCustomSprite(modPath, "trait_ultimatesquad");
+            Logger.LogInfo("[UltimateSquad] Sprite loaded");
 
             CustomTraits.RegisterTrait(
                 ScriptableObject.CreateInstance<UltimateSquad>(),
                 UltimateSquad.ULTIMATE_ID,
                 true
             );
+            Logger.LogInfo("[UltimateSquad] Trait registered: " + UltimateSquad.ULTIMATE_ID);
 
+            CustomText.CustomTermsAdded -= AddCustomTerms;
             CustomText.CustomTermsAdded += AddCustomTerms;
+            Logger.LogInfo("[UltimateSquad] Localization callback added");
 
-            Logger.LogInfo("======== BadNorthUltimateSquad 1.0 已就绪 ========");
+            Logger.LogInfo("======== [UltimateSquad] Ready (1.0) ========");
+        }
+
+        public void OnDisable()
+        {
+            CustomText.CustomTermsAdded -= AddCustomTerms;
+            Logger.LogInfo("[UltimateSquad] Disabled");
         }
 
         private void AddCustomTerms()

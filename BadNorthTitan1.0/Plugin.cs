@@ -21,6 +21,7 @@ namespace BadNorthTitan
 
             // 1. Load custom sprite
             CustomSprites.AddCustomSprite(modPath, "trait_titan");
+            Logger.LogInfo("[Titan] Sprite loaded");
 
             // 2. Register trait
             CustomTraits.RegisterTrait(
@@ -28,11 +29,20 @@ namespace BadNorthTitan
                 Titan.Titan_ID,
                 true  // alwaysUnlocked
             );
+            Logger.LogInfo("[Titan] Trait registered: " + Titan.Titan_ID);
 
-            // 3. Add localization
+            // 3. Add localization (防重复订阅)
+            CustomText.CustomTermsAdded -= AddCustomTerms;
             CustomText.CustomTermsAdded += AddCustomTerms;
+            Logger.LogInfo("[Titan] Localization callback added");
 
-            Logger.LogInfo(string.Format("======== BadNorthTitan 1.0 已就绪，特性ID: {0} ========", Titan.Titan_ID));
+            Logger.LogInfo("======== [Titan] Ready (1.0) ========");
+        }
+
+        public void OnDisable()
+        {
+            CustomText.CustomTermsAdded -= AddCustomTerms;
+            Logger.LogInfo("[Titan] Disabled");
         }
 
         private void AddCustomTerms()

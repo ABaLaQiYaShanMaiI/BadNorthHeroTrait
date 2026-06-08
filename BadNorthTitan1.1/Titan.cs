@@ -44,26 +44,12 @@ namespace BadNorthTitan
 
         public Titan()
         {
-            Debugger.Log("TITAN CREATED");
-            this.upgradeType = ScriptableObject.CreateInstance<HeroUpgradeType>();
-            this.upgradeType.typeEnum = (HeroUpgradeTypeEnum)4; // Trait
-            this.upgradeType.canBeStartItem = true;
-            this.upgradeType.unknownNameTerm = "META_INVENTORY/UNKNOWN/TRAIT/NAME";
-            this.upgradeType.unknownDescriptionTerm = "META_INVENTORY/UNKNOWN/TRAIT/DESC";
-            this.upgradeType.startItemLockedTerm = "META_INVENTORY/START/TRAIT/LOCKED";
-            this.upgradeType.startItemUnlockedTerm = "META_INVENTORY/START/TRAIT/UNLOCKED";
-            this.affectsPortrait = false;
-            base.name = Titan_ID;
-            this.nameTerm = "YYYYY/TRAIT/TITAN/NAME";
-            this.shortDescription = "YYYYY/TRAIT/TITAN/DESCSHORT";
-            this.infoSprite = CustomSprites.Sprites["trait_titan"];
-            HeroUpgradeDefinition.Level[] array = new HeroUpgradeDefinition.Level[1];
-            int num = 0;
-            HeroUpgradeDefinition.Level level = default(HeroUpgradeDefinition.Level);
-            level.cost = 0;
-            level.description = "YYYYY/TRAIT/TITAN/DESC";
-            array[num] = level;
-            this.levels = array;
+            this.upgradeType = TraitHelper.CreateTraitUpgradeType();
+            TraitHelper.SetupBaseDefinition(this, Titan_ID,
+                "YYYYY/TRAIT/TITAN/NAME",
+                "YYYYY/TRAIT/TITAN/DESCSHORT",
+                CustomSprites.Sprites["trait_titan"],
+                TraitHelper.CreateSingleLevel("YYYYY/TRAIT/TITAN/DESC"));
         }
 
         /// <summary>

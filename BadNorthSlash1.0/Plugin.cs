@@ -20,16 +20,26 @@ namespace BadNorthSlash
             string modPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + Path.DirectorySeparatorChar;
 
             CustomSprites.AddCustomSprite(modPath, "trait_slash");
+            Logger.LogInfo("[Slash] Sprite loaded");
 
             CustomTraits.RegisterTrait(
                 ScriptableObject.CreateInstance<SweepingBlade>(),
                 SweepingBlade.Slash_ID,
                 true
             );
+            Logger.LogInfo("[Slash] Trait registered: " + SweepingBlade.Slash_ID);
 
+            CustomText.CustomTermsAdded -= AddCustomTerms;
             CustomText.CustomTermsAdded += AddCustomTerms;
+            Logger.LogInfo("[Slash] Localization callback added");
 
-            Logger.LogInfo("======== BadNorthSlash 1.0 已就绪 ========");
+            Logger.LogInfo("======== [Slash] Ready (1.0) ========");
+        }
+
+        public void OnDisable()
+        {
+            CustomText.CustomTermsAdded -= AddCustomTerms;
+            Logger.LogInfo("[Slash] Disabled");
         }
 
         private void AddCustomTerms()

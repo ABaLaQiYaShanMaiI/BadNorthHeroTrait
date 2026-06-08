@@ -27,6 +27,7 @@ namespace BadNorthTitan
 
             // 1. Load custom sprite
             CustomSprites.AddCustomSprite(modPath, "trait_titan");
+            Logger.LogInfo("[Titan1.1] Sprite loaded");
 
             // 2. Register trait
             CustomTraits.RegisterTrait(
@@ -34,19 +35,29 @@ namespace BadNorthTitan
                 Titan.Titan_ID,
                 true  // alwaysUnlocked
             );
+            Logger.LogInfo("[Titan1.1] Trait registered: " + Titan.Titan_ID);
 
-            // 3. Add localization
+            // 3. Add localization (防重复订阅)
+            CustomText.CustomTermsAdded -= AddCustomTerms;
             CustomText.CustomTermsAdded += AddCustomTerms;
+            Logger.LogInfo("[Titan1.1] Localization callback added");
 
             // 4. Apply Titan archery fixes (sight/aim patches for giant archers)
             Harmony harmony = new Harmony("nacu.badnorthtitan1.1.archeryfix");
             TitanArcheryFixes.ApplyPatches(harmony);
+            Logger.LogInfo("[Titan1.1] Harmony patches applied");
 
             // 5. 立即执行一次全局清理；后续由 Update() 每 2 秒驱动
             DoGlobalCleanup();
             _cleanupTimer = 0f;
 
-            Logger.LogInfo(string.Format("======== BadNorthTitan 1.1 已就绪，特性ID: {0} ========", Titan.Titan_ID));
+            Logger.LogInfo("======== [Titan1.1] Ready (1.1) ========");
+        }
+
+        public void OnDisable()
+        {
+            CustomText.CustomTermsAdded -= AddCustomTerms;
+            Logger.LogInfo("[Titan1.1] Disabled");
         }
 
         void Update()
