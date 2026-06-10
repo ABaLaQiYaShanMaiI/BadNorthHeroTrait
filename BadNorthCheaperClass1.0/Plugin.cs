@@ -21,6 +21,7 @@ namespace BadNorthCheaperClass
 
             // 1. Load custom sprite
             CustomSprites.AddCustomSprite(modPath, "trait_cheaperclass");
+            Logger.LogInfo("[CheaperClass] Sprite loaded");
 
             // 2. Register trait
             CustomTraits.RegisterTrait(
@@ -28,11 +29,20 @@ namespace BadNorthCheaperClass
                 CheaperClass.CHEAPERCLASS_ID,
                 true  // alwaysUnlocked
             );
+            Logger.LogInfo("[CheaperClass] Trait registered: " + CheaperClass.CHEAPERCLASS_ID);
 
-            // 3. Add localization
+            // 3. Add localization (防重复订阅)
+            CustomText.CustomTermsAdded -= AddCustomTerms;
             CustomText.CustomTermsAdded += AddCustomTerms;
+            Logger.LogInfo("[CheaperClass] Localization callback added");
 
-            Logger.LogInfo($"======== BadNorthCheaperClass 1.0 已就绪，特性ID: {CheaperClass.CHEAPERCLASS_ID} ========");
+            Logger.LogInfo("======== [CheaperClass] Ready (1.0) ========");
+        }
+
+        public void OnDisable()
+        {
+            CustomText.CustomTermsAdded -= AddCustomTerms;
+            Logger.LogInfo("[CheaperClass] Disabled");
         }
 
         private void AddCustomTerms()

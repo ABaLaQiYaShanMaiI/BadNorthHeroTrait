@@ -24,6 +24,13 @@ namespace BadNorthAPI
         private static ConstructorInfo _upgradeEntryConstructor;
         private static bool _reflectionFailed = false;
 
+        // 日志门控：反射/构造器失败只报一次
+        private static bool _reflectionErrorLogged = false;
+        private static bool _upgradesFieldErrorLogged = false;
+        private static bool _constructorErrorLogged = false;
+        private static bool _upgradeFieldErrorLogged = false;
+        private static bool _isStartingFieldErrorLogged = false;
+
         private static void EnsureReflectionInit()
         {
             // 使用 ReferenceEquals 避免 Mono 2.0 下 FieldInfo.op_Inequality 缺失问题
@@ -53,26 +60,48 @@ namespace BadNorthAPI
                     Plugin.logger.LogInfo(sb.ToString());
                 }
 
-                // 遍历所有构造函数，寻找可用的
-                foreach (ConstructorInfo ctor in _upgradeEntryType.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+                // 优先级明确的构造器匹配策略：
+                // 优先匹配 (HeroUpgradeDefinition, bool)
+                // 其次 (HeroUpgradeDefinition, int)
+                // 再次 (HeroUpgradeDefinition, int, bool)
+                // 最后才考虑 (HeroUpgradeDefinition, object) 等宽泛情况
+                ConstructorInfo[] allCtors = _upgradeEntryType.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+                // Priority 1: (HeroUpgradeDefinition, bool)
+                _upgradeEntryConstructor = FindConstructorWithParams(allCtors,
+                    typeof(HeroUpgradeDefinition), typeof(bool));
+                if (!ReferenceEquals(_upgradeEntryConstructor, null))
                 {
-                    ParameterInfo[] parameters = ctor.GetParameters();
-                    if (parameters.Length >= 2 &&
-                        parameters[0].ParameterType.IsAssignableFrom(typeof(HeroUpgradeDefinition)) &&
-                        (parameters[1].ParameterType.Equals(typeof(bool)) || 
-                         parameters[1].ParameterType.Equals(typeof(int)) ||
-                         parameters[1].ParameterType.Equals(typeof(object))))
+                    Plugin.logger.LogInfo("[BadNorthAPI] Found UpgradeEntry constructor (Priority 1): (HeroUpgradeDefinition, bool)");
+                }
+                else
+                {
+                    // Priority 2: (HeroUpgradeDefinition, int)
+                    _upgradeEntryConstructor = FindConstructorWithParams(allCtors,
+                        typeof(HeroUpgradeDefinition), typeof(int));
+                    if (!ReferenceEquals(_upgradeEntryConstructor, null))
                     {
-                        _upgradeEntryConstructor = ctor;
-                        StringBuilder sb = new StringBuilder("[BadNorthAPI] Found UpgradeEntry constructor with signature (");
-                        for (int i = 0; i < parameters.Length; i++)
+                        Plugin.logger.LogInfo("[BadNorthAPI] Found UpgradeEntry constructor (Priority 2): (HeroUpgradeDefinition, int)");
+                    }
+                    else
+                    {
+                        // Priority 3: (HeroUpgradeDefinition, int, bool)
+                        _upgradeEntryConstructor = FindConstructorWithParams(allCtors,
+                            typeof(HeroUpgradeDefinition), typeof(int), typeof(bool));
+                        if (!ReferenceEquals(_upgradeEntryConstructor, null))
                         {
-                            if (i > 0) sb.Append(", ");
-                            sb.Append(parameters[i].ParameterType.Name);
+                            Plugin.logger.LogInfo("[BadNorthAPI] Found UpgradeEntry constructor (Priority 3): (HeroUpgradeDefinition, int, bool)");
                         }
-                        sb.Append(")");
-                        Plugin.logger.LogInfo(sb.ToString());
-                        break;
+                        else
+                        {
+                            // Priority 4 (fallback): (HeroUpgradeDefinition, object)
+                            _upgradeEntryConstructor = FindConstructorWithParams(allCtors,
+                                typeof(HeroUpgradeDefinition), typeof(object));
+                            if (!ReferenceEquals(_upgradeEntryConstructor, null))
+                            {
+                                Plugin.logger.LogInfo("[BadNorthAPI] Found UpgradeEntry constructor (Priority 4 - fallback): (HeroUpgradeDefinition, object)");
+                            }
+                        }
                     }
                 }
 
@@ -89,12 +118,42 @@ namespace BadNorthAPI
             }
         }
 
+        /// <summary>
+        /// 在给定构造函数列表中精确匹配指定参数类型序列的构造函数
+        /// </summary>
+        private static ConstructorInfo FindConstructorWithParams(ConstructorInfo[] ctors, params Type[] paramTypes)
+        {
+            foreach (ConstructorInfo ctor in ctors)
+            {
+                ParameterInfo[] parameters = ctor.GetParameters();
+                if (parameters.Length != paramTypes.Length)
+                    continue;
+
+                bool match = true;
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    if (!parameters[i].ParameterType.Equals(paramTypes[i]))
+                    {
+                        match = false;
+                        break;
+                    }
+                }
+                if (match)
+                    return ctor;
+            }
+            return null;
+        }
+
         private static IList GetUpgrades(Voxels.TowerDefense.ProfileInternals.MetaInventory self)
         {
             EnsureReflectionInit();
             if (_reflectionFailed || ReferenceEquals(_upgradesField, null))
             {
-                Plugin.logger.LogError("[BadNorthAPI] Cannot get upgrades: reflection initialization failed.");
+                if (!_upgradesFieldErrorLogged)
+                {
+                    _upgradesFieldErrorLogged = true;
+                    Plugin.logger.LogError("[BadNorthAPI] Cannot get upgrades: reflection initialization failed. (此错误仅显示一次)");
+                }
                 return null;
             }
             return (IList)_upgradesField.GetValue(self);
@@ -105,7 +164,11 @@ namespace BadNorthAPI
             EnsureReflectionInit();
             if (_reflectionFailed || ReferenceEquals(_upgradeEntryConstructor, null))
             {
-                Plugin.logger.LogError("[BadNorthAPI] Cannot create UpgradeEntry: constructor not found. Game version may be incompatible.");
+                if (!_constructorErrorLogged)
+                {
+                    _constructorErrorLogged = true;
+                    Plugin.logger.LogError("[BadNorthAPI] Cannot create UpgradeEntry: constructor not found. Game version may be incompatible. (此错误仅显示一次)");
+                }
                 return null;
             }
 
@@ -119,12 +182,22 @@ namespace BadNorthAPI
             if (parameters.Length == 2)
             {
                 // 2参数: (HeroUpgradeDefinition, bool/int/object)
-                object secondParam = isStarting;
-                if (parameters[1].ParameterType.Equals(typeof(int)))
-                    secondParam = isStarting ? 1 : 0;
+                if (parameters[1].ParameterType.Equals(typeof(bool)))
+                    args[1] = isStarting;
+                else if (parameters[1].ParameterType.Equals(typeof(int)))
+                    args[1] = isStarting ? 1 : 0;
                 else if (parameters[1].ParameterType.Equals(typeof(object)))
-                    secondParam = (object)isStarting;
-                args[1] = secondParam;
+                    args[1] = (object)isStarting;
+                else
+                {
+                    if (!_constructorErrorLogged)
+                    {
+                        _constructorErrorLogged = true;
+                        Plugin.logger.LogError(string.Format("[BadNorthAPI] Unexpected 2-param UpgradeEntry constructor type: {0}. (此错误仅显示一次)",
+                            parameters[1].ParameterType.FullName));
+                    }
+                    return null;
+                }
             }
             else if (parameters.Length == 3)
             {
@@ -135,7 +208,12 @@ namespace BadNorthAPI
             }
             else
             {
-                Plugin.logger.LogError($"[BadNorthAPI] Unexpected UpgradeEntry constructor parameter count: {parameters.Length}");
+                if (!_constructorErrorLogged)
+                {
+                    _constructorErrorLogged = true;
+                    Plugin.logger.LogError(string.Format("[BadNorthAPI] Unexpected UpgradeEntry constructor parameter count: {0}. (此错误仅显示一次)",
+                        parameters.Length));
+                }
                 return null;
             }
 
@@ -147,7 +225,11 @@ namespace BadNorthAPI
             EnsureReflectionInit();
             if (_reflectionFailed || ReferenceEquals(_upgradeEntryUpgradeField, null))
             {
-                Plugin.logger.LogError("[BadNorthAPI] Cannot get upgrade entry upgrade: reflection initialization failed.");
+                if (!_upgradeFieldErrorLogged)
+                {
+                    _upgradeFieldErrorLogged = true;
+                    Plugin.logger.LogError("[BadNorthAPI] Cannot get upgrade entry upgrade: reflection initialization failed. (此错误仅显示一次)");
+                }
                 return null;
             }
             return _upgradeEntryUpgradeField.GetValue(entry);
@@ -158,7 +240,11 @@ namespace BadNorthAPI
             EnsureReflectionInit();
             if (_reflectionFailed || ReferenceEquals(_upgradeEntryIsStartingField, null))
             {
-                Plugin.logger.LogError("[BadNorthAPI] Cannot get upgrade entry isStarting: reflection initialization failed.");
+                if (!_isStartingFieldErrorLogged)
+                {
+                    _isStartingFieldErrorLogged = true;
+                    Plugin.logger.LogError("[BadNorthAPI] Cannot get upgrade entry isStarting: reflection initialization failed. (此错误仅显示一次)");
+                }
                 return false;
             }
             return (bool)_upgradeEntryIsStartingField.GetValue(entry);
@@ -169,7 +255,11 @@ namespace BadNorthAPI
             EnsureReflectionInit();
             if (_reflectionFailed || ReferenceEquals(_upgradeEntryIsStartingField, null))
             {
-                Plugin.logger.LogError("[BadNorthAPI] Cannot set upgrade entry isStarting: reflection initialization failed.");
+                if (!_isStartingFieldErrorLogged)
+                {
+                    _isStartingFieldErrorLogged = true;
+                    Plugin.logger.LogError("[BadNorthAPI] Cannot set upgrade entry isStarting: reflection initialization failed. (此错误仅显示一次)");
+                }
                 return;
             }
             _upgradeEntryIsStartingField.SetValue(entry, value);
@@ -187,12 +277,20 @@ namespace BadNorthAPI
 
         private static void MetaInventory_InitStartingUpgrades(On.Voxels.TowerDefense.ProfileInternals.MetaInventory.orig_InitStartingUpgrades orig, Voxels.TowerDefense.ProfileInternals.MetaInventory self)
         {
-            // 如果反射初始化失败，跳过所有自定义特性处理，直接调用原始方法
+            // 先执行原始逻辑，让原版初始化容器，再补丁自定义特质
+            orig.Invoke(self);
+
+            // 如果反射初始化失败，跳过所有自定义特性处理
             EnsureReflectionInit();
             if (_reflectionFailed)
             {
-                Plugin.logger.LogError("[BadNorthAPI] Reflection initialization failed. Skipping custom traits processing.");
-                orig.Invoke(self);
+                return;
+            }
+
+            // 获取 upgrades 列表，如果为空则跳过
+            IList upgrades = GetUpgrades(self);
+            if (ReferenceEquals(upgrades, null))
+            {
                 return;
             }
 
@@ -202,94 +300,152 @@ namespace BadNorthAPI
                 if (ReferenceEquals(registeredTrait, null))
                     continue;
 
-                // 使用反射调用 Get 方法
-                object upgradeEntry = null;
-                try
+                // 检查该特质是否已存在于 upgrades 列表中
+                bool alreadyPresent = false;
+                for (int i = 0; i < upgrades.Count; i++)
                 {
-                    upgradeEntry = typeof(Voxels.TowerDefense.ProfileInternals.MetaInventory)
-                        .GetMethod("Get", new Type[] { typeof(HeroUpgradeDefinition) })
-                        .Invoke(self, new object[] { registeredTrait });
+                    object entry = upgrades[i];
+                    object upgrade = GetUpgradeEntryUpgrade(entry);
+                    if (!ReferenceEquals(upgrade, null))
+                    {
+                        PropertyInfo defProp = upgrade.GetType().GetProperty("definition");
+                        if (!ReferenceEquals(defProp, null))
+                        {
+                            object def = defProp.GetValue(upgrade, null);
+                            if (ReferenceEquals(def, registeredTrait))
+                            {
+                                alreadyPresent = true;
+                                // 确保它是 starting 的
+                                if (!GetUpgradeEntryIsStarting(entry))
+                                {
+                                    SetUpgradeEntryIsStarting(entry, true);
+                                }
+                                break;
+                            }
+                        }
+                    }
                 }
-                catch { }
 
-                if (ReferenceEquals(upgradeEntry, null))
+                if (!alreadyPresent)
                 {
                     object newEntry = CreateUpgradeEntry(registeredTrait, true);
                     if (!ReferenceEquals(newEntry, null))
                     {
-                        IList upgrades = GetUpgrades(self);
-                        if (!ReferenceEquals(upgrades, null))
-                        {
-                            upgrades.Add(newEntry);
-                        }
+                        upgrades.Add(newEntry);
+                        Plugin.logger.LogInfo("[BadNorthAPI] Added starting trait: " + traitID);
                     }
                     else
                     {
                         Plugin.logger.LogWarning("[BadNorthAPI] Skipping starting trait " + traitID + " because UpgradeEntry creation failed.");
                     }
                 }
-                else if (!GetUpgradeEntryIsStarting(upgradeEntry))
-                {
-                    SetUpgradeEntryIsStarting(upgradeEntry, true);
-                }
             }
 
-            // 移除空引用条目
-            IList upgradesList = GetUpgrades(self);
-            if (!ReferenceEquals(upgradesList, null))
+            // 移除空引用条目（倒序删除避免索引偏移）
+            List<int> idsToRemove = new List<int>();
+            for (int i = 0; i < upgrades.Count; i++)
             {
-                List<int> ids = new List<int>();
-                for (int i = 0; i < upgradesList.Count; i++)
+                object entry = upgrades[i];
+                object upgrade = GetUpgradeEntryUpgrade(entry);
+                if (ReferenceEquals(upgrade, null))
                 {
-                    object entry = upgradesList[i];
-                    object upgrade = GetUpgradeEntryUpgrade(entry);
-                    if (ReferenceEquals(upgrade, null))
-                    {
-                        ids.Add(i);
-                        continue;
-                    }
-                    PropertyInfo defProp = upgrade.GetType().GetProperty("definition");
-                    if (!ReferenceEquals(defProp, null))
-                    {
-                        object def = defProp.GetValue(upgrade, null);
-                        if (ReferenceEquals(def, null))
-                        {
-                            ids.Add(i);
-                        }
-                    }
+                    idsToRemove.Add(i);
+                    continue;
                 }
-                if (ids.Count > 0)
+                PropertyInfo defProp = upgrade.GetType().GetProperty("definition");
+                if (!ReferenceEquals(defProp, null))
                 {
-                    ids.Sort((a, b) => b.CompareTo(a));
-                    foreach (int id in ids)
+                    object def = defProp.GetValue(upgrade, null);
+                    if (ReferenceEquals(def, null))
                     {
-                        upgradesList.RemoveAt(id);
+                        idsToRemove.Add(i);
                     }
                 }
             }
-
-            orig.Invoke(self);
+            if (idsToRemove.Count > 0)
+            {
+                idsToRemove.Sort((a, b) => b.CompareTo(a));
+                foreach (int id in idsToRemove)
+                {
+                    upgrades.RemoveAt(id);
+                }
+                Plugin.logger.LogInfo("[BadNorthAPI] Removed " + idsToRemove.Count + " null-reference upgrade entries.");
+            }
         }
 
         public static HeroUpgradeDefinition GetRegisteredTrait(string traitID)
         {
-            if (!ResourceList<HeroUpgradeDefinition>.dictionary.ContainsKey(traitID))
+            Dictionary<string, int> dict = ResourceList<HeroUpgradeDefinition>.dictionary;
+            if (!dict.ContainsKey(traitID))
             {
-                Plugin.logger.LogWarning("Cannot find registered trait with ID " + traitID + ".");
+                Plugin.logger.LogWarning("[BadNorthAPI] Cannot find registered trait with ID " + traitID + ".");
                 return null;
             }
-            return ResourceList<HeroUpgradeDefinition>.dictionary[traitID];
+            int index = dict[traitID];
+            List<HeroUpgradeDefinition> list = ResourceList<HeroUpgradeDefinition>.list;
+            if (index < 0 || index >= list.Count)
+            {
+                Plugin.logger.LogWarning("[BadNorthAPI] Registered trait index out of range for ID " + traitID + ".");
+                return null;
+            }
+            return list[index];
         }
 
+        /// <summary>
+        /// 注册自定义特质。
+        /// 包含重复注册保护：如果 traitID 已存在，记录警告并跳过注册。
+        /// </summary>
+        /// <param name="trait">特质定义实例</param>
+        /// <param name="traitID">特质唯一ID</param>
+        /// <param name="alwaysUnlocked">是否总是解锁（作为起始特质）</param>
         public static void RegisterTrait(HeroUpgradeDefinition trait, string traitID, bool alwaysUnlocked = false)
         {
-            ResourceList<HeroUpgradeDefinition>.list.Add(trait);
-            ResourceList<HeroUpgradeDefinition>.dictionary.Add(traitID, ArrayExtensions.Last<HeroUpgradeDefinition>(ResourceList<HeroUpgradeDefinition>.list));
-            Plugin.logger.LogInfo("Registered trait " + traitID);
+            // 空值保护
+            if (ReferenceEquals(trait, null))
+            {
+                Plugin.logger.LogError("[BadNorthAPI] RegisterTrait: trait 为 null，跳过注册");
+                return;
+            }
+            if (string.IsNullOrEmpty(traitID))
+            {
+                Plugin.logger.LogError("[BadNorthAPI] RegisterTrait: traitID 为空，跳过注册");
+                return;
+            }
+
+            // 重复注册保护：检查 dictionary 是否已包含
+            Dictionary<string, int> dict = ResourceList<HeroUpgradeDefinition>.dictionary;
+            if (dict.ContainsKey(traitID))
+            {
+                Plugin.logger.LogWarning("[BadNorthAPI] RegisterTrait: traitID \"" + traitID + "\" 已经注册过，跳过重复注册");
+                return;
+            }
+
+            // 检查 list 中是否已存在相同引用
+            List<HeroUpgradeDefinition> list = ResourceList<HeroUpgradeDefinition>.list;
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (ReferenceEquals(list[i], trait))
+                {
+                    Plugin.logger.LogWarning("[BadNorthAPI] RegisterTrait: trait 实例已存在于 list 中（索引 " + i + "），跳过重复注册");
+                    return;
+                }
+            }
+
+            list.Add(trait);
+            dict.Add(traitID, list.Count - 1);
+            Plugin.logger.LogInfo("[BadNorthAPI] Registered trait " + traitID);
+
             if (alwaysUnlocked)
             {
-                CustomTraits.startingTraits.Add(traitID);
-                Plugin.logger.LogInfo("Added trait " + traitID + " to starting traits!");
+                if (!CustomTraits.startingTraits.Contains(traitID))
+                {
+                    CustomTraits.startingTraits.Add(traitID);
+                    Plugin.logger.LogInfo("[BadNorthAPI] Added trait " + traitID + " to starting traits!");
+                }
+                else
+                {
+                    Plugin.logger.LogWarning("[BadNorthAPI] startingTraits already contains " + traitID + ", 跳过重复添加");
+                }
             }
         }
 

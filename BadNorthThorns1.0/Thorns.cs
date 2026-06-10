@@ -4,69 +4,54 @@ using Voxels.TowerDefense;
 
 namespace BadNorthThorns
 {
-    public class Thorns : HeroUpgradeDefinition, IAttackResponder
+    /// <summary>
+    /// 荆棘特质定义 - 只负责定义和 OnAppliedToSquad 分发。
+    /// 反伤逻辑由独立的 ThornsResponder 组件处理，
+    /// 实现"定义"与"行为实例"分离。
+    /// </summary>
+    public class Thorns : HeroUpgradeDefinition
     {
         public static readonly string THORNS_ID = "Hero_Trait_Thorns";
 
         public Thorns()
         {
-            Debugger.Log("THORNS CREATED");
-            this.upgradeType = ScriptableObject.CreateInstance<HeroUpgradeType>();
-            this.upgradeType.typeEnum = (HeroUpgradeTypeEnum)4;
+            this.upgradeType = TraitHelper.CreateTraitUpgradeType();
             this.upgradeType.canBeStartItem = true;
-            this.upgradeType.unknownNameTerm = "META_INVENTORY/UNKNOWN/TRAIT/NAME";
-            this.upgradeType.unknownDescriptionTerm = "META_INVENTORY/UNKNOWN/TRAIT/DESC";
-            this.upgradeType.startItemLockedTerm = "META_INVENTORY/START/TRAIT/LOCKED";
-            this.upgradeType.startItemUnlockedTerm = "META_INVENTORY/START/TRAIT/UNLOCKED";
-            this.affectsPortrait = false;
-            base.name = THORNS_ID;
-            this.nameTerm = "NACU/TRAIT/THORNS/NAME";
-            this.shortDescription = "NACU/TRAIT/THORNS/DESCSHORT";
-            this.infoSprite = CustomSprites.Sprites["trait_thorns"];
-            HeroUpgradeDefinition.Level[] array = new HeroUpgradeDefinition.Level[1];
-            int num = 0;
-            HeroUpgradeDefinition.Level level = default(HeroUpgradeDefinition.Level);
-            level.cost = 0;
-            level.description = "NACU/TRAIT/THORNS/DESC";
-            array[num] = level;
-            this.levels = array;
+            TraitHelper.SetupBaseDefinition(this, THORNS_ID,
+                "NACU/TRAIT/THORNS/NAME",
+                "NACU/TRAIT/THORNS/DESCSHORT",
+                CustomSprites.Sprites["trait_thorns"],
+                TraitHelper.CreateSingleLevel("NACU/TRAIT/THORNS/DESC"));
         }
 
         public override void OnAppliedToSquad(EnglishSquad squad, int upgradeLevel)
         {
             base.OnAppliedToSquad(squad, upgradeLevel);
-            squad.onAgentCreated += this.AddThing;
-            Debugger.Log($"[Thorns] 已应用到小队 {squad?.name}");
+
+            // 为新创建的 Agent 附加荆棘响应器（防重复订阅）
+            squad.onAgentCreated -= this.AttachThornsResponder;
+            squad.onAgentCreated += this.AttachThornsResponder;
+
+            // 为现有 Agent 附加荆棘响应器
+            foreach (Agent agent in squad.agents)
+            {
+                this.AttachThornsResponder(agent);
+            }
+
+            Debugger.Log("[Thorns] 已应用到小队 " + (squad != null ? squad.name : "null"));
         }
 
-        public void AddThing(Agent agent)
+        /// <summary>
+        /// 为 Agent 附加荆棘响应器组件。
+        /// 使用 GetOrAddComponent 防止重复挂载。
+        /// </summary>
+        private void AttachThornsResponder(Agent agent)
         {
-            if (!agent.attackResponders.Contains(this))
-            {
-                agent.attackResponders.Add(this);
-                Debugger.Log($"[Thorns] 已为 {agent?.name} 添加反伤响应器");
-            }
-        }
+            if (ReferenceEquals(agent, null))
+                return;
 
-        public void ModifyAttack(ref Attack attack)
-        {
-            Debugger.Log($"[Thorns] ModifyAttack called, monoAttacker type={attack.monoAttacker?.GetType().ToString()}, name={attack.monoAttacker?.name}");
-
-            CloseCombatBrain closeCombatBrain = attack.monoAttacker as CloseCombatBrain;
-            if (closeCombatBrain != null)
-            {
-                Debugger.Log($"[Thorns] 反伤触发: {closeCombatBrain.agent.name} 受到荆棘伤害");
-                closeCombatBrain.agent.DealDamage(new Attack(
-                    1.5f, 1f, 1f, -attack.direction, attack.pos,
-                    closeCombatBrain, closeCombatBrain.enSquad,
-                    "Sfx/English/Sword",
-                    ScriptableObjectSingleton<PrefabManager>.instance.hitEffect
-                ));
-            }
-            else
-            {
-                Debugger.Log("[Thorns] 攻击者不是 CloseCombatBrain，跳过反伤");
-            }
+            ComponentHelper.GetOrAddComponent<ThornsResponder>(agent.gameObject);
+            Debugger.Log("[Thorns] 已为 " + agent.name + " 附加荆棘响应器");
         }
     }
 }

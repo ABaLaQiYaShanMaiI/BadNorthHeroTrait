@@ -8,7 +8,7 @@ namespace BadNorthTitan
 {
 	/// <summary>
 	/// 泰坦 (Titan) - 真正的巨人之力，盾弓皆可，升级后起效。
-	/// 保留 TankArcher 箭矢外观 + trajctoryCalculator；
+	/// 保留 TankArcher 箭矢外观 + trajectoryCalculator；
 	/// 专注射击由 TitanArcheryFixes + TitanFocusHelper 安全接管。
 	/// </summary>
 	public class Titan : HeroUpgradeDefinition

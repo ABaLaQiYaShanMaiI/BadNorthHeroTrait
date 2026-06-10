@@ -16,37 +16,22 @@ namespace BadNorthSlash
 
         public SweepingBlade()
         {
-            Plugin.Logger.LogInfo("Slash CREATED");
-            this.upgradeType = ScriptableObject.CreateInstance<HeroUpgradeType>();
-            this.upgradeType.typeEnum = HeroUpgradeTypeEnum.Trait;
-            this.upgradeType.canBeStartItem = true;
-            this.upgradeType.unknownNameTerm = "META_INVENTORY/UNKNOWN/TRAIT/NAME";
-            this.upgradeType.unknownDescriptionTerm = "META_INVENTORY/UNKNOWN/TRAIT/DESC";
-            this.upgradeType.startItemLockedTerm = "META_INVENTORY/START/TRAIT/LOCKED";
-            this.upgradeType.startItemUnlockedTerm = "META_INVENTORY/START/TRAIT/UNLOCKED";
-            this.affectsPortrait = false;
-            base.name = Slash_ID;
-            this.nameTerm = "YYYYY/TRAIT/SLASH/NAME";
-            this.shortDescription = "YYYYY/TRAIT/SLASH/DESCSHORT";
-            this.infoSprite = CustomSprites.Sprites["trait_slash"];
-            this.levels = new HeroUpgradeDefinition.Level[]
-            {
-                new HeroUpgradeDefinition.Level
-                {
-                    cost = 0,
-                    description = "YYYYY/TRAIT/SLASH/DESC"
-                }
-            };
+            this.upgradeType = TraitHelper.CreateTraitUpgradeType();
+            TraitHelper.SetupBaseDefinition(this, Slash_ID,
+                "YYYYY/TRAIT/SLASH/NAME",
+                "YYYYY/TRAIT/SLASH/DESCSHORT",
+                CustomSprites.Sprites["trait_slash"],
+                TraitHelper.CreateSingleLevel("YYYYY/TRAIT/SLASH/DESC"));
         }
 
         public override void OnAppliedToSquad(EnglishSquad squad, int upgradeLevel)
         {
             squad.heroAgent.GetComponent<Stun>().stunMultiplier = 0.1f;
-            squad.heroAgent.GetOrAddComponent<SlashSword>();
+            ComponentHelper.GetOrAddComponent<SlashSword>(squad.heroAgent.gameObject);
 
             if (squad.level >= 1 && squad.minionPrefab.GetComponent<Swordsman>())
             {
-                squad.minionPrefab.GetOrAddComponent<SlashSword>();
+                ComponentHelper.GetOrAddComponent<SlashSword>(squad.minionPrefab);
             }
         }
     }

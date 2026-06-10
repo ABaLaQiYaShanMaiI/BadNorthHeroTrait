@@ -20,16 +20,26 @@ namespace BadNorthYuri
             string modPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + Path.DirectorySeparatorChar;
 
             CustomSprites.AddCustomSprite(modPath, "trait_yuri");
+            Logger.LogInfo("[Yuri] Sprite loaded");
 
             CustomTraits.RegisterTrait(
                 ScriptableObject.CreateInstance<MindElite>(),
                 MindElite.YURI_ID,
                 true
             );
+            Logger.LogInfo("[Yuri] Trait registered: " + MindElite.YURI_ID);
 
+            CustomText.CustomTermsAdded -= AddCustomTerms;
             CustomText.CustomTermsAdded += AddCustomTerms;
+            Logger.LogInfo("[Yuri] Localization callback added");
 
-            Logger.LogInfo("======== BadNorthYuri 1.0 已就绪 ========");
+            Logger.LogInfo("======== [Yuri] Ready (1.0) ========");
+        }
+
+        public void OnDisable()
+        {
+            CustomText.CustomTermsAdded -= AddCustomTerms;
+            Logger.LogInfo("[Yuri] Disabled");
         }
 
         private void AddCustomTerms()

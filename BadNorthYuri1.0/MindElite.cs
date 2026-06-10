@@ -16,33 +16,18 @@ namespace BadNorthYuri
 
         public MindElite()
         {
-            Plugin.Logger.LogInfo("Yuri CREATED");
-            this.upgradeType = ScriptableObject.CreateInstance<HeroUpgradeType>();
-            this.upgradeType.typeEnum = HeroUpgradeTypeEnum.Trait;
-            this.upgradeType.canBeStartItem = true;
-            this.upgradeType.unknownNameTerm = "META_INVENTORY/UNKNOWN/TRAIT/NAME";
-            this.upgradeType.unknownDescriptionTerm = "META_INVENTORY/UNKNOWN/TRAIT/DESC";
-            this.upgradeType.startItemLockedTerm = "META_INVENTORY/START/TRAIT/LOCKED";
-            this.upgradeType.startItemUnlockedTerm = "META_INVENTORY/START/TRAIT/UNLOCKED";
-            this.affectsPortrait = false;
-            base.name = YURI_ID;
-            this.nameTerm = "YYYYY/TRAIT/YURI/NAME";
-            this.shortDescription = "YYYYY/TRAIT/YURI/DESCSHORT";
-            this.infoSprite = CustomSprites.Sprites["trait_yuri"];
-            this.levels = new HeroUpgradeDefinition.Level[]
-            {
-                new HeroUpgradeDefinition.Level
-                {
-                    cost = 0,
-                    description = "YYYYY/TRAIT/YURI/DESC"
-                }
-            };
+            this.upgradeType = TraitHelper.CreateTraitUpgradeType();
+            TraitHelper.SetupBaseDefinition(this, YURI_ID,
+                "YYYYY/TRAIT/YURI/NAME",
+                "YYYYY/TRAIT/YURI/DESCSHORT",
+                CustomSprites.Sprites["trait_yuri"],
+                TraitHelper.CreateSingleLevel("YYYYY/TRAIT/YURI/DESC"));
         }
 
         public override void OnAppliedToSquad(EnglishSquad squad, int upgradeLevel)
         {
-            squad.heroAgent.GetOrAddComponent<YuriComponent>();
-            squad.heroAgent.GetOrAddComponent<YuriComponent>().PSIswitch = true;
+            YuriComponent yuri = ComponentHelper.GetOrAddComponent<YuriComponent>(squad.heroAgent.gameObject);
+            yuri.PSIswitch = true;
             squad.heroAgent.GetComponent<Stun>().stunMultiplier = 0.1f;
         }
     }

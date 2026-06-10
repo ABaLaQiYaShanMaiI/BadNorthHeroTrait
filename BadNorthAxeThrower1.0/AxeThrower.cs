@@ -18,65 +18,33 @@ namespace BadNorthAxeThrower
 
         public AxeThrower()
         {
-            Plugin.Logger.LogInfo("AXETHROWER CREATED");
-            this.upgradeType = ScriptableObject.CreateInstance<HeroUpgradeType>();
-            this.upgradeType.typeEnum = (HeroUpgradeTypeEnum)4; // AxeThrower = 4
-            this.upgradeType.canBeStartItem = true;
-            this.upgradeType.unknownNameTerm = "META_INVENTORY/UNKNOWN/TRAIT/NAME";
-            this.upgradeType.unknownDescriptionTerm = "META_INVENTORY/UNKNOWN/TRAIT/DESC";
-            this.upgradeType.startItemLockedTerm = "META_INVENTORY/START/TRAIT/LOCKED";
-            this.upgradeType.startItemUnlockedTerm = "META_INVENTORY/START/TRAIT/UNLOCKED";
-            this.affectsPortrait = false;
-            base.name = AXETHROWER_ID;
-            this.nameTerm = "NACU/TRAIT/AXE/NAME";
-            this.shortDescription = "NACU/TRAIT/AXE/DESCSHORT";
-this.infoSprite = CustomSprites.Sprites["trait_axethrower"];
-            HeroUpgradeDefinition.Level[] array = new HeroUpgradeDefinition.Level[1];
-            int num = 0;
-            HeroUpgradeDefinition.Level level = default(HeroUpgradeDefinition.Level);
-            level.cost = 0;
-            level.description = "NACU/TRAIT/AXE/DESC";
-            array[num] = level;
-            this.levels = array;
+            this.upgradeType = TraitHelper.CreateTraitUpgradeType();
+            TraitHelper.SetupBaseDefinition(this, AXETHROWER_ID,
+                "NACU/TRAIT/AXE/NAME",
+                "NACU/TRAIT/AXE/DESCSHORT",
+                CustomSprites.Sprites["trait_axethrower"],
+                TraitHelper.CreateSingleLevel("NACU/TRAIT/AXE/DESC"));
         }
 
-        private static T GetOrAddComponent<T>(GameObject go) where T : Component
-        {
-            T comp = go.GetComponent<T>();
-            if (ReferenceEquals(comp, null))
-            {
-                comp = go.AddComponent<T>();
-            }
-            return comp;
-        }
+        // ── 反射辅助（使用 ReflectionHelper 统一入口） ──
 
         private static object GetFieldValue(AxeThrowing instance, string fieldName)
         {
-            FieldInfo field = typeof(AxeThrowing).GetField(fieldName,
-                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-            if (ReferenceEquals(field, null))
-            {
-                Plugin.Logger.LogWarning(string.Format("[AxeThrower] 反射字段 {0} 未找到", fieldName));
-                return null;
-            }
-            return field.GetValue(instance);
+            return ReflectionHelper.GetFieldValue(instance, fieldName, "AxeThrower");
         }
 
-        private static void SetFieldValue(AxeThrowing instance, string fieldName, object value)
+        private static bool SetFieldValue(AxeThrowing instance, string fieldName, object value)
         {
-            FieldInfo field = typeof(AxeThrowing).GetField(fieldName,
-                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-            if (ReferenceEquals(field, null))
-            {
-                Plugin.Logger.LogWarning(string.Format("[AxeThrower] 反射字段 {0} 未找到，无法设置", fieldName));
-                return;
-            }
-            field.SetValue(instance, value);
+            return ReflectionHelper.SetFieldValue(instance, fieldName, value, "AxeThrower");
         }
 
-        // 三级容错获取 AxeThrowing 模板
+        // ── 三级容错获取 AxeThrowing 模板（加合法性校验） ──
+
         private static AxeThrowing GetAxeThrowingTemplate()
         {
+            AxeThrowing template = null;
+
+            // Level 1: 从 LevelStateObjectReferences 获取
             try
             {
                 if (!ReferenceEquals(LevelStateObjectReferences.dict, null) &&
@@ -111,11 +79,10 @@ this.infoSprite = CustomSprites.Sprites["trait_axethrower"];
 
                     if (!ReferenceEquals(agentObj, null))
                     {
-                        AxeThrowing template = agentObj.GetComponent<AxeThrowing>();
+                        template = agentObj.GetComponent<AxeThrowing>();
                         if (!ReferenceEquals(template, null))
                         {
                             Plugin.Logger.LogInfo("[AxeThrower] 从 LevelStateObjectReferences 成功获取模板");
-                            return template;
                         }
                     }
                 }
@@ -125,22 +92,70 @@ this.infoSprite = CustomSprites.Sprites["trait_axethrower"];
                 Plugin.Logger.LogWarning("[AxeThrower] LevelStateObjectReferences 获取失败: " + ex.Message);
             }
 
-            try
+            // Level 2: 从 Resources.FindObjectsOfTypeAll 获取
+            if (ReferenceEquals(template, null))
             {
-                AxeThrowing[] allAxeThrowings = Resources.FindObjectsOfTypeAll<AxeThrowing>();
-                if (!ReferenceEquals(allAxeThrowings, null) && allAxeThrowings.Length > 0)
+                try
                 {
-                    Plugin.Logger.LogInfo("[AxeThrower] 从 Resources.FindObjectsOfTypeAll 获取模板 (共 " + allAxeThrowings.Length + " 个)");
-                    return allAxeThrowings[0];
+                    AxeThrowing[] allAxeThrowings = Resources.FindObjectsOfTypeAll<AxeThrowing>();
+                    if (!ReferenceEquals(allAxeThrowings, null) && allAxeThrowings.Length > 0)
+                    {
+                        template = allAxeThrowings[0];
+                        Plugin.Logger.LogInfo("[AxeThrower] 从 Resources.FindObjectsOfTypeAll 获取模板 (共 " + allAxeThrowings.Length + " 个)");
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    Plugin.Logger.LogWarning("[AxeThrower] Resources.FindObjectsOfTypeAll 获取失败: " + ex.Message);
                 }
             }
-            catch (System.Exception ex)
+
+            // 合法性校验：模板必须完整可用
+            if (!ReferenceEquals(template, null))
             {
-                Plugin.Logger.LogWarning("[AxeThrower] Resources.FindObjectsOfTypeAll 获取失败: " + ex.Message);
+                bool valid = true;
+                if (ReferenceEquals(GetFieldValue(template, FIELD_PREPARE_SOUND), null))
+                {
+                    Plugin.Logger.LogWarning("[AxeThrower] 模板校验失败：prepareSound 缺失");
+                    valid = false;
+                }
+                if (ReferenceEquals(GetFieldValue(template, FIELD_THROWING_AXE_PREFAB), null))
+                {
+                    Plugin.Logger.LogWarning("[AxeThrower] 模板校验失败：throwingAxePrefab 缺失");
+                    valid = false;
+                }
+                if (ReferenceEquals(GetFieldValue(template, FIELD_ATTACK_SETTINGS), null))
+                {
+                    Plugin.Logger.LogWarning("[AxeThrower] 模板校验失败：attackSettings 缺失");
+                    valid = false;
+                }
+                if (!valid)
+                {
+                    Plugin.Logger.LogWarning("[AxeThrower] 模板不完整，视为无效");
+                    template = null;
+                }
             }
 
-            Plugin.Logger.LogWarning("[AxeThrower] 无法获取 AxeThrowing 模板");
-            return null;
+            if (ReferenceEquals(template, null))
+            {
+                Plugin.Logger.LogWarning("[AxeThrower] 无法获取有效的 AxeThrowing 模板");
+            }
+
+            return template;
+        }
+
+        /// <summary>
+        /// 安全深拷贝 AttackSettings（如果是 class 类型则逐字段复制，避免引用共享污染）。
+        /// </summary>
+        private static AttackSettings CloneAttackSettings(AttackSettings source)
+        {
+            AttackSettings clone = new AttackSettings();
+            clone.damage = source.damage;
+            clone.knockback = source.knockback;
+            clone.stun = source.stun;
+            clone.launchImpulse = source.launchImpulse;
+            // 保留其他可能的字段默认值
+            return clone;
         }
 
         private static void ApplyLevelScaling(AxeThrowing comp, int squadLevel)
@@ -152,7 +167,8 @@ this.infoSprite = CustomSprites.Sprites["trait_axethrower"];
                 return;
             }
             AttackSettings attackSettings = (AttackSettings)settingsObj;
-            Plugin.Logger.LogInfo($"[AxeThrower] 应用缩放前: launchImpulse={attackSettings.launchImpulse}, damage={attackSettings.damage}, knockback={attackSettings.knockback}, stun={attackSettings.stun}");
+            Plugin.Logger.LogInfo(string.Format("[AxeThrower] 应用缩放前: launchImpulse={0}, damage={1}, knockback={2}, stun={3}",
+                attackSettings.launchImpulse, attackSettings.damage, attackSettings.knockback, attackSettings.stun));
 
             switch (squadLevel)
             {
@@ -184,7 +200,7 @@ this.infoSprite = CustomSprites.Sprites["trait_axethrower"];
 
             if (attackSettings.launchImpulse <= 0f)
             {
-                Plugin.Logger.LogWarning($"[AxeThrower] launchImpulse 为 {attackSettings.launchImpulse}（来自模板），设置为默认值 1.0f");
+                Plugin.Logger.LogWarning(string.Format("[AxeThrower] launchImpulse 为 {0}（来自模板），设置为默认值 1.0f", attackSettings.launchImpulse));
                 attackSettings.launchImpulse = 1.0f;
             }
 
@@ -195,42 +211,57 @@ this.infoSprite = CustomSprites.Sprites["trait_axethrower"];
         {
             base.OnAppliedToSquad(squad, upgradeLevel);
 
-            GetOrAddComponent<LineOfSight>(squad.heroAgent.gameObject);
+            // 使用 GetOrAddComponent 防止重复挂载组件
+            ComponentHelper.GetOrAddComponent<LineOfSight>(squad.heroAgent.gameObject);
+            AxeThrowing comp = ComponentHelper.GetOrAddComponent<AxeThrowing>(squad.heroAgent.gameObject);
+
             AxeThrowing template = GetAxeThrowingTemplate();
-            squad.heroAgent.gameObject.AddComponent<AxeThrowing>();
-            AxeThrowing comp = squad.heroAgent.GetComponent<AxeThrowing>();
 
             if (!ReferenceEquals(template, null))
             {
+                // 安全复制：逐字段复制，AttackSettings 做深拷贝
                 SetFieldValue(comp, FIELD_PREPARE_SOUND, GetFieldValue(template, FIELD_PREPARE_SOUND));
                 SetFieldValue(comp, FIELD_THROWING_AXE_PREFAB, GetFieldValue(template, FIELD_THROWING_AXE_PREFAB));
                 SetFieldValue(comp, FIELD_TRAJECTORY_UTILITY, GetFieldValue(template, FIELD_TRAJECTORY_UTILITY));
-                SetFieldValue(comp, FIELD_ATTACK_SETTINGS, GetFieldValue(template, FIELD_ATTACK_SETTINGS));
 
-                Plugin.Logger.LogInfo("[AxeThrower] 成功从模板复制攻击属性");
+                object templateSettingsObj = GetFieldValue(template, FIELD_ATTACK_SETTINGS);
+                if (!ReferenceEquals(templateSettingsObj, null))
+                {
+                    AttackSettings clonedSettings = CloneAttackSettings((AttackSettings)templateSettingsObj);
+                    SetFieldValue(comp, FIELD_ATTACK_SETTINGS, clonedSettings);
+                }
+                else
+                {
+                    SetFieldValue(comp, FIELD_ATTACK_SETTINGS, null);
+                }
+
+                Plugin.Logger.LogInfo("[AxeThrower] 成功从模板复制攻击属性（AttackSettings 已深拷贝）");
             }
             else
             {
                 Plugin.Logger.LogWarning("[AxeThrower] 无模板可用，使用默认值");
             }
+
             ApplyLevelScaling(comp, squad.hero.squadLevel);
 
             Plugin.Logger.LogInfo("[AxeThrower] 等级缩放已应用, 等级=" + squad.hero.squadLevel);
 
             comp.Setup();
+
             object finalAmmo = GetFieldValue(comp, FIELD_AMMO);
             object finalSettingsObj = GetFieldValue(comp, FIELD_ATTACK_SETTINGS);
             if (!ReferenceEquals(finalSettingsObj, null))
             {
                 AttackSettings finalSettings = (AttackSettings)finalSettingsObj;
-                Plugin.Logger.LogInfo($"[AxeThrower] 验证：ammo={finalAmmo}, damage={finalSettings.damage}, knockback={finalSettings.knockback}, stun={finalSettings.stun}, launchImpulse={finalSettings.launchImpulse}");
+                Plugin.Logger.LogInfo(string.Format("[AxeThrower] 验证：ammo={0}, damage={1}, knockback={2}, stun={3}, launchImpulse={4}",
+                    finalAmmo, finalSettings.damage, finalSettings.knockback, finalSettings.stun, finalSettings.launchImpulse));
             }
             else
             {
-                Plugin.Logger.LogWarning($"[AxeThrower] 验证：ammo={finalAmmo}, attackSettings 获取失败");
+                Plugin.Logger.LogWarning(string.Format("[AxeThrower] 验证：ammo={0}, attackSettings 获取失败", finalAmmo));
             }
 
-            Plugin.Logger.LogInfo($"[AxeThrower] 已应用到小队 {squad.name}，等级={squad.hero.squadLevel}");
+            Plugin.Logger.LogInfo(string.Format("[AxeThrower] 已应用到小队 {0}，等级={1}", squad.name, squad.hero.squadLevel));
         }
     }
 }

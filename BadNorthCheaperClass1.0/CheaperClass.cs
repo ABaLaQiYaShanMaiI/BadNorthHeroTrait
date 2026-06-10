@@ -18,26 +18,12 @@ namespace BadNorthCheaperClass
 
         public CheaperClass()
         {
-            Plugin.Logger.LogInfo("CHEAPERCLASS CREATED");
-            this.upgradeType = ScriptableObject.CreateInstance<HeroUpgradeType>();
-            this.upgradeType.typeEnum = (HeroUpgradeTypeEnum)4;
-            this.upgradeType.canBeStartItem = true;
-            this.upgradeType.unknownNameTerm = "META_INVENTORY/UNKNOWN/TRAIT/NAME";
-            this.upgradeType.unknownDescriptionTerm = "META_INVENTORY/UNKNOWN/TRAIT/DESC";
-            this.upgradeType.startItemLockedTerm = "META_INVENTORY/START/TRAIT/LOCKED";
-            this.upgradeType.startItemUnlockedTerm = "META_INVENTORY/START/TRAIT/UNLOCKED";
-            this.affectsPortrait = false;
-            base.name = CHEAPERCLASS_ID;
-            this.nameTerm = "NACU/TRAIT/CCLASS/NAME";
-            this.shortDescription = "NACU/TRAIT/CCLASS/DESCSHORT";
-            this.infoSprite = CustomSprites.Sprites["trait_cheaperclass"];
-            HeroUpgradeDefinition.Level[] array = new HeroUpgradeDefinition.Level[1];
-            int num = 0;
-            HeroUpgradeDefinition.Level level = default(HeroUpgradeDefinition.Level);
-            level.cost = 0;
-            level.description = "NACU/TRAIT/CCLASS/DESC";
-            array[num] = level;
-            this.levels = array;
+            this.upgradeType = TraitHelper.CreateTraitUpgradeType();
+            TraitHelper.SetupBaseDefinition(this, CHEAPERCLASS_ID,
+                "NACU/TRAIT/CCLASS/NAME",
+                "NACU/TRAIT/CCLASS/DESCSHORT",
+                CustomSprites.Sprites["trait_cheaperclass"],
+                TraitHelper.CreateSingleLevel("NACU/TRAIT/CCLASS/DESC"));
         }
 
         public static bool ApplyDiscountToHeroDef(HeroDefinition heroDef)
@@ -154,19 +140,19 @@ namespace BadNorthCheaperClass
                     }
 
                     found = true;
-                    Plugin.Logger.LogInfo($"[CheaperClass] 处理 HeroDef {heroName}，共修改 {modifiedUpgrades}/{totalUpgrades} 个升级费用");
+                    Plugin.Logger.LogInfo(string.Format("[CheaperClass] 处理 HeroDef {0}，共修改 {1}/{2} 个升级费用", heroName, modifiedUpgrades, totalUpgrades));
                     return true;
                 }
 
                 if (!found)
                 {
-                    Plugin.Logger.LogWarning($"[CheaperClass] HeroDef {heroName}：未找到 upgrades 列表字段");
+                    Plugin.Logger.LogWarning(string.Format("[CheaperClass] HeroDef {0}：未找到 upgrades 列表字段", heroName));
                 }
                 return found;
             }
             catch (Exception ex)
             {
-                Plugin.Logger.LogWarning($"[CheaperClass] ApplyDiscountToHeroDef 异常: {ex.Message}");
+                Plugin.Logger.LogWarning(string.Format("[CheaperClass] ApplyDiscountToHeroDef 异常: {0}", ex.Message));
                 return false;
             }
         }
@@ -175,7 +161,7 @@ namespace BadNorthCheaperClass
         {
             base.OnAppliedToSquad(squad, upgradeLevel);
 
-            Plugin.Logger.LogInfo("[CheaperClass] OnAppliedToSquad entered - squad=" + (squad?.name ?? "null") + ", upgradeLevel=" + upgradeLevel);
+            Plugin.Logger.LogInfo(string.Format("[CheaperClass] OnAppliedToSquad entered - squad={0}, upgradeLevel={1}", squad != null ? squad.name : "null", upgradeLevel));
 
             if (discountApplied)
             {
@@ -207,11 +193,11 @@ namespace BadNorthCheaperClass
                 {
                     discountApplied = true;
                     _globalDiscountApplied = true;
-                    Plugin.Logger.LogInfo($"[CheaperClass] 已应用到小队 {squad.name}，折扣应用成功");
+                    Plugin.Logger.LogInfo(string.Format("[CheaperClass] 已应用到小队 {0}，折扣应用成功", squad.name));
                 }
                 else
                 {
-                    Plugin.Logger.LogWarning($"[CheaperClass] 应用到小队 {squad.name} 失败");
+                    Plugin.Logger.LogWarning(string.Format("[CheaperClass] 应用到小队 {0} 失败", squad.name));
                 }
             }
             catch (System.Exception ex)
