@@ -210,21 +210,6 @@ namespace BadNorthTitan
 				return false;
 			}
 
-			// 诊断：无可用目标（频率控制：同一 Agent 每隔 SightLogCooldown 输出一次，或 enemyCount 变化时立即输出）
-			int agentId = agent.GetInstanceID();
-			float now = Time.time;
-			int curEnemyCount = enemies.Count;
-			int lastCount;
-			bool countChanged = !_lastSightEnemyCount.TryGetValue(agentId, out lastCount) || lastCount != curEnemyCount;
-			float lastLog;
-			bool cooldownReady = !_lastSightLogTime.TryGetValue(agentId, out lastLog) || (now - lastLog >= SightLogCooldown);
-
-			if (countChanged || cooldownReady)
-			{
-				_lastSightEnemyCount[agentId] = curEnemyCount;
-				_lastSightLogTime[agentId] = now;
-				Plugin.Logger.LogInfo(string.Format("[Titan DIAG] Archer#{0} 索敌完成：范围内无障碍目标（enemyCount={1}）", agentId, curEnemyCount));
-			}
 			return true;
 		}
 
@@ -312,11 +297,6 @@ namespace BadNorthTitan
 				TitanFocusHelper tfh = __instance.GetComponent<TitanFocusHelper>();
 				if (!ReferenceEquals(tfh, null) && tfh.enabled)
 				{
-					int agentId = agent.GetInstanceID();
-					if (_shootFocusPassThrough.Add(agentId))
-					{
-						Plugin.Logger.LogInfo(string.Format("[Titan DIAG] Archer#{0} ShootPrefix 聚焦放行（TitanFocusHelper 驱动）", agentId));
-					}
 					return true;
 				}
 
@@ -606,10 +586,57 @@ namespace BadNorthTitan
 						cleaned++;
 					}
 				}
-				if (cleaned > 0)
-					Plugin.Logger.LogInfo(string.Format("[Titan DIAG] 清理了 {0} 个残留 TitanFocusHelper", cleaned));
+				// 计算小队中心位置
+				Vector3 squadCenter = Vector3.zero;
+				int archerCountForCenter = 0;
+				foreach (Agent squadAgent in squad.agents)
+				{
+					if (ReferenceEquals(squadAgent, null)) continue;
+					if (!IsTitanArcher(squadAgent)) continue;
+					squadCenter += squadAgent.transform.position;
+					archerCountForCenter++;
+				}
+				if (archerCountForCenter > 0)
+					squadCenter /= archerCountForCenter;
+				else
+					squadCenter = abilityAgent.transform.position;
 
-				// 为每个泰坦弓箭手挂载 TitanFocusHelper
+				// 计算统一射击方向（含垂直角度，保证高地对低地命中）
+				Vector3 unifiedDir = (targetPos - squadCenter).normalized;
+
+				// 获取第一个弓箭手的原版 ProjectileSettings（保留地形/敌人碰撞层掩码）
+				ProjectileSettings baseSettings = null;
+				foreach (Agent squadAgent in squad.agents)
+				{
+					if (ReferenceEquals(squadAgent, null)) continue;
+					if (!IsTitanArcher(squadAgent)) continue;
+					Archery archeryComp = squadAgent.GetComponent<Archery>();
+					if (!ReferenceEquals(archeryComp, null))
+					{
+						// 从反射获取 _archerySettings 字段
+						System.Reflection.FieldInfo settingsField = typeof(Archery).GetField("_archerySettings",
+							System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+						if (!ReferenceEquals(settingsField, null))
+						{
+							object settingsArray = settingsField.GetValue(archeryComp);
+							if (settingsArray is System.Array arr && arr.Length > 0)
+							{
+								// 获取第一个 settings 的结构
+								object firstSetting = arr.GetValue(0);
+								if (firstSetting != null)
+								{
+									System.Reflection.FieldInfo psField = firstSetting.GetType().GetField("projectileSettings",
+										System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+									if (!ReferenceEquals(psField, null))
+										baseSettings = psField.GetValue(firstSetting) as ProjectileSettings;
+								}
+							}
+						}
+						break;
+					}
+				}
+
+				// 为每个泰坦弓箭手挂载 TitanFocusHelper（每次射击前自动转向）
 				int count = 0;
 				foreach (Agent squadAgent in squad.agents)
 				{
@@ -617,7 +644,7 @@ namespace BadNorthTitan
 					if (!IsTitanArcher(squadAgent)) continue;
 
 					TitanFocusHelper helper = squadAgent.gameObject.AddComponent<TitanFocusHelper>();
-					helper.Configure(targetPos, 5, 0.4f);
+					helper.Configure(unifiedDir, 5, 0.4f, baseSettings);
 					count++;
 				}
 
@@ -625,14 +652,14 @@ namespace BadNorthTitan
 				if (_focusRedirected.Add(abilityAgentId))
 				{
 					Plugin.Logger.LogInfo(string.Format(
-						"[Titan FocusFix] DoTargetedAction 重定向 ✓: {0} 个 Archer 已挂载 TitanFocusHelper，目标 ({1:F1},{2:F1},{3:F1})",
-						count, targetPos.x, targetPos.y, targetPos.z));
+						"[Titan FocusFix] DoTargetedAction 重定向 ✓: {0} 个 Archer 已挂载 TitanFocusHelper，方向 ({1:F2},{2:F2},{3:F2}) → ({4:F1},{5:F1},{6:F1})",
+						count, unifiedDir.x, unifiedDir.y, unifiedDir.z, targetPos.x, targetPos.y, targetPos.z));
 				}
 				else
 				{
 					Plugin.Logger.LogInfo(string.Format(
-						"[Titan FocusFix] DoTargetedAction 重定向（再次）: {0} 个 Archer @ ({1:F1},{2:F1},{3:F1})",
-						count, targetPos.x, targetPos.y, targetPos.z));
+						"[Titan FocusFix] DoTargetedAction 重定向（再次）: {0} 个 Archer，方向 ({1:F2},{2:F2},{3:F2})",
+						count, unifiedDir.x, unifiedDir.y, unifiedDir.z));
 				}
 
 				return false;
