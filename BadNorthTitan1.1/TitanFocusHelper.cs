@@ -1,4 +1,4 @@
-using UnityEngine;
+shenusing UnityEngine;
 using Voxels.TowerDefense;
 using Voxels.TowerDefense.Ballistics;
 
@@ -81,7 +81,7 @@ namespace BadNorthTitan
 				dir.Normalize();
 			}
 
-			archery.Shoot(dir, ps);
+			archery.Shoot(dir * ArrowSpeed, ps);
 			_ammo--;
 		}
 	}

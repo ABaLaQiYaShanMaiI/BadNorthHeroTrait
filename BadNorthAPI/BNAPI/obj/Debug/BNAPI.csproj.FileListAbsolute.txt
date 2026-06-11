@@ -1,11 +1,3 @@
-f:\BadNorthProgram\BadNorthHeroTraits\BNAPI\BNAPI\obj\Debug\BNAPI.csproj.AssemblyReference.cache
-f:\BadNorthProgram\BadNorthHeroTraits\BNAPI\BNAPI\obj\Debug\BNAPI.csproj.CoreCompileInputs.cache
-c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BNAPI\BNAPI\obj\Debug\BNAPI.csproj.AssemblyReference.cache
-c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BNAPI\BNAPI\obj\Debug\BNAPI.csproj.CoreCompileInputs.cache
-c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BNAPI\BNAPI\bin\Debug\BadNorthAPI.dll
-c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BNAPI\BNAPI\bin\Debug\BadNorthAPI.pdb
-c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BNAPI\BNAPI\obj\Debug\BadNorthAPI.dll
-c:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BNAPI\BNAPI\obj\Debug\BadNorthAPI.pdb
 C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthAPI\BNAPI\bin\Debug\BadNorthAPI.dll
 C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthAPI\BNAPI\bin\Debug\BadNorthAPI.pdb
 C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthAPI\BNAPI\obj\Debug\BNAPI.csproj.AssemblyReference.cache
