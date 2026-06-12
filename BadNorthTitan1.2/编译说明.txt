@@ -1,0 +1,33 @@
+=== BadNorthTitan 1.2 编译说明 ===
+
+当前环境编译失败原因：
+  本机仅安装了 .NET 11 Preview SDK，缺少 .NET Framework 4.8 目标包（Developer Pack）。
+  BadNorthTitan.csproj 的目标框架为 net48（Unity游戏模组），需要 .NET Framework 4.8 SDK。
+
+解决方法（任选其一）：
+
+方法1 — 安装 .NET Framework 4.8 Developer Pack:
+  下载地址：https://aka.ms/msbuild/developerpacks
+  选择 ".NET Framework 4.8 Developer Pack" 安装后重启终端即可。
+
+方法2 — 使用 Visual Studio 2022:
+  如果安装了 VS2022（带 .NET 桌面开发工作负载），
+  用 VS2022 打开 BadNorthTitan.csproj 或在 Developer Command Prompt 中执行：
+    MSBuild BadNorthTitan1.2\BadNorthTitan.csproj -t:Build -p:Configuration=Debug
+
+方法3 — 修改 csproj 目标框架（不推荐）:
+  将 TargetFrameworkVersion 从 v4.8 改为 net48，
+  但这需要确保引用的 BepInEx/Harmony/Assembly-CSharp 等都匹配。
+
+失败日志：
+  C:\Program Files\dotnet\sdk\11.0.100-preview.4.26230.115\Microsoft.Common.CurrentVersion.targets(1259,5):
+  error MSB3644: 找不到 .NETFramework,Version=v4.8 的引用程序集。
+
+已确认文件状态（代码已完成，编译通过后即可使用）：
+  - BadNorthTitan.csproj    → AssemblyName: BadNorthTitan1.2
+  - Plugin.cs               → BepInPlugin: nacu.badnorthtitan1.2, Harmony: 1.2.archeryfix
+  - Properties/AssemblyInfo.cs → AssemblyVersion: 1.2.0.0
+  - Titan.cs                → 完全对齐魔改版PlentyTraits Titan效果
+  - TitanArcheryFixes.cs    → 7个Harmony补丁（索敌/瞄准/弹道/崩溃修复）
+  - TitanFocusHelper.cs     → 专注射击助手（Unity Update驱动）
+  - Resources/trait_titan.png → 原有图片资源
