@@ -9,7 +9,7 @@ namespace BadNorthAxeThrower
 {
     public class AxeThrower : HeroUpgradeDefinition
     {
-        public static readonly string AXETHROWER_ID = "Hero_Trait_AxeThrowerV10";
+        public static readonly string AXETHROWER_ID = "Hero_Trait_AxeThrower";
 
         private const string FIELD_PREPARE_SOUND = "prepareSound";
         private const string FIELD_THROWING_AXE_PREFAB = "throwingAxePrefab";

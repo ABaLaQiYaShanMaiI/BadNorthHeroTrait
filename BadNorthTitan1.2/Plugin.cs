@@ -31,8 +31,8 @@ namespace BadNorthTitan
 
 			string modPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + Path.DirectorySeparatorChar;
 
-			// 1. Load custom sprite
-			CustomSprites.AddCustomSprite(modPath, "trait_titan");
+			// 1. Load custom sprite (使用独立 key，避免与 1.0/1.1 共享)
+			CustomSprites.AddCustomSprite(modPath, "trait_titanv12");
 
 			// 2. Register trait
 			CustomTraits.RegisterTrait(
@@ -41,7 +41,7 @@ namespace BadNorthTitan
 				true
 			);
 
-			// 3. Add localization (防重复订阅)
+			// 3. Add localization (防重复订阅，使用独立的 term key)
 			CustomText.CustomTermsAdded -= AddCustomTerms;
 			CustomText.CustomTermsAdded += AddCustomTerms;
 
@@ -60,9 +60,9 @@ namespace BadNorthTitan
 
 		private void AddCustomTerms()
 		{
-			CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/TITAN/NAME", "泰坦 (BadNorthTitan1.2)");
-			CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/TITAN/DESCSHORT", "真正的巨人之力，盾弓皆可，升级后起效 (BadNorthTitan1.2)");
-			CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/TITAN/DESC", "步兵与弓箭手皆可获得泰坦之力。\n大幅提升伤害、护甲与抗性，但小队人数减半。\n需要小队达到1级后解锁。 (BadNorthTitan1.2)");
+			CustomText.AddCustomTerm(Titan.TitanV12_NAME, "泰坦 (BadNorthTitan1.2)");
+			CustomText.AddCustomTerm(Titan.TitanV12_SHORT, "真正的巨人之力，盾弓皆可，升级后起效 (BadNorthTitan1.2)");
+			CustomText.AddCustomTerm(Titan.TitanV12_DESC, "步兵与弓箭手皆可获得泰坦之力。\n大幅提升伤害、护甲与抗性，但小队人数减半。\n需要小队达到1级后解锁。 (BadNorthTitan1.2)");
 		}
 	}
 }

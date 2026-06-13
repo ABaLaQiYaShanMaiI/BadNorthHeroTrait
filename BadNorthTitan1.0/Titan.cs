@@ -13,7 +13,7 @@ namespace BadNorthTitan
     /// </summary>
     public class Titan : HeroUpgradeDefinition
     {
-        public static readonly string Titan_ID = "Hero_Trait_TitanV10";
+        public static readonly string Titan_ID = "Hero_Trait_Titan";
 
         // ── 通用参数 ──
         private const float SCALE = 1.25f;

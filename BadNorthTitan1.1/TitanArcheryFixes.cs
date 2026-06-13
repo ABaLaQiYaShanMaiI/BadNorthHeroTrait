@@ -52,6 +52,9 @@ namespace BadNorthTitan
 		private static FieldInfo _coolDownTimeField = null;
 		private static bool _coolDownTimeFieldAttempted = false;
 
+		// ── 版本隔离：记录属于本版本的 Agent InstanceID ──
+		public static HashSet<int> OurAgentIds = new HashSet<int>();
+
 		// ── 诊断计数器（去重用，避免刷屏） ──
 		private static HashSet<int> _maybeSetupBlocked = new HashSet<int>();
 		private static HashSet<int> _maybeSetupPenetrated = new HashSet<int>();
@@ -547,19 +550,6 @@ namespace BadNorthTitan
 
 			try
 			{
-				Agent abilityAgent = FindTitanAgentFromAbility(__instance, heroNavSpot);
-
-				if (!IsTitanArcher(abilityAgent))
-				{
-					if (abilityAgent != null)
-						GameplayLog(string.Format("[Titan DIAG] DoTargetedActionPrefix: Agent#{0} 非泰坦弓箭手 — 放行", abilityAgent.GetInstanceID()));
-					else
-						GameplayLogWarn("[Titan WARN] DoTargetedActionPrefix: 无法找到任何泰坦弓箭手 Agent，穿透放行（原版可能崩溃）");
-					return true;
-				}
-
-				// ↓ 泰坦弓箭手 ↓
-
 				Vector3 targetPos = Vector3.zero;
 				if (!ReferenceEquals(target, null))
 					targetPos = target.transform.position;
@@ -571,18 +561,44 @@ namespace BadNorthTitan
 					return true;
 				}
 
-				EnglishSquad squad = abilityAgent.squad as EnglishSquad;
+				// ── 直接从 heroNavSpot 获取小队，避免全局扫描跨小队串台 ──
+				EnglishSquad squad = null;
+				if (!ReferenceEquals(heroNavSpot, null))
+				{
+					FieldInfo squadField = typeof(NavSpot).GetField("squad", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+					if (!ReferenceEquals(squadField, null))
+						squad = squadField.GetValue(heroNavSpot) as EnglishSquad;
+				}
 				if (ReferenceEquals(squad, null))
 				{
-					GameplayLogWarn("[Titan WARN] DoTargetedActionPrefix: squad == null！穿透放行");
+					GameplayLogWarn("[Titan WARN] DoTargetedActionPrefix: 无法从 heroNavSpot 获取 squad！穿透放行");
 					return true;
 				}
 
-				int cleaned = 0;
+				// 检查该小队是否有本版本的泰坦弓箭手（且不含 TitanV12Marker）
+				bool hasOurArcher = false;
+				foreach (Agent squadAgent in squad.agents)
+				{
+					if (ReferenceEquals(squadAgent, null)) continue;
+					if (IsTitanArcher(squadAgent) && TitanArcheryFixes.OurAgentIds.Contains(squadAgent.GetInstanceID())
+						&& squadAgent.GetComponent("TitanV12Marker") == null)
+					{
+						hasOurArcher = true;
+						break;
+					}
+				}
+				if (!hasOurArcher)
+				{
+					GameplayLog(string.Format("[Titan DIAG] DoTargetedActionPrefix: 小队 {0} 没有 1.1 版泰坦弓箭手 — 放行", squad.name));
+					return true;
+				}
+
+			int cleaned = 0;
 				foreach (Agent squadAgent in squad.agents)
 				{
 					if (ReferenceEquals(squadAgent, null)) continue;
 					if (!IsTitanArcher(squadAgent)) continue;
+					if (!TitanArcheryFixes.OurAgentIds.Contains(squadAgent.GetInstanceID())) continue;
 					TitanFocusHelper existing = squadAgent.GetComponent<TitanFocusHelper>();
 					if (!ReferenceEquals(existing, null))
 					{
@@ -596,13 +612,14 @@ namespace BadNorthTitan
 				{
 					if (ReferenceEquals(squadAgent, null)) continue;
 					if (!IsTitanArcher(squadAgent)) continue;
+					if (!TitanArcheryFixes.OurAgentIds.Contains(squadAgent.GetInstanceID())) continue;
 					squadCenter += squadAgent.transform.position;
 					archerCountForCenter++;
 				}
 				if (archerCountForCenter > 0)
 					squadCenter /= archerCountForCenter;
 				else
-					squadCenter = abilityAgent.transform.position;
+					squadCenter = squad.agents[0].transform.position;
 
 				Vector3 unifiedDir = (targetPos - squadCenter).normalized;
 
@@ -640,14 +657,23 @@ namespace BadNorthTitan
 				{
 					if (ReferenceEquals(squadAgent, null)) continue;
 					if (!IsTitanArcher(squadAgent)) continue;
+					if (!TitanArcheryFixes.OurAgentIds.Contains(squadAgent.GetInstanceID())) continue;
 
 					TitanFocusHelper helper = squadAgent.gameObject.AddComponent<TitanFocusHelper>();
 					helper.Configure(unifiedDir, 5, 0.4f, baseSettings);
 					count++;
 				}
 
-				int abilityAgentId = abilityAgent.GetInstanceID();
-				if (_focusRedirected.Add(abilityAgentId))
+				int logAgentId = 0;
+				foreach (Agent a in squad.agents)
+				{
+					if (IsTitanArcher(a) && OurAgentIds.Contains(a.GetInstanceID()))
+					{
+						logAgentId = a.GetInstanceID();
+						break;
+					}
+				}
+				if (_focusRedirected.Add(logAgentId))
 				{
 					GameplayLog(string.Format(
 						"[Titan FocusFix] DoTargetedAction 重定向 ✓: {0} 个 Archer 已挂载 TitanFocusHelper，方向 ({1:F2},{2:F2},{3:F2}) → ({4:F1},{5:F1},{6:F1})",

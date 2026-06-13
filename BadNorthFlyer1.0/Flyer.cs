@@ -14,7 +14,7 @@ namespace BadNorthFlyer
     /// </summary>
     public class Flyer : HeroUpgradeDefinition
     {
-        public static readonly string FLYER_ID = "Hero_Trait_FlyerV10";
+        public static readonly string FLYER_ID = "Hero_Trait_Flyer";
 
         // ── 反射字段名常量 ──
         private const string FIELD_PREPARE_SOUND = "prepareSound";

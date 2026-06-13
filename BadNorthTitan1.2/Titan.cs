@@ -8,9 +8,14 @@ using Voxels.TowerDefense;
 namespace BadNorthTitan
 {
 	/// <summary>
-	/// Ì©Ì¹ (Titan) - ÕæÕıµÄ¾ŞÈËÖ®Á¦£¬¶Ü¹­½Ô¿É£¬Éı¼¶ºóÆğĞ§¡£
-	/// ±£Áô TankArcher ¼ıÊ¸Íâ¹Û + trajectoryCalculator£»
-	/// ×¨×¢Éä»÷ÓÉ TitanArcheryFixes + TitanFocusHelper °²È«½Ó¹Ü¡£
+	/// ç‰ˆæœ¬æ ‡è®°ï¼šç”¨äº 1.1 æ£€æµ‹åŒä¸€ Agent ä¸Šæ˜¯å¦å­˜åœ¨æ›´é«˜ç‰ˆæœ¬ Titan trait
+	/// </summary>
+	public class TitanV12Marker : MonoBehaviour { }
+
+	/// <summary>
+	/// æ³°å¦ (Titan) - çœŸæ­£çš„å·¨äººä¹‹åŠ›ï¼Œç›¾å¼“çš†å¯ï¼Œå‡çº§åèµ·æ•ˆã€‚
+	/// ä¿ç•™ TankArcher ç®­çŸ¢å¤–è§‚ + trajectoryCalculatorï¼›
+	/// ä¸“æ³¨å°„å‡»ç”± TitanArcheryFixes + TitanFocusHelper å®‰å…¨æ¥ç®¡ã€‚
 	/// </summary>
 	public class Titan : HeroUpgradeDefinition
 	{
@@ -32,15 +37,15 @@ namespace BadNorthTitan
 			this.upgradeType.startItemUnlockedTerm = "META_INVENTORY/START/TRAIT/UNLOCKED";
 			this.affectsPortrait = false;
 			base.name = Titan.Titan_ID;
-			this.nameTerm = "ABaLaQiYaShanMaiI/TRAIT/TITAN/NAME";
-			this.shortDescription = "ABaLaQiYaShanMaiI/TRAIT/TITAN/DESCSHORT";
-			this.infoSprite = CustomSprites.Sprites["trait_titan"];
+			this.nameTerm = Titan.TitanV12_NAME;
+			this.shortDescription = Titan.TitanV12_SHORT;
+			this.infoSprite = CustomSprites.Sprites["trait_titanv12"];
 			this.levels = new HeroUpgradeDefinition.Level[]
 			{
 				new HeroUpgradeDefinition.Level
 				{
 					cost = 0,
-					description = "ABaLaQiYaShanMaiI/TRAIT/TITAN/DESC"
+					description = Titan.TitanV12_DESC
 				}
 			};
 		}
@@ -74,6 +79,9 @@ namespace BadNorthTitan
 			if (ReferenceEquals(agent, null)) return;
 
 			agent.scale = 1.25f;
+			TitanArcheryFixes.OurAgentIds.Add(agent.GetInstanceID());
+			if (agent.GetComponent<TitanV12Marker>() == null)
+				agent.gameObject.AddComponent<TitanV12Marker>();
 			Swordsman component = agent.GetComponent<Swordsman>();
 			Archery component2 = agent.GetComponent<Archery>();
 
@@ -127,7 +135,7 @@ namespace BadNorthTitan
 				}
 				catch (Exception ex)
 				{
-					Plugin.Logger.LogWarning("[Titan] Ä£°å¸´ÖÆÊ§°Ü: " + ex.Message);
+					Plugin.Logger.LogWarning("[Titan] æ¨¡æ¿å¤åˆ¶å¤±è´¥: " + ex.Message);
 				}
 
 				for (int j = 0; j < component2._archerySettings.Length; j++)
@@ -152,5 +160,8 @@ namespace BadNorthTitan
 		}
 
 		public static readonly string Titan_ID = "Hero_Trait_TitanV12";
+		public const string TitanV12_NAME = "ABaLaQiYaShanMaiI/TRAIT/TITANV12/NAME";
+		public const string TitanV12_SHORT = "ABaLaQiYaShanMaiI/TRAIT/TITANV12/DESCSHORT";
+		public const string TitanV12_DESC = "ABaLaQiYaShanMaiI/TRAIT/TITANV12/DESC";
 	}
 }

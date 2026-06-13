@@ -23,6 +23,9 @@ namespace BadNorthAPI
         private static FieldInfo _upgradeEntryUpgradeField;
         private static FieldInfo _upgradeEntryIsStartingField;
         private static ConstructorInfo _upgradeEntryConstructor;
+        // SerializableHeroUpgrade 反射
+        private static Type _serializableHeroUpgradeType;
+        private static ConstructorInfo _serializableHeroUpgradeConstructor;
         private static bool _reflectionFailed = false;
 
         // 日志门控：反射/构造器失败只报一次
@@ -48,7 +51,8 @@ namespace BadNorthAPI
                 _upgradeEntryIsStartingField = _upgradeEntryType.GetField("isStarting");
 
                 Plugin.Logger.LogInfo("[BadNorthAPI] Listing UpgradeEntry constructors:");
-                foreach (ConstructorInfo ctor in _upgradeEntryType.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+                ConstructorInfo[] allCtors = _upgradeEntryType.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                foreach (ConstructorInfo ctor in allCtors)
                 {
                     ParameterInfo[] parameters = ctor.GetParameters();
                     StringBuilder sb = new StringBuilder("[BadNorthAPI]   ctor(");
@@ -62,45 +66,55 @@ namespace BadNorthAPI
                 }
 
                 // 优先级明确的构造器匹配策略：
-                // 优先匹配 (HeroUpgradeDefinition, bool)
-                // 其次 (HeroUpgradeDefinition, int)
-                // 再次 (HeroUpgradeDefinition, int, bool)
-                // 最后才考虑 (HeroUpgradeDefinition, object) 等宽泛情况
-                ConstructorInfo[] allCtors = _upgradeEntryType.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                // Priority 1: (SerializableHeroUpgrade, bool) ← 游戏主构造器，序列化安全
+                // Priority 2: (HeroUpgradeDefinition, bool)
+                // Priority 3: (HeroUpgradeDefinition, int)
+                // Priority 4: (HeroUpgradeDefinition, int, bool)
+                // Priority 5: (HeroUpgradeDefinition, object)
 
-                // Priority 1: (HeroUpgradeDefinition, bool)
+                // Priority 1: (SerializableHeroUpgrade, bool)
                 _upgradeEntryConstructor = FindConstructorWithParams(allCtors,
-                    typeof(HeroUpgradeDefinition), typeof(bool));
+                    typeof(SerializableHeroUpgrade), typeof(bool));
                 if (!ReferenceEquals(_upgradeEntryConstructor, null))
                 {
-                    Plugin.Logger.LogInfo("[BadNorthAPI] Found UpgradeEntry constructor (Priority 1): (HeroUpgradeDefinition, bool)");
+                    Plugin.Logger.LogInfo("[BadNorthAPI] Found UpgradeEntry constructor (Priority 1): (SerializableHeroUpgrade, bool)");
                 }
                 else
                 {
-                    // Priority 2: (HeroUpgradeDefinition, int)
+                    // Priority 2: (HeroUpgradeDefinition, bool)
                     _upgradeEntryConstructor = FindConstructorWithParams(allCtors,
-                        typeof(HeroUpgradeDefinition), typeof(int));
+                        typeof(HeroUpgradeDefinition), typeof(bool));
                     if (!ReferenceEquals(_upgradeEntryConstructor, null))
                     {
-                        Plugin.Logger.LogInfo("[BadNorthAPI] Found UpgradeEntry constructor (Priority 2): (HeroUpgradeDefinition, int)");
+                        Plugin.Logger.LogInfo("[BadNorthAPI] Found UpgradeEntry constructor (Priority 2): (HeroUpgradeDefinition, bool)");
                     }
                     else
                     {
-                        // Priority 3: (HeroUpgradeDefinition, int, bool)
+                        // Priority 3: (HeroUpgradeDefinition, int)
                         _upgradeEntryConstructor = FindConstructorWithParams(allCtors,
-                            typeof(HeroUpgradeDefinition), typeof(int), typeof(bool));
+                            typeof(HeroUpgradeDefinition), typeof(int));
                         if (!ReferenceEquals(_upgradeEntryConstructor, null))
                         {
-                            Plugin.Logger.LogInfo("[BadNorthAPI] Found UpgradeEntry constructor (Priority 3): (HeroUpgradeDefinition, int, bool)");
+                            Plugin.Logger.LogInfo("[BadNorthAPI] Found UpgradeEntry constructor (Priority 3): (HeroUpgradeDefinition, int)");
                         }
                         else
                         {
-                            // Priority 4 (fallback): (HeroUpgradeDefinition, object)
+                            // Priority 4: (HeroUpgradeDefinition, int, bool)
                             _upgradeEntryConstructor = FindConstructorWithParams(allCtors,
-                                typeof(HeroUpgradeDefinition), typeof(object));
+                                typeof(HeroUpgradeDefinition), typeof(int), typeof(bool));
                             if (!ReferenceEquals(_upgradeEntryConstructor, null))
                             {
-                                Plugin.Logger.LogInfo("[BadNorthAPI] Found UpgradeEntry constructor (Priority 4 - fallback): (HeroUpgradeDefinition, object)");
+                                Plugin.Logger.LogInfo("[BadNorthAPI] Found UpgradeEntry constructor (Priority 4): (HeroUpgradeDefinition, int, bool)");
+                            }
+                            else
+                            {
+                                // Priority 5 (fallback): (HeroUpgradeDefinition, object)
+                                _upgradeEntryConstructor = FindConstructorWithParams(allCtors,
+                                    typeof(HeroUpgradeDefinition), typeof(object));
+                                if (!ReferenceEquals(_upgradeEntryConstructor, null))
+                                {
+                                    Plugin.Logger.LogInfo("[BadNorthAPI] Found UpgradeEntry constructor (Priority 5 - fallback): (HeroUpgradeDefinition, object)");
+                                }
                             }
                         }
                     }
@@ -111,11 +125,75 @@ namespace BadNorthAPI
                     Plugin.Logger.LogError("[BadNorthAPI] Failed to find compatible UpgradeEntry constructor. Custom traits will be disabled.");
                     _reflectionFailed = true;
                 }
+                else
+                {
+                    // 如果匹配到 Priority 1 (SerializableHeroUpgrade, bool)，
+                    // 预反射 SerializableHeroUpgrade 实现，查找合适的构造器
+                    if (_upgradeEntryConstructor.GetParameters()[0].ParameterType.Equals(typeof(SerializableHeroUpgrade)))
+                    {
+                        InitSerializableHeroUpgradeReflection();
+                    }
+                }
             }
             else
             {
                 Plugin.Logger.LogError("[BadNorthAPI] Failed to find nested type UpgradeEntry. Game version may be incompatible. Custom traits will be disabled.");
                 _reflectionFailed = true;
+            }
+        }
+
+        /// <summary>
+        /// 反射 SerializableHeroUpgrade 类并查找接受 HeroUpgradeDefinition 的构造器
+        /// </summary>
+        private static void InitSerializableHeroUpgradeReflection()
+        {
+            _serializableHeroUpgradeType = typeof(SerializableHeroUpgrade);
+            ConstructorInfo[] shuCtors = _serializableHeroUpgradeType.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+            Plugin.Logger.LogInfo("[BadNorthAPI] Listing SerializableHeroUpgrade constructors:");
+            foreach (ConstructorInfo ctor in shuCtors)
+            {
+                ParameterInfo[] parameters = ctor.GetParameters();
+                StringBuilder sb = new StringBuilder("[BadNorthAPI]   SHU ctor(");
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    if (i > 0) sb.Append(", ");
+                    sb.Append(parameters[i].ParameterType.FullName);
+                }
+                sb.Append(")");
+                Plugin.Logger.LogInfo(sb.ToString());
+            }
+
+            // 按优先级查找：
+            // Pri A: (HeroUpgradeDefinition, int) - definition + level
+            // Pri B: (HeroUpgradeDefinition) - 仅 definition
+            // Pri C: 无参构造器
+            _serializableHeroUpgradeConstructor = FindConstructorWithParams(shuCtors,
+                typeof(HeroUpgradeDefinition), typeof(int));
+            if (!ReferenceEquals(_serializableHeroUpgradeConstructor, null))
+            {
+                Plugin.Logger.LogInfo("[BadNorthAPI] Found SerializableHeroUpgrade constructor (Pri A): (HeroUpgradeDefinition, int)");
+            }
+            else
+            {
+                _serializableHeroUpgradeConstructor = FindConstructorWithParams(shuCtors,
+                    typeof(HeroUpgradeDefinition));
+                if (!ReferenceEquals(_serializableHeroUpgradeConstructor, null))
+                {
+                    Plugin.Logger.LogInfo("[BadNorthAPI] Found SerializableHeroUpgrade constructor (Pri B): (HeroUpgradeDefinition)");
+                }
+                else
+                {
+                    _serializableHeroUpgradeConstructor = FindConstructorWithParams(shuCtors, new Type[0]);
+                    if (!ReferenceEquals(_serializableHeroUpgradeConstructor, null))
+                    {
+                        Plugin.Logger.LogInfo("[BadNorthAPI] Found SerializableHeroUpgrade constructor (Pri C): 无参构造");
+                    }
+                    else
+                    {
+                        Plugin.Logger.LogError("[BadNorthAPI] Failed to find any SerializableHeroUpgrade constructor. Custom traits will use fallback mode.");
+                    }
+                }
             }
         }
 
@@ -160,6 +238,52 @@ namespace BadNorthAPI
             return (IList)_upgradesField.GetValue(self);
         }
 
+        /// <summary>
+        /// 创建 SerializableHeroUpgrade 包装实例（当构造器类型为 SerializableHeroUpgrade 时使用）
+        /// </summary>
+        private static object CreateSerializableHeroUpgrade(HeroUpgradeDefinition def)
+        {
+            if (ReferenceEquals(_serializableHeroUpgradeConstructor, null))
+                return null;
+
+            ParameterInfo[] parameters = _serializableHeroUpgradeConstructor.GetParameters();
+            if (parameters.Length == 2)
+            {
+                // (HeroUpgradeDefinition, int)：int 通常为 level 索引，默认 0
+                return _serializableHeroUpgradeConstructor.Invoke(new object[] { def, 0 });
+            }
+            else if (parameters.Length == 1)
+            {
+                // (HeroUpgradeDefinition)
+                return _serializableHeroUpgradeConstructor.Invoke(new object[] { def });
+            }
+            else if (parameters.Length == 0)
+            {
+                // 无参构造器：需要手动设置 definition 属性
+                object shu = _serializableHeroUpgradeConstructor.Invoke(null);
+                PropertyInfo defProp = _serializableHeroUpgradeType.GetProperty("definition");
+                if (!ReferenceEquals(defProp, null))
+                {
+                    defProp.SetValue(shu, def, null);
+                }
+                else
+                {
+                    FieldInfo defField = _serializableHeroUpgradeType.GetField("definition", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                    if (!ReferenceEquals(defField, null))
+                    {
+                        defField.SetValue(shu, def);
+                    }
+                    else
+                    {
+                        Plugin.Logger.LogError("[BadNorthAPI] Cannot set definition on SerializableHeroUpgrade (no property or field found).");
+                        return null;
+                    }
+                }
+                return shu;
+            }
+            return null;
+        }
+
         private static object CreateUpgradeEntry(HeroUpgradeDefinition def, bool isStarting)
         {
             EnsureReflectionInit();
@@ -176,46 +300,69 @@ namespace BadNorthAPI
             ParameterInfo[] parameters = _upgradeEntryConstructor.GetParameters();
             object[] args = new object[parameters.Length];
 
-            // 第一个参数始终是 HeroUpgradeDefinition
-            args[0] = def;
+            // 判断第一个参数类型
+            Type firstParamType = parameters[0].ParameterType;
 
-            // 根据参数数量动态构建
-            if (parameters.Length == 2)
+            if (firstParamType.Equals(typeof(SerializableHeroUpgrade)))
             {
-                // 2参数: (HeroUpgradeDefinition, bool/int/object)
-                if (parameters[1].ParameterType.Equals(typeof(bool)))
+                // Priority 1 路径：(SerializableHeroUpgrade, bool)
+                // 先创建 SerializableHeroUpgrade 包装器
+                object shu = CreateSerializableHeroUpgrade(def);
+                if (ReferenceEquals(shu, null))
+                {
+                    if (!_constructorErrorLogged)
+                    {
+                        _constructorErrorLogged = true;
+                        Plugin.Logger.LogError("[BadNorthAPI] Failed to create SerializableHeroUpgrade wrapper. (此错误仅显示一次)");
+                    }
+                    return null;
+                }
+                args[0] = shu;
+                if (parameters.Length >= 2)
                     args[1] = isStarting;
-                else if (parameters[1].ParameterType.Equals(typeof(int)))
-                    args[1] = isStarting ? 1 : 0;
-                else if (parameters[1].ParameterType.Equals(typeof(object)))
-                    args[1] = (object)isStarting;
+            }
+            else
+            {
+                // 回退路径：直接传 HeroUpgradeDefinition
+                args[0] = def;
+
+                // 根据参数数量动态构建
+                if (parameters.Length == 2)
+                {
+                    // 2参数: (HeroUpgradeDefinition, bool/int/object)
+                    if (parameters[1].ParameterType.Equals(typeof(bool)))
+                        args[1] = isStarting;
+                    else if (parameters[1].ParameterType.Equals(typeof(int)))
+                        args[1] = isStarting ? 1 : 0;
+                    else if (parameters[1].ParameterType.Equals(typeof(object)))
+                        args[1] = (object)isStarting;
+                    else
+                    {
+                        if (!_constructorErrorLogged)
+                        {
+                            _constructorErrorLogged = true;
+                            Plugin.Logger.LogError(string.Format("[BadNorthAPI] Unexpected 2-param UpgradeEntry constructor type: {0}. (此错误仅显示一次)",
+                                parameters[1].ParameterType.FullName));
+                        }
+                        return null;
+                    }
+                }
+                else if (parameters.Length == 3)
+                {
+                    // 3参数: (HeroUpgradeDefinition, int, bool)
+                    args[1] = 0;
+                    args[2] = isStarting;
+                }
                 else
                 {
                     if (!_constructorErrorLogged)
                     {
                         _constructorErrorLogged = true;
-                        Plugin.Logger.LogError(string.Format("[BadNorthAPI] Unexpected 2-param UpgradeEntry constructor type: {0}. (此错误仅显示一次)",
-                            parameters[1].ParameterType.FullName));
+                        Plugin.Logger.LogError(string.Format("[BadNorthAPI] Unexpected UpgradeEntry constructor parameter count: {0}. (此错误仅显示一次)",
+                            parameters.Length));
                     }
                     return null;
                 }
-            }
-            else if (parameters.Length == 3)
-            {
-                // 3参数: (HeroUpgradeDefinition, int, bool)
-                // 第二个参数是 int（等级索引？），第三个参数是 bool（isStarting）
-                args[1] = 0; // 默认等级索引为0
-                args[2] = isStarting;
-            }
-            else
-            {
-                if (!_constructorErrorLogged)
-                {
-                    _constructorErrorLogged = true;
-                    Plugin.Logger.LogError(string.Format("[BadNorthAPI] Unexpected UpgradeEntry constructor parameter count: {0}. (此错误仅显示一次)",
-                        parameters.Length));
-                }
-                return null;
             }
 
             return _upgradeEntryConstructor.Invoke(args);
@@ -278,23 +425,51 @@ namespace BadNorthAPI
 
         private static void MetaInventory_InitStartingUpgrades(On.Voxels.TowerDefense.ProfileInternals.MetaInventory.orig_InitStartingUpgrades orig, Voxels.TowerDefense.ProfileInternals.MetaInventory self)
         {
-            // 先执行原始逻辑，让原版初始化容器，再补丁自定义特质
-            orig.Invoke(self);
-
             // 如果反射初始化失败，跳过所有自定义特性处理
             EnsureReflectionInit();
             if (_reflectionFailed)
             {
+                // 即使反射失败，仍然执行原始逻辑
+                try
+                {
+                    orig.Invoke(self);
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Logger.LogError(string.Format("[BadNorthAPI] orig.Invoke (InitStartingUpgrades) 异常: {0}", ex.Message));
+                }
                 return;
             }
 
-            // 获取 upgrades 列表，如果为空则跳过
+            // 获取 upgrades 列表
             IList upgrades = GetUpgrades(self);
             if (ReferenceEquals(upgrades, null))
             {
+                try
+                {
+                    orig.Invoke(self);
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Logger.LogError(string.Format("[BadNorthAPI] orig.Invoke (InitStartingUpgrades) 异常: {0}", ex.Message));
+                }
                 return;
             }
 
+            // ── 第一轮清理：先移除存档反序列化残留的空引用条目，防止 orig 中 AddToStarting NPE ──
+            RemoveNullEntries(upgrades);
+
+            // 先执行原始逻辑，让原版初始化容器
+            try
+            {
+                orig.Invoke(self);
+            }
+            catch (Exception ex)
+            {
+                Plugin.Logger.LogError(string.Format("[BadNorthAPI] orig.Invoke (InitStartingUpgrades) 异常: {0}", ex.Message));
+            }
+
+            // 补丁自定义特质
             foreach (string traitID in CustomTraits.StartingTraits)
             {
                 HeroUpgradeDefinition registeredTrait = CustomTraits.GetRegisteredTrait(traitID);
@@ -342,7 +517,17 @@ namespace BadNorthAPI
                 }
             }
 
-            // 移除空引用条目（倒序删除避免索引偏移）
+            // ── 第二轮清理：移除 orig 或自定义添加过程中可能产生的空引用条目 ──
+            RemoveNullEntries(upgrades);
+        }
+
+        /// <summary>
+        /// 移除 upgrades 列表中的空引用条目（倒序删除避免索引偏移）
+        /// </summary>
+        private static void RemoveNullEntries(IList upgrades)
+        {
+            if (ReferenceEquals(upgrades, null)) return;
+
             List<int> idsToRemove = new List<int>();
             for (int i = 0; i < upgrades.Count; i++)
             {

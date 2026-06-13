@@ -1,7 +1,7 @@
-# BadNorth 特质字段清单（V10/V11/V12 版本化 ID 方案）
+# BadNorth 特质字段清单
 
-> 仿照 Titan 1.2 使用 `Hero_Trait_TitanV12` 的做法，  
-> 所有特质 ID 按版本添加后缀：1.0 → V10, 1.1 → V11, 1.2 → V12。
+> 各特质的 Trait ID、本地化术语与显示文本汇总。  
+> ID 值以各代码文件中 `public static readonly string ..._ID` 常量为准。
 
 ---
 
@@ -9,7 +9,7 @@
 
 | 字段 | 值 |
 |------|----|
-| **Trait ID** | `Hero_Trait_AxeThrowerV10` |
+| **Trait ID** | `Hero_Trait_AxeThrower` |
 | **NAMESPACE** | `ABaLaQiYaShanMaiI/TRAIT/AXE/NAME` |
 | **DESCSHORT** | `ABaLaQiYaShanMaiI/TRAIT/AXE/DESCSHORT` |
 | **DESC** | `ABaLaQiYaShanMaiI/TRAIT/AXE/DESC` |
@@ -23,7 +23,7 @@
 
 | 字段 | 值 |
 |------|----|
-| **Trait ID** | `Hero_Trait_FlyerV10` |
+| **Trait ID** | `Hero_Trait_Flyer` |
 | **NAMESPACE** | `ABaLaQiYaShanMaiI/TRAIT/FLYER/NAME` |
 | **DESCSHORT** | `ABaLaQiYaShanMaiI/TRAIT/FLYER/DESCSHORT` |
 | **DESC** | `ABaLaQiYaShanMaiI/TRAIT/FLYER/DESC` |
@@ -37,7 +37,7 @@
 
 | 字段 | 值 |
 |------|----|
-| **Trait ID** | `Hero_Trait_SlashV10` |
+| **Trait ID** | `Hero_Trait_Slash` |
 | **NAMESPACE** | `ABaLaQiYaShanMaiI/TRAIT/SLASH/NAME` |
 | **DESCSHORT** | `ABaLaQiYaShanMaiI/TRAIT/SLASH/DESCSHORT` |
 | **DESC** | `ABaLaQiYaShanMaiI/TRAIT/SLASH/DESC` |
@@ -65,7 +65,7 @@
 
 | 字段 | 值 |
 |------|----|
-| **Trait ID** | `Hero_Trait_ThornsV10` |
+| **Trait ID** | `Hero_Trait_Thorns` |
 | **NAMESPACE** | `ABaLaQiYaShanMaiI/TRAIT/THORNS/NAME` |
 | **DESCSHORT** | `ABaLaQiYaShanMaiI/TRAIT/THORNS/DESCSHORT` |
 | **DESC** | `ABaLaQiYaShanMaiI/TRAIT/THORNS/DESC` |
@@ -119,11 +119,11 @@
 
 ---
 
-## 9. 泰坦 (Titan) 1.0 → V10
+## 9. 泰坦 (Titan) 1.0
 
 | 字段 | 值 |
 |------|----|
-| **Trait ID** | `Hero_Trait_TitanV10` |
+| **Trait ID** | `Hero_Trait_Titan` |
 | **NAMESPACE** | `ABaLaQiYaShanMaiI/TRAIT/TITAN/NAME` |
 | **DESCSHORT** | `ABaLaQiYaShanMaiI/TRAIT/TITAN/DESCSHORT` |
 | **DESC** | `ABaLaQiYaShanMaiI/TRAIT/TITAN/DESC` |
@@ -133,11 +133,11 @@
 
 ---
 
-## 10. 泰坦 (Titan) 1.1 → V11
+## 10. 泰坦 (Titan) 1.1
 
 | 字段 | 值 |
 |------|----|
-| **Trait ID** | `Hero_Trait_TitanV11` |
+| **Trait ID** | `Hero_Trait_Titan` |
 | **NAMESPACE** | `ABaLaQiYaShanMaiI/TRAIT/TITAN/NAME` |
 | **DESCSHORT** | `ABaLaQiYaShanMaiI/TRAIT/TITAN/DESCSHORT` |
 | **DESC** | `ABaLaQiYaShanMaiI/TRAIT/TITAN/DESC` |
@@ -161,12 +161,20 @@
 
 ---
 
-## 版本化 ID 映射速查
+## 特质 ID 映射速查
 
-| 版本号 | ID 后缀 | 示例 |
-|--------|---------|------|
-| 1.0 | `V10` | `Hero_Trait_AxeThrowerV10` |
-| 1.1 | `V11` | `Hero_Trait_TitanV11` |
-| 1.2 | `V12` | `Hero_Trait_TitanV12` |
+| 特质 | 目录 | 代码 Trait ID |
+|------|------|--------------|
+| 掷斧手 | BadNorthAxeThrower1.0 | `Hero_Trait_AxeThrower` |
+| 神鹰 | BadNorthFlyer1.0 | `Hero_Trait_Flyer` |
+| 横扫之刃 | BadNorthSlash1.0 | `Hero_Trait_Slash` |
+| 迅捷精通 | BadNorthCheaperClass1.0 | `Hero_Trait_CheaperClassV10` |
+| 荆棘 | BadNorthThorns1.0 | `Hero_Trait_Thorns` |
+| 追猎 | BadNorthRegenerative1.0 | `Hero_Trait_RegenerativeV10` |
+| 心灵精英 | BadNorthYuri1.0 | `Hero_Trait_YuriV10` |
+| 终极部队 | BadNorthUltimateSquad1.0 | `Hero_Trait_UltimateSquadV10` |
+| 泰坦 1.0 | BadNorthTitan1.0 | `Hero_Trait_Titan` |
+| 泰坦 1.1 | BadNorthTitan1.1 | `Hero_Trait_Titan` |
+| 泰坦 1.2 | BadNorthTitan1.2 | `Hero_Trait_TitanV12` |
 
-> ⚠ **待修改**：除 Titan 1.2 外，其余 10 个特质的 `public static readonly string ..._ID` 常量仍为旧格式（无版本后缀），需要在各自的主定义文件中改为上述 V10/V11 格式。
+> ⚠ **注意**：Trait ID 由各代码文件中的 `public static readonly string ..._ID` 常量定义，以上为实际代码中的值。`V10`/`V12` 只有 CheaperClass、Regenerative、UltimateSquad、Yuri、Titan 1.2 保留了版本号后缀。

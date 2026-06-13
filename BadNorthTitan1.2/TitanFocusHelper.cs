@@ -19,8 +19,8 @@ namespace BadNorthTitan
 	public class TitanFocusHelper : MonoBehaviour
 	{
 		private Vector3 _shootDir;           // 统一射击方向（已归一化）
-		private int _ammo = 25;
-		private float _shotInterval = 0.01f;
+		private int _ammo = 8;
+		private float _shotInterval = 0.04f;
 		private float _lastShotTime;
 		private float _spread = 0.5f;
 
@@ -53,15 +53,16 @@ namespace BadNorthTitan
 			_shootDir = shootDir;
 			_ammo = ammo;
 			_shotInterval = interval;
-			_lastShotTime = 0f;
+			_lastShotTime = Time.time - interval;
 			_baseSettings = baseSettings;
+			GameplayLog(string.Format("[Titan FocusHelper] Configure → ammo={0}, interval={1:F3}, spread={2:F2}, shoot_dir=({3:F3},{4:F3},{5:F3}), _lastShotTime={6:F2}",
+				_ammo, _shotInterval, _spread, _shootDir.x, _shootDir.y, _shootDir.z, _lastShotTime));
 		}
 
 		void OnEnable()
 		{
-			_lastShotTime = 0f;
-			GameplayLog(string.Format("[Titan FocusHelper] OnEnable → ammo={0}, interval={1:F3}, spread={2:F2}, dir=({3:F2},{4:F2},{5:F2})",
-				_ammo, _shotInterval, _spread, _shootDir.x, _shootDir.y, _shootDir.z));
+			GameplayLog(string.Format("[Titan FocusHelper] OnEnable → ammo={0}, interval={1:F3}, spread={2:F2} (等待 Configure 注入 _shootDir)",
+				_ammo, _shotInterval, _spread));
 		}
 
 		void Update()
@@ -135,16 +136,16 @@ namespace BadNorthTitan
 				Vector3 spreadVec = Random.insideUnitSphere * _spread;
 				dir += spreadVec;
 				dir.Normalize();
-				GameplayLog(string.Format("[Titan FocusHelper] 射击 #{0}: 剩余={1}, 间隔={2:F4}s, cooldown前={3:F2}, spread=({4:F3},{5:F3},{6:F3}), dir=({7:F3},{8:F3},{9:F3})",
-					25 - _ammo + 1, _ammo - 1, timeSinceLastShot, cooldownBefore,
-					spreadVec.x, spreadVec.y, spreadVec.z,
+				GameplayLog(string.Format("[Titan FocusHelper] 射击 #{0}/{4}: 剩余={1}, 间隔={2:F4}s, cooldown前={3:F2}, spread=({5:F3},{6:F3},{7:F3}), shoot_dir=({8:F3},{9:F3},{10:F3})",
+					_ammo, _ammo - 1, timeSinceLastShot, cooldownBefore,
+					_ammo, spreadVec.x, spreadVec.y, spreadVec.z,
 					dir.x, dir.y, dir.z));
 			}
 			else
 			{
-				GameplayLog(string.Format("[Titan FocusHelper] 射击 #{0}: 剩余={1}, 间隔={2:F4}s, cooldown前={3:F2}, dir=({4:F3},{5:F3},{6:F3})",
-					25 - _ammo + 1, _ammo - 1, timeSinceLastShot, cooldownBefore,
-					dir.x, dir.y, dir.z));
+				GameplayLog(string.Format("[Titan FocusHelper] 射击 #{0}/{4}: 剩余={1}, 间隔={2:F4}s, cooldown前={3:F2}, shoot_dir=({5:F3},{6:F3},{7:F3})",
+					_ammo, _ammo - 1, timeSinceLastShot, cooldownBefore,
+					_ammo, dir.x, dir.y, dir.z));
 			}
 
 			archery.Shoot(dir * ArrowSpeed, ps);

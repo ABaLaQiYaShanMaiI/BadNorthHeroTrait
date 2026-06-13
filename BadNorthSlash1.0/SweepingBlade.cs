@@ -13,7 +13,7 @@ namespace BadNorthSlash
     /// </summary>
     public class SweepingBlade : HeroUpgradeDefinition
     {
-        public static readonly string Slash_ID = "Hero_Trait_SlashV10";
+        public static readonly string Slash_ID = "Hero_Trait_Slash";
 
         public SweepingBlade()
         {

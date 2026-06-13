@@ -74,6 +74,7 @@ namespace BadNorthTitan
 			if (ReferenceEquals(agent, null)) return;
 
 			agent.scale = 1.25f;
+			TitanArcheryFixes.OurAgentIds.Add(agent.GetInstanceID());
 			Swordsman component = agent.GetComponent<Swordsman>();
 			Archery component2 = agent.GetComponent<Archery>();
 
@@ -151,6 +152,6 @@ namespace BadNorthTitan
 				stunComp.stunMultiplier = 1E-06f;
 		}
 
-		public static readonly string Titan_ID = "Hero_Trait_TitanV11";
+		public static readonly string Titan_ID = "Hero_Trait_Titan";
 	}
 }

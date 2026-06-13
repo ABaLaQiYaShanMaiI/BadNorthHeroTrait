@@ -76,6 +76,15 @@ BadNorthHeroTraits/                    # 根目录（Git 仓库）
 │   ├── Resources/trait_titan.png
 │   └── BadNorthTitan.csproj          # AssemblyName: BadNorthTitan1.1
 │
+├── BadNorthTitan1.2/                 # 特质: 泰坦 v1.2
+│   ├── Titan.cs                       # 特质定义（高属性巨人化 + V12 独立 ID/术语）
+│   ├── TitanArcheryFixes.cs           # Harmony补丁（8 补丁：索敌/瞄准/弹道 + 专注修复）
+│   ├── TitanFocusHelper.cs            # 专注射击助手
+│   ├── Plugin.cs                      # Mod 入口 (v1.2)
+│   ├── Properties/AssemblyInfo.cs     # AssemblyVersion("1.2.0.0")
+│   ├── Resources/trait_titanv12.png
+│   └── BadNorthTitan.csproj          # AssemblyName: BadNorthTitan1.2
+│
 ├── BadNorthUltimateSquad1.0/         # 特质: 终极部队
 │   ├── UltimateSquad.cs               # 特质定义（英雄坦克化+小兵全面强化，IAttackResponder免疫击退）
 │   ├── Plugin.cs                      # Mod 入口
@@ -108,7 +117,7 @@ BadNorthCheaperClass1.0.dll ──────┤
 BadNorthRegenerative1.0.dll ──────┤
 BadNorthThorns1.0.dll ────────────┤  ──→ BadNorthAPI.dll ──→ MMHOOK-Assembly-CSharp.dll ──→ BepInEx.dll ──→ Assembly-CSharp.dll
 BadNorthFlyer1.0.dll ─────────────┤
-BadNorthTitan1.0.dll / 1.1.dll ───┤
+BadNorthTitan1.0.dll / 1.1.dll / 1.2.dll ───┤
 BadNorthUltimateSquad1.0.dll ─────┤
 BadNorthYuri1.0.dll ──────────────┤
 BadNorthSlash1.0.dll ─────────────┘
@@ -132,17 +141,17 @@ BadNorthSlash1.0.dll ─────────────┘
 
 | 特质 | ID | 命名空间 | GUID |
 |------|-----|---------|------|
-| 掷斧手 | `Hero_Trait_AxeThrowerV10` | BadNorthAxeThrower | ABaLaQiYaShanMaiI.badnorthaxethrower1.0 |
+| 掷斧手 | `Hero_Trait_AxeThrower` | BadNorthAxeThrower | ABaLaQiYaShanMaiI.badnorthaxethrower1.0 |
 | 迅捷精通 | `Hero_Trait_CheaperClassV10` | BadNorthCheaperClass | ABaLaQiYaShanMaiI.badnorthcheaperclass1.0 |
 | 追猎 | `Hero_Trait_RegenerativeV10` | BadNorthRegenerative | ABaLaQiYaShanMaiI.badnorthregenerative1.0 |
-| 荆棘 | `Hero_Trait_ThornsV10` | BadNorthThorns | ABaLaQiYaShanMaiI.badnorththorns1.0 |
-| 神鹰 | `Hero_Trait_FlyerV10` | BadNorthFlyer | ABaLaQiYaShanMaiI.badnorthflyer1.0 |
-| 泰坦 v1.0 | `Hero_Trait_TitanV10` | BadNorthTitan | ABaLaQiYaShanMaiI.badnorthtitan1.0 |
-| 泰坦 v1.1 | `Hero_Trait_TitanV11` | BadNorthTitan | ABaLaQiYaShanMaiI.badnorthtitan1.1 |
+| 荆棘 | `Hero_Trait_Thorns` | BadNorthThorns | ABaLaQiYaShanMaiI.badnorththorns1.0 |
+| 神鹰 | `Hero_Trait_Flyer` | BadNorthFlyer | ABaLaQiYaShanMaiI.badnorthflyer1.0 |
+| 泰坦 v1.0 | `Hero_Trait_Titan` | BadNorthTitan | ABaLaQiYaShanMaiI.badnorthtitan1.0 |
+| 泰坦 v1.1 | `Hero_Trait_Titan` | BadNorthTitan | ABaLaQiYaShanMaiI.badnorthtitan1.1 |
 | 泰坦 v1.2 | `Hero_Trait_TitanV12` | BadNorthTitan | ABaLaQiYaShanMaiI.badnorthtitan1.2 |
 | 终极部队 | `Hero_Trait_UltimateSquadV10` | BadNorthUltimateSquad | ABaLaQiYaShanMaiI.badnorthultimatesquad1.0 |
 | 心灵精英 | `Hero_Trait_YuriV10` | BadNorthYuri | ABaLaQiYaShanMaiI.badnorthyuri1.0 |
-| 横扫之刃 | `Hero_Trait_SlashV10` | BadNorthSweepingBlade | ABaLaQiYaShanMaiI.badnorthsweepingblade1.0 |
+| 横扫之刃 | `Hero_Trait_Slash` | BadNorthSweepingBlade | ABaLaQiYaShanMaiI.badnorthsweepingblade1.0 |
 
 ## 构建说明
 
@@ -167,6 +176,7 @@ dotnet build BadNorthThorns1.0/BadNorthThorns.csproj -c Debug
 dotnet build BadNorthFlyer1.0/BadNorthFlyer.csproj -c Debug
 dotnet build BadNorthTitan1.0/BadNorthTitan.csproj -c Debug
 dotnet build BadNorthTitan1.1/BadNorthTitan.csproj -c Debug
+dotnet build BadNorthTitan1.2/BadNorthTitan.csproj -c Debug
 dotnet build BadNorthUltimateSquad1.0/BadNorthUltimateSquad.csproj -c Debug
 dotnet build BadNorthYuri1.0/BadNorthYuri.csproj -c Debug
 dotnet build BadNorthSlash1.0/BadNorthSlash.csproj -c Debug
@@ -184,6 +194,7 @@ dotnet build BadNorthSlash1.0/BadNorthSlash.csproj -c Debug
 | Flyer 1.0 | `BadNorthFlyer1.0/bin/Debug/BadNorthFlyer1.0.dll` |
 | Titan 1.0 | `BadNorthTitan1.0/bin/Debug/BadNorthTitan1.0.dll` |
 | Titan 1.1 | `BadNorthTitan1.1/bin/Debug/BadNorthTitan1.1.dll` |
+| Titan 1.2 | `BadNorthTitan1.2/bin/Debug/BadNorthTitan1.2.dll` |
 | UltimateSquad 1.0 | `BadNorthUltimateSquad1.0/bin/Debug/BadNorthUltimateSquad1.0.dll` |
 | Yuri 1.0 | `BadNorthYuri1.0/bin/Debug/BadNorthYuri1.0.dll` |
 | Slash 1.0 | `BadNorthSlash1.0/bin/Debug/BadNorthSlash1.0.dll` |
@@ -202,6 +213,7 @@ BadNorth/BepInEx/plugins/
 ├── BadNorthFlyer1.0.dll               # 可选 - 神鹰特质
 ├── BadNorthTitan1.0.dll               # 可选 - 泰坦特质 v1.0
 ├── BadNorthTitan1.1.dll               # 可选 - 泰坦特质 v1.1
+├── BadNorthTitan1.2.dll               # 可选 - 泰坦特质 v1.2
 ├── BadNorthUltimateSquad1.0.dll       # 可选 - 终极部队特质
 ├── BadNorthYuri1.0.dll                # 可选 - 心灵精英特质
 ├── BadNorthSlash1.0.dll               # 可选 - 横扫之刃特质
@@ -282,7 +294,7 @@ public void OnEnable()
 
 #### 1.5 图标命名与引用规范
 
-- 图标文件路径：`Resources/trait_{英文名}.png`（**不包含版本号**，如 `trait_titan.png`）
+- 图标文件路径：`Resources/trait_{英文名}.png`（**不包含版本号**，如 `trait_titan.png`），仅 Titan 1.2 例外（`trait_titanv12.png`）
 - 在 Plugin.cs 中加载：`CustomSprites.AddCustomSprite(modPath, "trait_{英文名}");`
 - 在特质定义构造函数中引用：`this.infoSprite = CustomSprites.Sprites["trait_{英文名}"];`
 
@@ -297,18 +309,18 @@ public void OnEnable()
 
 ### 3️⃣ BadNorthTitan 1.2 —— 泰坦特质
 
-> **版本**: v1.2 | **目录**: `BadNorthTitan1.2/` | **GUID**: `ABaLaQiYaShanMaiI.badnorthtitan1.2` | **DLL**: `BadNorthTitan1.2.dll` | **AssemblyVersion**: `1.2.0.0`
+> **版本**: v1.2 | **目录**: `BadNorthTitan1.2/` | **GUID**: `ABaLaQiYaShanMaiI.badnorthtitan1.2` | **DLL**: `BadNorthTitan1.2.dll` | **AssemblyVersion**: `1.2.0.0` | **Trait ID**: `Hero_Trait_TitanV12`
 
 将原 PlentyTraits Titan 重写为模块化版本，并在 1.1 中加入泰坦弓箭手索敌/瞄准修复。
 
-> **1.0 版本**也存在：目录 `BadNorthTitan1.0/`，GUID `ABaLaQiYaShanMaiI.badnorthtitan1.0`，DLL `BadNorthTitan1.0.dll`，AssemblyVersion `1.0.0.0`。不含 TitanArcheryFixes.cs。
-> **1.1 版本**也存在：目录 `BadNorthTitan1.1/`，GUID `ABaLaQiYaShanMaiI.badnorthtitan1.1`，DLL `BadNorthTitan1.1.dll`，AssemblyVersion `1.1.0.0`。
+> **1.0 版本**也存在：目录 `BadNorthTitan1.0/`，GUID `ABaLaQiYaShanMaiI.badnorthtitan1.0`，DLL `BadNorthTitan1.0.dll`，AssemblyVersion `1.0.0.0`，Trait ID `Hero_Trait_Titan`。不含 TitanArcheryFixes.cs。
+> **1.1 版本**也存在：目录 `BadNorthTitan1.1/`，GUID `ABaLaQiYaShanMaiI.badnorthtitan1.1`，DLL `BadNorthTitan1.1.dll`，AssemblyVersion `1.1.0.0`，Trait ID `Hero_Trait_Titan`。
 
 #### 3.1 文件结构（v1.2）
 
 | 文件 | 职责 |
 |------|------|
-| `Titan.cs` | 特质定义 — 属性强化、体型缩放、小队人数调整 |
+| `Titan.cs` | 特质定义 — 属性强化、体型缩放、小队人数调整（Trait ID: `Hero_Trait_TitanV12`） |
 | `TitanArcheryFixes.cs` | Harmony 补丁 — 泰坦弓箭手索敌/瞄准/射击逻辑重写（8 补丁） |
 | `TitanFocusHelper.cs` | 专注射击助手 — 极简自建聚焦射击组件 |
 | `Plugin.cs` | Mod 入口 — 注册特质 + 应用弓箭手补丁 |
@@ -514,7 +526,7 @@ TitanArcheryFixes.ApplyPatches(harmony);
 | | 弓箭手击飞力 | 3 |
 | 英雄动画 | 替换为双刀维京样式 | `Viking_Twohanded` |
 
-#### 7.2 泰坦 (Titan) — `BadNorthTitan1.0/Titan.cs` / `BadNorthTitan1.1/Titan.cs`
+#### 7.2 泰坦 (Titan) — `BadNorthTitan1.0/Titan.cs` / `BadNorthTitan1.1/Titan.cs` / `BadNorthTitan1.2/Titan.cs`
 
 | 类别 | 参数 | 值 |
 |------|------|-----|
@@ -653,7 +665,7 @@ TitanArcheryFixes.ApplyPatches(harmony);
 
 #### 8.1 构建顺序
 
-必须先构建 BadNorthAPI 生成 `BadNorthAPI.dll`，再构建 10 个特质 Mod。
+必须先构建 BadNorthAPI 生成 `BadNorthAPI.dll`，再构建 11 个特质 Mod。
 
 #### 8.2 csproj HintPath 层级
 
