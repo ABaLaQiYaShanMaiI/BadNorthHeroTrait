@@ -7,13 +7,13 @@ using Voxels.TowerDefense;
 namespace BadNorthSlash
 {
     /// <summary>
-    /// ºáÉ¨Ö®ÈĞ (Slash / Sweeping Blade) - ÖÒÊµ»¹Ô­Ä§¸Ä°æ FancyTraits/Slash.cs
-    /// Ó¢ĞÛ»ñµÃ¸ßÑ£ÔÎ¿¹ĞÔ (stunMultiplier=0.1)£¬²¢»ñµÃ SlashSword ×é¼ş£¨ÂúÑª+½¦Éä£©¡£
-    /// µ±µÈ¼¶¡İ1ÇÒĞ¡±øÎª Swordsman Ê±£¬Ğ¡±øÒ²»ñµÃ SlashSword ×é¼ş¡£
+    /// æ¨ªæ‰«ä¹‹åˆƒ (Slash / Sweeping Blade) - å¿ å®è¿˜åŸé­”æ”¹ç‰ˆ FancyTraits/Slash.cs
+    /// è‹±é›„è·å¾—é«˜çœ©æ™•æŠ—æ€§ (stunMultiplier=0.1)ï¼Œå¹¶è·å¾— SlashSword ç»„ä»¶ï¼ˆæ»¡è¡€+æº…å°„ï¼‰ã€‚
+    /// å½“ç­‰çº§â‰¥1ä¸”å°å…µä¸º Swordsman æ—¶ï¼Œå°å…µä¹Ÿè·å¾— SlashSword ç»„ä»¶ã€‚
     /// </summary>
     public class SweepingBlade : HeroUpgradeDefinition
     {
-        public static readonly string Slash_ID = "Hero_Trait_Slash";
+        public static readonly string Slash_ID = "Hero_Trait_SlashV10";
 
         public SweepingBlade()
         {
@@ -32,7 +32,7 @@ namespace BadNorthSlash
 
             if (squad.level >= 1 && squad.minionPrefab.GetComponent<Swordsman>())
             {
-                ComponentHelper.GetOrAddComponent<SlashSword>(squad.minionPrefab);
+                ComponentHelper.GetOrAddComponent<SlashSword>(squad.minionPrefab.gameObject);
             }
         }
     }

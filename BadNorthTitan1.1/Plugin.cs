@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using BepInEx;
+using BepInEx.Configuration;
 using BepInEx.Logging;
 using BadNorthAPI;
 using HarmonyLib;
@@ -15,10 +16,19 @@ namespace BadNorthTitan
 	public class Plugin : BaseUnityPlugin
 	{
 		public static ManualLogSource Logger;
+		public static bool EnableGameplayLog;
 
 		public void OnEnable()
 		{
 			Logger = base.Logger;
+
+			EnableGameplayLog = Config.Bind(
+				"Log",
+				"EnableGameplayLog",
+				true,
+				"是否启用 Titan 1.1 的游戏运行时日志（Harmony patch 诊断等）。不影响加载/卸载日志。"
+			).Value;
+
 			string modPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + Path.DirectorySeparatorChar;
 
 			// 1. Load custom sprite

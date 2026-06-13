@@ -54,7 +54,7 @@ namespace BadNorthAPI
 
                 if (termExists)
                 {
-                    Plugin.logger.LogInfo(string.Concat(new string[]
+                    Plugin.Logger.LogInfo(string.Concat(new string[]
                     {
                         "TERM \"",
                         term,
@@ -67,7 +67,7 @@ namespace BadNorthAPI
 
                 languageSourceData.AddTerm(term);
                 languageSourceData.mTerms[languageSourceData.mTerms.Count - 1].SetTranslation(0, text, null);
-                Plugin.logger.LogInfo(string.Concat(new string[]
+                Plugin.Logger.LogInfo(string.Concat(new string[]
                 {
                     "TRANSLATED \"",
                     term,
@@ -78,13 +78,13 @@ namespace BadNorthAPI
             }
             catch (Exception ex)
             {
-                Plugin.logger.LogError(string.Concat(new string[]
+                Plugin.Logger.LogError(string.Concat(new string[]
                 {
                     "FAILED TO TRANSLATE \"",
                     term,
                     "\""
                 }));
-                Plugin.logger.LogError(ex);
+                Plugin.Logger.LogError(ex);
             }
         }
 

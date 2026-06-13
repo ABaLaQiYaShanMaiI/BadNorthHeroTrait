@@ -12,7 +12,7 @@ namespace BadNorthThorns
     /// </summary>
     public class Thorns : HeroUpgradeDefinition
     {
-        public static readonly string THORNS_ID = "Hero_Trait_Thorns";
+        public static readonly string THORNS_ID = "Hero_Trait_ThornsV10";
 
         public Thorns()
         {

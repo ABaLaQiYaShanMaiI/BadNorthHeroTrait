@@ -83,6 +83,7 @@
   <ItemGroup>
     <Compile Include="Thorns.cs" />
     <Compile Include="Plugin.cs" />
+    <Compile Include="ThornsResponder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

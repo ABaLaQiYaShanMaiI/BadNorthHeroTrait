@@ -17,12 +17,12 @@ namespace BadNorthAPI
                 texture2D.filterMode = FilterMode.Bilinear;
                 texture2D.wrapMode = TextureWrapMode.Clamp;
                 CustomSprites.Sprites[name] = Sprite.Create(texture2D, new Rect(0f, 0f, (float)texture2D.width, (float)texture2D.height), new Vector2((float)(texture2D.width / 2), (float)(texture2D.height / 2)));
-                Plugin.logger.LogInfo("Added custom sprite with id " + name + "!");
+                Plugin.Logger.LogInfo("Added custom sprite with id " + name + "!");
             }
             catch (Exception ex)
             {
-                Plugin.logger.LogError("Failed to add sprite " + path + "\\" + name);
-                Plugin.logger.LogError(ex);
+                Plugin.Logger.LogError("Failed to add sprite " + path + "\\" + name);
+                Plugin.Logger.LogError(ex);
             }
         }
 

@@ -8,13 +8,13 @@ using Voxels.TowerDefense.Flag;
 namespace BadNorthUltimateSquad
 {
     /// <summary>
-    /// ÖÕ¼«²¿¶Ó (Ultimate Squad) - ÖÒÊµ»¹Ô­Ä§¸Ä°æ FancyTraits/UltimateSquad.cs
-    /// Ó¢ĞÛ»ñµÃÌ¹¿Ë»¯¸ÄÔì£¨¸´ÖÆ Tank ¶¯»­¡¢scale=1.28¡¢»¤¼×{6,8,11,14}¡¢¸ßÉËº¦/»÷ÍË/Ñ£ÔÎ¡¢ÃâÒß»÷ÍË£©£¬
-    /// ¶îÍâ»ñµÃ¹ºÂòÕÛ¿ÛºÍ¶îÍâÊ¹ÓÃ´ÎÊı£»Ğ¡±ø»ñµÃÎÂºÍµÄÈ«ÃæÇ¿»¯¡£
+    /// ç»ˆæéƒ¨é˜Ÿ (Ultimate Squad) - å¿ å®è¿˜åŸé­”æ”¹ç‰ˆ FancyTraits/UltimateSquad.cs
+    /// è‹±é›„è·å¾—å¦å…‹åŒ–æ”¹é€ ï¼ˆå¤åˆ¶ Tank åŠ¨ç”»ã€scale=1.28ã€æŠ¤ç”²{6,8,11,14}ã€é«˜ä¼¤å®³/å‡»é€€/çœ©æ™•ã€å…ç–«å‡»é€€ï¼‰ï¼Œ
+    /// é¢å¤–è·å¾—è´­ä¹°æŠ˜æ‰£å’Œé¢å¤–ä½¿ç”¨æ¬¡æ•°ï¼›å°å…µè·å¾—æ¸©å’Œçš„å…¨é¢å¼ºåŒ–ã€‚
     /// </summary>
     public class UltimateSquad : HeroUpgradeDefinition, IAttackResponder
     {
-        public static readonly string ULTIMATE_ID = "Hero_Trait_UltimateSquad";
+        public static readonly string ULTIMATE_ID = "Hero_Trait_UltimateSquadV10";
 
         public UltimateSquad()
         {
@@ -26,7 +26,7 @@ namespace BadNorthUltimateSquad
                 TraitHelper.CreateSingleLevel("ABaLaQiYaShanMaiI/TRAIT/ULTIMATE/DESC"));
         }
 
-        // ©¤©¤ Ö÷Èë¿Ú£ºÓ¦ÓÃµ½Ğ¡¶Ó ©¤©¤
+        // â”€â”€ ä¸»å…¥å£ï¼šåº”ç”¨åˆ°å°é˜Ÿ â”€â”€
 
         public override void OnAppliedToSquad(EnglishSquad squad, int upgradeLevel)
         {
@@ -35,7 +35,7 @@ namespace BadNorthUltimateSquad
             squad.onAgentCreated += this.UltimateEffect;
         }
 
-        // ©¤©¤ ¹ºÂòÊ±¶îÍâĞ§¹û ©¤©¤
+        // â”€â”€ è´­ä¹°æ—¶é¢å¤–æ•ˆæœ â”€â”€
 
         public override void OnPurchased(HeroDefinition hero, int level)
         {
@@ -44,7 +44,7 @@ namespace BadNorthUltimateSquad
             hero.discountType = HeroUpgradeTypeEnum.Class;
         }
 
-        // ©¤©¤ Ó¢ĞÛÌ¹¿Ë»¯¸ÄÔì ©¤©¤
+        // â”€â”€ è‹±é›„å¦å…‹åŒ–æ”¹é€  â”€â”€
 
         private void HeroEffect(Agent agent)
         {
@@ -57,7 +57,7 @@ namespace BadNorthUltimateSquad
                 agent.scale = 1.28f;
                 agent.maxSpeed *= 1.3f;
 
-                // µ÷ÕûÆìÖÄ´óĞ¡ÒÔ²¹³¥Ëõ·Å±ä»¯
+                // è°ƒæ•´æ——å¸œå¤§å°ä»¥è¡¥å¿ç¼©æ”¾å˜åŒ–
                 FlagPole flagPole = agent.GetComponentInChildren<FlagPole>(true);
                 if (flagPole != null)
                 {
@@ -91,7 +91,7 @@ namespace BadNorthUltimateSquad
             }
         }
 
-        // ©¤©¤ Ğ¡±øÈ«ÃæÇ¿»¯ ©¤©¤
+        // â”€â”€ å°å…µå…¨é¢å¼ºåŒ– â”€â”€
 
         private void UltimateEffect(Agent agent)
         {
@@ -106,7 +106,7 @@ namespace BadNorthUltimateSquad
             agent.maxSpeed *= 1.25f;
             agent.GetComponent<Stun>().stunMultiplier = 0.5f;
 
-            // ©¤©¤ ²½±ø (Swordsman) ©¤©¤
+            // â”€â”€ æ­¥å…µ (Swordsman) â”€â”€
             Swordsman swordsman = agent.GetComponent<Swordsman>();
             if (swordsman)
             {
@@ -127,7 +127,7 @@ namespace BadNorthUltimateSquad
                 }
             }
 
-            // ©¤©¤ ¹­¼ıÊÖ (Archery) ©¤©¤
+            // â”€â”€ å¼“ç®­æ‰‹ (Archery) â”€â”€
             Archery archery = agent.GetComponent<Archery>();
             if (archery)
             {
@@ -145,7 +145,7 @@ namespace BadNorthUltimateSquad
                 }
             }
 
-            // ©¤©¤ Ã¬±ø (Spear) ©¤©¤
+            // â”€â”€ çŸ›å…µ (Spear) â”€â”€
             Spear spear = agent.GetComponent<Spear>();
             if (spear)
             {
@@ -164,7 +164,7 @@ namespace BadNorthUltimateSquad
             }
         }
 
-        // ©¤©¤ ¸´ÖÆ Tank ¶¯»­ ©¤©¤
+        // â”€â”€ å¤åˆ¶ Tank åŠ¨ç”» â”€â”€
 
         private void CopyTank(Agent myAgent)
         {
@@ -204,7 +204,7 @@ namespace BadNorthUltimateSquad
             }
         }
 
-        // ©¤©¤ IAttackResponder£ºÓ¢ĞÛÃâÒß»÷ÍË ©¤©¤
+        // â”€â”€ IAttackResponderï¼šè‹±é›„å…ç–«å‡»é€€ â”€â”€
 
         public void ModifyAttack(ref Attack attack)
         {

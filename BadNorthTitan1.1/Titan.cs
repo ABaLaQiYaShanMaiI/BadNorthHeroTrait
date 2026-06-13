@@ -8,9 +8,9 @@ using Voxels.TowerDefense;
 namespace BadNorthTitan
 {
 	/// <summary>
-	/// Ì©Ì¹ (Titan) - ÕæÕıµÄ¾ŞÈËÖ®Á¦£¬¶Ü¹­½Ô¿É£¬Éı¼¶ºóÆğĞ§¡£
-	/// ±£Áô TankArcher ¼ıÊ¸Íâ¹Û + trajectoryCalculator£»
-	/// ×¨×¢Éä»÷ÓÉ TitanArcheryFixes + TitanFocusHelper °²È«½Ó¹Ü¡£
+	/// æ³°å¦ (Titan) - çœŸæ­£çš„å·¨äººä¹‹åŠ›ï¼Œç›¾å¼“çš†å¯ï¼Œå‡çº§åèµ·æ•ˆã€‚
+	/// ä¿ç•™ TankArcher ç®­çŸ¢å¤–è§‚ + trajectoryCalculatorï¼›
+	/// ä¸“æ³¨å°„å‡»ç”± TitanArcheryFixes + TitanFocusHelper å®‰å…¨æ¥ç®¡ã€‚
 	/// </summary>
 	public class Titan : HeroUpgradeDefinition
 	{
@@ -127,7 +127,7 @@ namespace BadNorthTitan
 				}
 				catch (Exception ex)
 				{
-					Plugin.Logger.LogWarning("[Titan] Ä£°å¸´ÖÆÊ§°Ü: " + ex.Message);
+					Plugin.Logger.LogWarning("[Titan] æ¨¡æ¿å¤åˆ¶å¤±è´¥: " + ex.Message);
 				}
 
 				for (int j = 0; j < component2._archerySettings.Length; j++)
@@ -151,6 +151,6 @@ namespace BadNorthTitan
 				stunComp.stunMultiplier = 1E-06f;
 		}
 
-		public static readonly string Titan_ID = "Hero_Trait_Titan";
+		public static readonly string Titan_ID = "Hero_Trait_TitanV11";
 	}
 }

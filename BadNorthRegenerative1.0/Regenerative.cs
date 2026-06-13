@@ -12,7 +12,7 @@ namespace BadNorthRegenerative
 {
     public class Regenerative : HeroUpgradeDefinition
     {
-        public static readonly string REGENERATIVE_ID = "Hero_Trait_Regenerative";
+        public static readonly string REGENERATIVE_ID = "Hero_Trait_RegenerativeV10";
 
         private int currentSquadLevel;
 

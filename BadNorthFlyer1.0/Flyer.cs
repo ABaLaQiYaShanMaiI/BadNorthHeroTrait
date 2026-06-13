@@ -9,32 +9,32 @@ using Voxels.TowerDefense.Ballistics;
 namespace BadNorthFlyer
 {
     /// <summary>
-    /// ÉñÓ¥ (Flyer) - ²úÉúÈÃµĞÈË¸¡¿ÕµÄÁ¦Á¿¡£
-    /// Ó¢ĞÛ»ñµÃ·É¸«ÄÜÁ¦£¬ËùÓĞ²½±øµ¥Î»»ñµÃ»÷·ÉĞ§¹û¡£
+    /// ç¥é¹° (Flyer) - äº§ç”Ÿè®©æ•Œäººæµ®ç©ºçš„åŠ›é‡ã€‚
+    /// è‹±é›„è·å¾—é£æ–§èƒ½åŠ›ï¼Œæ‰€æœ‰æ­¥å…µå•ä½è·å¾—å‡»é£æ•ˆæœã€‚
     /// </summary>
     public class Flyer : HeroUpgradeDefinition
     {
-        public static readonly string FLYER_ID = "Hero_Trait_Flyer";
+        public static readonly string FLYER_ID = "Hero_Trait_FlyerV10";
 
-        // ©¤©¤ ·´Éä×Ö¶ÎÃû³£Á¿ ©¤©¤
+        // â”€â”€ åå°„å­—æ®µåå¸¸é‡ â”€â”€
         private const string FIELD_PREPARE_SOUND = "prepareSound";
         private const string FIELD_THROWING_AXE_PREFAB = "throwingAxePrefab";
         private const string FIELD_TRAJECTORY_UTILITY = "trajectoryUtility";
         private const string FIELD_ATTACK_SETTINGS = "attackSettings";
         private const string FIELD_AMMO = "ammo";
 
-        // ©¤©¤ ·É¸«²ÎÊı ©¤©¤
+        // â”€â”€ é£æ–§å‚æ•° â”€â”€
         private const float HERO_AXE_DAMAGE_MULT = 0.5f;
         private const float HERO_LAUNCH_IMPULSE = 9f;
         private const int HERO_AXE_AMMO = 500;
 
-        // ©¤©¤ Ó¢ĞÛ»÷·É²ÎÊı ©¤©¤
+        // â”€â”€ è‹±é›„å‡»é£å‚æ•° â”€â”€
         private const float HERO_MAX_SPEED = 8f;
         private const float HERO_WANNAFLY = 5f;
         private const int HERO_KNOCKBACK_LEVEL_INDEX = 3;
         private const float HERO_KNOCKBACK_MULT = 2f;
 
-        // ©¤©¤ Ğ¡±ø¼õËÙ²ÎÊı ©¤©¤
+        // â”€â”€ å°å…µå‡é€Ÿå‚æ•° â”€â”€
         private const float MINION_MAX_SPEED = 2.5f;
         private const float MINION_FLY_POWER = 5f;
         private const float SPEAR_FLY_POWER = 4f;
@@ -52,7 +52,7 @@ namespace BadNorthFlyer
                 TraitHelper.CreateSingleLevel("ABaLaQiYaShanMaiI/TRAIT/FLYER/DESC"));
         }
 
-        // ©¤©¤ ·´Éä¸¨Öú ©¤©¤
+        // â”€â”€ åå°„è¾…åŠ© â”€â”€
         private static object GetFieldValue(AxeThrowing instance, string fieldName)
         {
             return ReflectionHelper.GetFieldValue(instance, fieldName, "Flyer");
@@ -63,7 +63,7 @@ namespace BadNorthFlyer
             return ReflectionHelper.SetFieldValue(instance, fieldName, value, "Flyer");
         }
 
-        // ©¤©¤ Èı¼¶Èİ´í»ñÈ¡ AxeThrowing Ä£°å ©¤©¤
+        // â”€â”€ ä¸‰çº§å®¹é”™è·å– AxeThrowing æ¨¡æ¿ â”€â”€
         private static AxeThrowing GetAxeThrowingTemplate()
         {
             try
@@ -95,7 +95,7 @@ namespace BadNorthFlyer
                     }
                     catch (Exception ex)
                     {
-                        Plugin.Logger.LogWarning("[Flyer] VikingReference ·´ÉäÊ§°Ü: " + ex.Message);
+                        Plugin.Logger.LogWarning("[Flyer] VikingReference åå°„å¤±è´¥: " + ex.Message);
                     }
 
                     if (!ReferenceEquals(agentObj, null))
@@ -103,7 +103,7 @@ namespace BadNorthFlyer
                         AxeThrowing template = agentObj.GetComponent<AxeThrowing>();
                         if (!ReferenceEquals(template, null))
                         {
-                            Plugin.Logger.LogInfo("[Flyer] ´Ó LevelStateObjectReferences ³É¹¦»ñÈ¡ AxeThrowing Ä£°å");
+                            Plugin.Logger.LogInfo("[Flyer] ä» LevelStateObjectReferences æˆåŠŸè·å– AxeThrowing æ¨¡æ¿");
                             return template;
                         }
                     }
@@ -111,7 +111,7 @@ namespace BadNorthFlyer
             }
             catch (Exception ex)
             {
-                Plugin.Logger.LogWarning("[Flyer] LevelStateObjectReferences »ñÈ¡ AxeThrowing Ê§°Ü: " + ex.Message);
+                Plugin.Logger.LogWarning("[Flyer] LevelStateObjectReferences è·å– AxeThrowing å¤±è´¥: " + ex.Message);
             }
 
             try
@@ -119,21 +119,21 @@ namespace BadNorthFlyer
                 AxeThrowing[] allAxeThrowings = Resources.FindObjectsOfTypeAll<AxeThrowing>();
                 if (!ReferenceEquals(allAxeThrowings, null) && allAxeThrowings.Length > 0)
                 {
-                    Plugin.Logger.LogInfo("[Flyer] ´Ó Resources.FindObjectsOfTypeAll »ñÈ¡ AxeThrowing Ä£°å (¹² " + allAxeThrowings.Length + " ¸ö)");
+                    Plugin.Logger.LogInfo("[Flyer] ä» Resources.FindObjectsOfTypeAll è·å– AxeThrowing æ¨¡æ¿ (å…± " + allAxeThrowings.Length + " ä¸ª)");
                     return allAxeThrowings[0];
                 }
             }
             catch (Exception ex)
             {
-                Plugin.Logger.LogWarning("[Flyer] Resources.FindObjectsOfTypeAll »ñÈ¡ AxeThrowing Ê§°Ü: " + ex.Message);
+                Plugin.Logger.LogWarning("[Flyer] Resources.FindObjectsOfTypeAll è·å– AxeThrowing å¤±è´¥: " + ex.Message);
             }
 
-            Plugin.Logger.LogWarning("[Flyer] ÎŞ·¨»ñÈ¡ AxeThrowing Ä£°å");
+            Plugin.Logger.LogWarning("[Flyer] æ— æ³•è·å– AxeThrowing æ¨¡æ¿");
             return null;
         }
 
         /// <summary>
-        /// ÎªÓ¢ĞÛÌí¼Ó·É¸«ÄÜÁ¦£¨¼ì²éÖØ¸´×é¼ş£©
+        /// ä¸ºè‹±é›„æ·»åŠ é£æ–§èƒ½åŠ›ï¼ˆæ£€æŸ¥é‡å¤ç»„ä»¶ï¼‰
         /// </summary>
         private void HeroAxe(Agent agent)
         {
@@ -150,16 +150,16 @@ namespace BadNorthFlyer
                 SetFieldValue(axeThrowing, FIELD_THROWING_AXE_PREFAB, GetFieldValue(template, FIELD_THROWING_AXE_PREFAB));
                 SetFieldValue(axeThrowing, FIELD_TRAJECTORY_UTILITY, GetFieldValue(template, FIELD_TRAJECTORY_UTILITY));
                 SetFieldValue(axeThrowing, FIELD_ATTACK_SETTINGS, GetFieldValue(template, FIELD_ATTACK_SETTINGS));
-                Plugin.Logger.LogInfo("[Flyer] ³É¹¦´ÓÄ£°å¸´ÖÆ·É¸«ÊôĞÔ");
+                Plugin.Logger.LogInfo("[Flyer] æˆåŠŸä»æ¨¡æ¿å¤åˆ¶é£æ–§å±æ€§");
             }
             else
             {
-                Plugin.Logger.LogWarning("[Flyer] ÎŞÄ£°å¿ÉÓÃ£¬·É¸«Ê¹ÓÃÄ¬ÈÏÖµ");
+                Plugin.Logger.LogWarning("[Flyer] æ— æ¨¡æ¿å¯ç”¨ï¼Œé£æ–§ä½¿ç”¨é»˜è®¤å€¼");
             }
 
             SetFieldValue(axeThrowing, FIELD_AMMO, HERO_AXE_AMMO);
 
-            // µ÷Õû·É¸«ÉËº¦ºÍ·¢Éä³åÁ¿
+            // è°ƒæ•´é£æ–§ä¼¤å®³å’Œå‘å°„å†²é‡
             object settingsObj = GetFieldValue(axeThrowing, FIELD_ATTACK_SETTINGS);
             if (!ReferenceEquals(settingsObj, null))
             {
@@ -170,11 +170,11 @@ namespace BadNorthFlyer
             }
 
             axeThrowing.Setup();
-            Plugin.Logger.LogInfo("[Flyer] Ó¢ĞÛ·É¸«ÒÑÅäÖÃ: ammo=" + HERO_AXE_AMMO + ", damageMult=" + HERO_AXE_DAMAGE_MULT + ", launchImpulse=" + HERO_LAUNCH_IMPULSE);
+            Plugin.Logger.LogInfo("[Flyer] è‹±é›„é£æ–§å·²é…ç½®: ammo=" + HERO_AXE_AMMO + ", damageMult=" + HERO_AXE_DAMAGE_MULT + ", launchImpulse=" + HERO_LAUNCH_IMPULSE);
         }
 
         /// <summary>
-        /// ÉèÖÃÓ¢ĞÛµÄWannafly£¨»÷·É£©Ğ§¹û
+        /// è®¾ç½®è‹±é›„çš„Wannaflyï¼ˆå‡»é£ï¼‰æ•ˆæœ
         /// </summary>
         private void HeroFlyPower(Agent agent)
         {
@@ -184,7 +184,7 @@ namespace BadNorthFlyer
                 swordsman.knockbackLevels[HERO_KNOCKBACK_LEVEL_INDEX] *= HERO_KNOCKBACK_MULT;
             }
 
-            // Í¨¹ı·´ÉäÉèÖÃ Wannafly ×Ö¶Î£¨Èç¹û´æÔÚ£©
+            // é€šè¿‡åå°„è®¾ç½® Wannafly å­—æ®µï¼ˆå¦‚æœå­˜åœ¨ï¼‰
             try
             {
                 if (swordsman != null)
@@ -198,21 +198,21 @@ namespace BadNorthFlyer
                     else if (!_wannaFlyWarningLogged)
                     {
                         _wannaFlyWarningLogged = true;
-                        Plugin.Logger.LogWarning("[Flyer] Swordsman.Wannafly field not found. (´Ë¾¯¸æ½öÏÔÊ¾Ò»´Î)");
+                        Plugin.Logger.LogWarning("[Flyer] Swordsman.Wannafly field not found. (æ­¤è­¦å‘Šä»…æ˜¾ç¤ºä¸€æ¬¡)");
                     }
                 }
             }
             catch (Exception ex)
             {
-                Plugin.Logger.LogWarning("[Flyer] ÉèÖÃ Wannafly Ê§°Ü: " + ex.Message);
+                Plugin.Logger.LogWarning("[Flyer] è®¾ç½® Wannafly å¤±è´¥: " + ex.Message);
             }
 
             agent.maxSpeed = HERO_MAX_SPEED;
-            Plugin.Logger.LogInfo("[Flyer] Ó¢ĞÛ»÷·ÉĞ§¹ûÒÑÅäÖÃ: maxSpeed=" + HERO_MAX_SPEED + ", knockbackMult=" + HERO_KNOCKBACK_MULT);
+            Plugin.Logger.LogInfo("[Flyer] è‹±é›„å‡»é£æ•ˆæœå·²é…ç½®: maxSpeed=" + HERO_MAX_SPEED + ", knockbackMult=" + HERO_KNOCKBACK_MULT);
         }
 
         /// <summary>
-        /// ÎªĞ¡±øÉèÖÃ¼õËÙºÍ»÷·ÉĞ§¹û
+        /// ä¸ºå°å…µè®¾ç½®å‡é€Ÿå’Œå‡»é£æ•ˆæœ
         /// </summary>
         private void SlowMinion(Agent agent)
         {
@@ -234,7 +234,7 @@ namespace BadNorthFlyer
                 }
                 catch (Exception ex)
                 {
-                    Plugin.Logger.LogWarning("[Flyer] ÉèÖÃĞ¡±ø Swordsman.Wannafly Ê§°Ü: " + ex.Message);
+                    Plugin.Logger.LogWarning("[Flyer] è®¾ç½®å°å…µ Swordsman.Wannafly å¤±è´¥: " + ex.Message);
                 }
             }
 
@@ -251,7 +251,7 @@ namespace BadNorthFlyer
                 }
                 catch (Exception ex)
                 {
-                    Plugin.Logger.LogWarning("[Flyer] ÉèÖÃ Spear.spearfly Ê§°Ü: " + ex.Message);
+                    Plugin.Logger.LogWarning("[Flyer] è®¾ç½® Spear.spearfly å¤±è´¥: " + ex.Message);
                 }
             }
 
@@ -268,15 +268,15 @@ namespace BadNorthFlyer
                 }
                 catch (Exception ex)
                 {
-                    Plugin.Logger.LogWarning("[Flyer] ÉèÖÃ Archery.archerfly Ê§°Ü: " + ex.Message);
+                    Plugin.Logger.LogWarning("[Flyer] è®¾ç½® Archery.archerfly å¤±è´¥: " + ex.Message);
                 }
             }
 
-            Debugger.Log("[Flyer] Ğ¡±ø¼õËÙ/»÷·ÉÒÑÅäÖÃ: maxSpeed=" + MINION_MAX_SPEED);
+            Debugger.Log("[Flyer] å°å…µå‡é€Ÿ/å‡»é£å·²é…ç½®: maxSpeed=" + MINION_MAX_SPEED);
         }
 
         /// <summary>
-        /// ¸´ÖÆË«µ¶Î¬¾©µÄ¶¯»­¿ØÖÆÆ÷²ÎÊı
+        /// å¤åˆ¶åŒåˆ€ç»´äº¬çš„åŠ¨ç”»æ§åˆ¶å™¨å‚æ•°
         /// </summary>
         private void CopyAnimatorParameters(Animator source, Animator target)
         {
@@ -302,7 +302,7 @@ namespace BadNorthFlyer
         }
 
         /// <summary>
-        /// ½«Ó¢ĞÛµÄ¶¯»­¿ØÖÆÆ÷Ìæ»»ÎªË«µ¶Î¬¾©µÄÑùÊ½
+        /// å°†è‹±é›„çš„åŠ¨ç”»æ§åˆ¶å™¨æ›¿æ¢ä¸ºåŒåˆ€ç»´äº¬çš„æ ·å¼
         /// </summary>
         private void CopyTwoHandedAnimator(Agent agent)
         {
@@ -311,7 +311,7 @@ namespace BadNorthFlyer
                 if (!LevelStateObjectReferences.dict.TryGetValue("Viking_Twohanded", out UnityEngine.Object reference) ||
                     !(reference is VikingReference vikingRef))
                 {
-                    Plugin.Logger.LogWarning("[Flyer] ÎŞ·¨»ñÈ¡ Viking_Twohanded ÒıÓÃ£¬Ìø¹ı¶¯»­¸´ÖÆ");
+                    Plugin.Logger.LogWarning("[Flyer] æ— æ³•è·å– Viking_Twohanded å¼•ç”¨ï¼Œè·³è¿‡åŠ¨ç”»å¤åˆ¶");
                     return;
                 }
 
@@ -338,13 +338,13 @@ namespace BadNorthFlyer
                 }
                 catch (Exception ex)
                 {
-                    Plugin.Logger.LogWarning("[Flyer] VikingReference(Twohanded) ·´ÉäÊ§°Ü: " + ex.Message);
+                    Plugin.Logger.LogWarning("[Flyer] VikingReference(Twohanded) åå°„å¤±è´¥: " + ex.Message);
                     return;
                 }
 
                 if (ReferenceEquals(templateObj, null))
                 {
-                    Plugin.Logger.LogWarning("[Flyer] ÎŞ·¨»ñÈ¡Ë«µ¶Î¬¾©µÄ GameObject");
+                    Plugin.Logger.LogWarning("[Flyer] æ— æ³•è·å–åŒåˆ€ç»´äº¬çš„ GameObject");
                     return;
                 }
 
@@ -353,7 +353,7 @@ namespace BadNorthFlyer
 
                 if (ReferenceEquals(sourceAnimator, null) || ReferenceEquals(targetAnimator, null))
                 {
-                    Plugin.Logger.LogWarning("[Flyer] Animator ×é¼şÈ±Ê§");
+                    Plugin.Logger.LogWarning("[Flyer] Animator ç»„ä»¶ç¼ºå¤±");
                     return;
                 }
 
@@ -363,28 +363,28 @@ namespace BadNorthFlyer
                 targetAnimator.cullingMode = sourceAnimator.cullingMode;
                 targetAnimator.applyRootMotion = sourceAnimator.applyRootMotion;
 
-                Debugger.Log("[Flyer] Ó¢ĞÛ¶¯»­¿ØÖÆÆ÷ÒÑÌæ»»ÎªË«µ¶Î¬¾©ÑùÊ½");
+                Debugger.Log("[Flyer] è‹±é›„åŠ¨ç”»æ§åˆ¶å™¨å·²æ›¿æ¢ä¸ºåŒåˆ€ç»´äº¬æ ·å¼");
             }
             catch (Exception ex)
             {
-                Plugin.Logger.LogWarning("[Flyer] CopyTwoHandedAnimator Òì³£: " + ex.Message);
+                Plugin.Logger.LogWarning("[Flyer] CopyTwoHandedAnimator å¼‚å¸¸: " + ex.Message);
             }
         }
 
-        // ©¤©¤ Ö÷Èë¿Ú ©¤©¤
+        // â”€â”€ ä¸»å…¥å£ â”€â”€
         public override void OnAppliedToSquad(EnglishSquad squad, int upgradeLevel)
         {
             base.OnAppliedToSquad(squad, upgradeLevel);
 
-            // Ó¢ĞÛ£º·É¸« + »÷·ÉĞ§¹û
+            // è‹±é›„ï¼šé£æ–§ + å‡»é£æ•ˆæœ
             this.HeroAxe(squad.heroAgent);
             this.HeroFlyPower(squad.heroAgent);
             this.CopyTwoHandedAnimator(squad.heroAgent);
 
-            // Ğ¡±ø£º¼õËÙ + »÷·ÉĞ§¹û
+            // å°å…µï¼šå‡é€Ÿ + å‡»é£æ•ˆæœ
             this.SlowMinion(squad.minionPrefab);
 
-            Plugin.Logger.LogInfo(string.Format("[Flyer] ÒÑÓ¦ÓÃµ½Ğ¡¶Ó {0}", squad.name));
+            Plugin.Logger.LogInfo(string.Format("[Flyer] å·²åº”ç”¨åˆ°å°é˜Ÿ {0}", squad.name));
         }
     }
 }

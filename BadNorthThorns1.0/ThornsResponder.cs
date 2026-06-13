@@ -62,7 +62,7 @@ namespace BadNorthThorns
                 return;
 
             // 攻击者已死亡/失效则跳过
-            if (closeCombatBrain.agent.isDead)
+            if (!closeCombatBrain.agent.aliveAndGrounded.active)
                 return;
 
             _isDealingThornsDamage = true;

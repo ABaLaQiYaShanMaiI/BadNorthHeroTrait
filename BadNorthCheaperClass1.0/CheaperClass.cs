@@ -10,12 +10,16 @@ namespace BadNorthCheaperClass
 {
     public class CheaperClass : HeroUpgradeDefinition
     {
-        public static readonly string CHEAPERCLASS_ID = "Hero_Trait_CheaperClass";
+        public static readonly string CHEAPERCLASS_ID = "Hero_Trait_CheaperClassV10";
 
         private const float DISCOUNT = 0.4f;
 
         private bool discountApplied = false;
         private static bool _globalDiscountApplied = false;
+
+        // ── 日志门控 ──
+        private static void GameplayLog(string message) => Debugger.Log(Plugin.EnableGameplayLog, message);
+        private static void GameplayLogWarn(string message) => Debugger.LogWarning(Plugin.EnableGameplayLog, message);
 
         public CheaperClass()
         {
@@ -32,7 +36,7 @@ namespace BadNorthCheaperClass
 
             if (ReferenceEquals(heroDef, null))
             {
-                Plugin.Logger.LogWarning("[CheaperClass] ApplyDiscountToHeroDef: heroDef 为 null");
+                GameplayLogWarn("[CheaperClass] ApplyDiscountToHeroDef: heroDef 为 null");
                 return false;
             }
 
@@ -123,7 +127,7 @@ namespace BadNorthCheaperClass
 
                         if (upgrade is CheaperClass)
                         {
-                            Plugin.Logger.LogInfo("[CheaperClass]   跳过自身");
+                            GameplayLog("[CheaperClass]   跳过自身");
                             continue;
                         }
 
@@ -141,19 +145,19 @@ namespace BadNorthCheaperClass
                     }
 
                     found = true;
-                    Plugin.Logger.LogInfo(string.Format("[CheaperClass] 处理 HeroDef {0}，共修改 {1}/{2} 个升级费用", heroName, modifiedUpgrades, totalUpgrades));
+                    GameplayLog(string.Format("[CheaperClass] 处理 HeroDef {0}，共修改 {1}/{2} 个升级费用", heroName, modifiedUpgrades, totalUpgrades));
                     return true;
                 }
 
                 if (!found)
                 {
-                    Plugin.Logger.LogWarning(string.Format("[CheaperClass] HeroDef {0}：未找到 upgrades 列表字段", heroName));
+                    GameplayLogWarn(string.Format("[CheaperClass] HeroDef {0}：未找到 upgrades 列表字段", heroName));
                 }
                 return found;
             }
             catch (Exception ex)
             {
-                Plugin.Logger.LogWarning(string.Format("[CheaperClass] ApplyDiscountToHeroDef 异常: {0}", ex.Message));
+                GameplayLogWarn(string.Format("[CheaperClass] ApplyDiscountToHeroDef 异常: {0}", ex.Message));
                 return false;
             }
         }
@@ -162,26 +166,26 @@ namespace BadNorthCheaperClass
         {
             base.OnAppliedToSquad(squad, upgradeLevel);
 
-            Plugin.Logger.LogInfo(string.Format("[CheaperClass] OnAppliedToSquad entered - squad={0}, upgradeLevel={1}", squad != null ? squad.name : "null", upgradeLevel));
+            GameplayLog(string.Format("[CheaperClass] OnAppliedToSquad entered - squad={0}, upgradeLevel={1}", squad != null ? squad.name : "null", upgradeLevel));
 
             if (discountApplied)
             {
-                Plugin.Logger.LogInfo("[CheaperClass] 跳过：实例折扣已应用 (discountApplied=true)");
+                GameplayLog("[CheaperClass] 跳过：实例折扣已应用 (discountApplied=true)");
                 return;
             }
             if (_globalDiscountApplied)
             {
-                Plugin.Logger.LogInfo("[CheaperClass] 跳过：全局折扣已应用 (_globalDiscountApplied=true)");
+                GameplayLog("[CheaperClass] 跳过：全局折扣已应用 (_globalDiscountApplied=true)");
                 return;
             }
             if (ReferenceEquals(squad, null))
             {
-                Plugin.Logger.LogWarning("[CheaperClass] 跳过：squad 为 null");
+                GameplayLogWarn("[CheaperClass] 跳过：squad 为 null");
                 return;
             }
             if (ReferenceEquals(squad.hero, null))
             {
-                Plugin.Logger.LogWarning("[CheaperClass] 跳过：squad.hero 为 null");
+                GameplayLogWarn("[CheaperClass] 跳过：squad.hero 为 null");
                 return;
             }
 
@@ -194,16 +198,16 @@ namespace BadNorthCheaperClass
                 {
                     discountApplied = true;
                     _globalDiscountApplied = true;
-                    Plugin.Logger.LogInfo(string.Format("[CheaperClass] 已应用到小队 {0}，折扣应用成功", squad.name));
+                    GameplayLog(string.Format("[CheaperClass] 已应用到小队 {0}，折扣应用成功", squad.name));
                 }
                 else
                 {
-                    Plugin.Logger.LogWarning(string.Format("[CheaperClass] 应用到小队 {0} 失败", squad.name));
+                    GameplayLogWarn(string.Format("[CheaperClass] 应用到小队 {0} 失败", squad.name));
                 }
             }
             catch (System.Exception ex)
             {
-                Plugin.Logger.LogError("[CheaperClass] 应用折扣时出错: " + ex.Message);
+                Debugger.LogWarning(Plugin.EnableGameplayLog, "[CheaperClass] 应用折扣时出错: " + ex.Message);
             }
         }
     }

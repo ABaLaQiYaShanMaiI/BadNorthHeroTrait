@@ -7,13 +7,13 @@ using Voxels.TowerDefense;
 namespace BadNorthYuri
 {
     /// <summary>
-    /// ĞÄÁé¾«Ó¢ (Yuri / Mind Elite) - ÖÒÊµ»¹Ô­Ä§¸Ä°æ FancyTraits/Yuri.cs
-    /// ¸øÓ¢ĞÛÌí¼Ó YuriComponent£¬¸Ã×é¼ş»á°´µÈ¼¶ÖÜÆÚĞÔÊÍ·ÅĞÄÁé³å»÷£¬
-    /// ¶Ô¸½½üµĞÈËÔì³ÉÉËº¦+Ñ£ÔÎ¡£Ó¢ĞÛ»ñµÃ¸ßÑ£ÔÎ¿¹ĞÔ (stunMultiplier=0.1)¡£
+    /// å¿ƒçµç²¾è‹± (Yuri / Mind Elite) - å¿ å®è¿˜åŸé­”æ”¹ç‰ˆ FancyTraits/Yuri.cs
+    /// ç»™è‹±é›„æ·»åŠ  YuriComponentï¼Œè¯¥ç»„ä»¶ä¼šæŒ‰ç­‰çº§å‘¨æœŸæ€§é‡Šæ”¾å¿ƒçµå†²å‡»ï¼Œ
+    /// å¯¹é™„è¿‘æ•Œäººé€ æˆä¼¤å®³+çœ©æ™•ã€‚è‹±é›„è·å¾—é«˜çœ©æ™•æŠ—æ€§ (stunMultiplier=0.1)ã€‚
     /// </summary>
     public class MindElite : HeroUpgradeDefinition
     {
-        public static readonly string YURI_ID = "Hero_Trait_Yuri";
+        public static readonly string YURI_ID = "Hero_Trait_YuriV10";
 
         public MindElite()
         {

@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using BepInEx;
+using BepInEx.Configuration;
 using BepInEx.Logging;
 using BadNorthAPI;
 using HarmonyLib;
@@ -15,10 +16,19 @@ namespace BadNorthTitan
 	public class Plugin : BaseUnityPlugin
 	{
 		public static ManualLogSource Logger;
+		public static bool EnableGameplayLog;
 
 		public void OnEnable()
 		{
 			Logger = base.Logger;
+
+			EnableGameplayLog = Config.Bind(
+				"Log",
+				"EnableGameplayLog",
+				true,
+				"是否启用 Titan 1.2 的游戏运行时日志（Harmony patch 诊断、TitanFocusHelper 射击日志等）。不影响加载/卸载日志。"
+			).Value;
+
 			string modPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + Path.DirectorySeparatorChar;
 
 			// 1. Load custom sprite
@@ -31,7 +41,8 @@ namespace BadNorthTitan
 				true
 			);
 
-			// 3. Add localization
+			// 3. Add localization (防重复订阅)
+			CustomText.CustomTermsAdded -= AddCustomTerms;
 			CustomText.CustomTermsAdded += AddCustomTerms;
 
 			// 4. Apply Titan archery Harmony patches (8 patches: sight/aim/ballistics + focus fix)
@@ -39,6 +50,12 @@ namespace BadNorthTitan
 			TitanArcheryFixes.ApplyPatches(harmony);
 
 			Logger.LogInfo("======== BadNorthTitan 1.2 已就绪 ========");
+		}
+
+		public void OnDisable()
+		{
+			CustomText.CustomTermsAdded -= AddCustomTerms;
+			Logger.LogInfo("[Titan] Disabled");
 		}
 
 		private void AddCustomTerms()

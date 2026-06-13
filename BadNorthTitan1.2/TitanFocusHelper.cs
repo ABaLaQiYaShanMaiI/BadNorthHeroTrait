@@ -1,5 +1,6 @@
 ﻿// Author: ABaLaQiYaShanMaiI
 using System.Reflection;
+using BadNorthAPI;
 using UnityEngine;
 using Voxels.TowerDefense;
 using Voxels.TowerDefense.Ballistics;
@@ -13,6 +14,7 @@ namespace BadNorthTitan
 	/// 仅用 Unity Update() 驱动射击，弹药耗尽后自动销毁。
 	/// 
 	/// 由 TitanArcheryFixes.DoTargetedActionPrefix 在玩家点击专注按钮时挂载。
+	/// 运行时日志受 Plugin.EnableGameplayLog 开关控制（默认关闭）。
 	/// </summary>
 	public class TitanFocusHelper : MonoBehaviour
 	{
@@ -29,6 +31,10 @@ namespace BadNorthTitan
 		private const float ArrowDrag = 0f;
 		private const float ArrowGravity = 0f;
 		private const float ArrowStartOffset = 0.8f;
+
+		// ── 日志门控 ──
+		private static void GameplayLog(string message) => Debugger.Log(Plugin.EnableGameplayLog, message);
+		private static void GameplayLogWarn(string message) => Debugger.LogWarning(Plugin.EnableGameplayLog, message);
 
 		// 反射缓存：ProjectileSettings 字段列表（用于全字段拷贝）
 		private static FieldInfo[] _psFields = null;
@@ -54,7 +60,7 @@ namespace BadNorthTitan
 		void OnEnable()
 		{
 			_lastShotTime = 0f;
-			Plugin.Logger.LogInfo(string.Format("[Titan FocusHelper] OnEnable → ammo={0}, interval={1:F3}, spread={2:F2}, dir=({3:F2},{4:F2},{5:F2})",
+			GameplayLog(string.Format("[Titan FocusHelper] OnEnable → ammo={0}, interval={1:F3}, spread={2:F2}, dir=({3:F2},{4:F2},{5:F2})",
 				_ammo, _shotInterval, _spread, _shootDir.x, _shootDir.y, _shootDir.z));
 		}
 
@@ -62,7 +68,7 @@ namespace BadNorthTitan
 		{
 			if (_ammo <= 0)
 			{
-				Plugin.Logger.LogInfo(string.Format("[Titan FocusHelper] 弹药耗尽，销毁自身 (GameObject={0})", gameObject.name));
+				GameplayLog(string.Format("[Titan FocusHelper] 弹药耗尽，销毁自身 (GameObject={0})", gameObject.name));
 				Destroy(this);
 				return;
 			}
@@ -73,7 +79,7 @@ namespace BadNorthTitan
 			Archery archery = GetComponent<Archery>();
 			if (ReferenceEquals(archery, null))
 			{
-				Plugin.Logger.LogWarning(string.Format("[Titan FocusHelper] Archery 组件为 null！销毁 (GameObject={0})", gameObject.name));
+				GameplayLogWarn(string.Format("[Titan FocusHelper] Archery 组件为 null！销毁 (GameObject={0})", gameObject.name));
 				Destroy(this);
 				return;
 			}
@@ -129,14 +135,14 @@ namespace BadNorthTitan
 				Vector3 spreadVec = Random.insideUnitSphere * _spread;
 				dir += spreadVec;
 				dir.Normalize();
-				Plugin.Logger.LogInfo(string.Format("[Titan FocusHelper] 射击 #{0}: 剩余={1}, 间隔={2:F4}s, cooldown前={3:F2}, spread=({4:F3},{5:F3},{6:F3}), dir=({7:F3},{8:F3},{9:F3})",
+				GameplayLog(string.Format("[Titan FocusHelper] 射击 #{0}: 剩余={1}, 间隔={2:F4}s, cooldown前={3:F2}, spread=({4:F3},{5:F3},{6:F3}), dir=({7:F3},{8:F3},{9:F3})",
 					25 - _ammo + 1, _ammo - 1, timeSinceLastShot, cooldownBefore,
 					spreadVec.x, spreadVec.y, spreadVec.z,
 					dir.x, dir.y, dir.z));
 			}
 			else
 			{
-				Plugin.Logger.LogInfo(string.Format("[Titan FocusHelper] 射击 #{0}: 剩余={1}, 间隔={2:F4}s, cooldown前={3:F2}, dir=({4:F3},{5:F3},{6:F3})",
+				GameplayLog(string.Format("[Titan FocusHelper] 射击 #{0}: 剩余={1}, 间隔={2:F4}s, cooldown前={3:F2}, dir=({4:F3},{5:F3},{6:F3})",
 					25 - _ammo + 1, _ammo - 1, timeSinceLastShot, cooldownBefore,
 					dir.x, dir.y, dir.z));
 			}

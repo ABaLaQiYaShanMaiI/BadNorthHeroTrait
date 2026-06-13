@@ -9,13 +9,17 @@ namespace BadNorthAxeThrower
 {
     public class AxeThrower : HeroUpgradeDefinition
     {
-        public static readonly string AXETHROWER_ID = "Hero_Trait_AxeThrower";
+        public static readonly string AXETHROWER_ID = "Hero_Trait_AxeThrowerV10";
 
         private const string FIELD_PREPARE_SOUND = "prepareSound";
         private const string FIELD_THROWING_AXE_PREFAB = "throwingAxePrefab";
         private const string FIELD_TRAJECTORY_UTILITY = "trajectoryUtility";
         private const string FIELD_ATTACK_SETTINGS = "attackSettings";
         private const string FIELD_AMMO = "ammo";
+
+        // ── 日志门控 ──
+        private static void GameplayLog(string message) => Debugger.Log(Plugin.EnableGameplayLog, message);
+        private static void GameplayLogWarn(string message) => Debugger.LogWarning(Plugin.EnableGameplayLog, message);
 
         public AxeThrower()
         {
@@ -75,7 +79,7 @@ namespace BadNorthAxeThrower
                     }
                     catch (System.Exception ex)
                     {
-                        Plugin.Logger.LogWarning("[AxeThrower] VikingReference 反射失败: " + ex.Message);
+                        GameplayLogWarn("[AxeThrower] VikingReference 反射失败: " + ex.Message);
                     }
 
                     if (!ReferenceEquals(agentObj, null))
@@ -83,14 +87,14 @@ namespace BadNorthAxeThrower
                         template = agentObj.GetComponent<AxeThrowing>();
                         if (!ReferenceEquals(template, null))
                         {
-                            Plugin.Logger.LogInfo("[AxeThrower] 从 LevelStateObjectReferences 成功获取模板");
+                            GameplayLog("[AxeThrower] 从 LevelStateObjectReferences 成功获取模板");
                         }
                     }
                 }
             }
             catch (System.Exception ex)
             {
-                Plugin.Logger.LogWarning("[AxeThrower] LevelStateObjectReferences 获取失败: " + ex.Message);
+                GameplayLogWarn("[AxeThrower] LevelStateObjectReferences 获取失败: " + ex.Message);
             }
 
             // Level 2: 从 Resources.FindObjectsOfTypeAll 获取
@@ -102,12 +106,12 @@ namespace BadNorthAxeThrower
                     if (!ReferenceEquals(allAxeThrowings, null) && allAxeThrowings.Length > 0)
                     {
                         template = allAxeThrowings[0];
-                        Plugin.Logger.LogInfo("[AxeThrower] 从 Resources.FindObjectsOfTypeAll 获取模板 (共 " + allAxeThrowings.Length + " 个)");
+                        GameplayLog("[AxeThrower] 从 Resources.FindObjectsOfTypeAll 获取模板 (共 " + allAxeThrowings.Length + " 个)");
                     }
                 }
                 catch (System.Exception ex)
                 {
-                    Plugin.Logger.LogWarning("[AxeThrower] Resources.FindObjectsOfTypeAll 获取失败: " + ex.Message);
+                    GameplayLogWarn("[AxeThrower] Resources.FindObjectsOfTypeAll 获取失败: " + ex.Message);
                 }
             }
 
@@ -117,29 +121,29 @@ namespace BadNorthAxeThrower
                 bool valid = true;
                 if (ReferenceEquals(GetFieldValue(template, FIELD_PREPARE_SOUND), null))
                 {
-                    Plugin.Logger.LogWarning("[AxeThrower] 模板校验失败：prepareSound 缺失");
+                    GameplayLogWarn("[AxeThrower] 模板校验失败：prepareSound 缺失");
                     valid = false;
                 }
                 if (ReferenceEquals(GetFieldValue(template, FIELD_THROWING_AXE_PREFAB), null))
                 {
-                    Plugin.Logger.LogWarning("[AxeThrower] 模板校验失败：throwingAxePrefab 缺失");
+                    GameplayLogWarn("[AxeThrower] 模板校验失败：throwingAxePrefab 缺失");
                     valid = false;
                 }
                 if (ReferenceEquals(GetFieldValue(template, FIELD_ATTACK_SETTINGS), null))
                 {
-                    Plugin.Logger.LogWarning("[AxeThrower] 模板校验失败：attackSettings 缺失");
+                    GameplayLogWarn("[AxeThrower] 模板校验失败：attackSettings 缺失");
                     valid = false;
                 }
                 if (!valid)
                 {
-                    Plugin.Logger.LogWarning("[AxeThrower] 模板不完整，视为无效");
+                    GameplayLogWarn("[AxeThrower] 模板不完整，视为无效");
                     template = null;
                 }
             }
 
             if (ReferenceEquals(template, null))
             {
-                Plugin.Logger.LogWarning("[AxeThrower] 无法获取有效的 AxeThrowing 模板");
+                GameplayLogWarn("[AxeThrower] 无法获取有效的 AxeThrowing 模板");
             }
 
             return template;
@@ -164,11 +168,11 @@ namespace BadNorthAxeThrower
             object settingsObj = GetFieldValue(comp, FIELD_ATTACK_SETTINGS);
             if (ReferenceEquals(settingsObj, null))
             {
-                Plugin.Logger.LogWarning("[AxeThrower] 无法获取 attackSettings，跳过等级缩放");
+                GameplayLogWarn("[AxeThrower] 无法获取 attackSettings，跳过等级缩放");
                 return;
             }
             AttackSettings attackSettings = (AttackSettings)settingsObj;
-            Plugin.Logger.LogInfo(string.Format("[AxeThrower] 应用缩放前: launchImpulse={0}, damage={1}, knockback={2}, stun={3}",
+            GameplayLog(string.Format("[AxeThrower] 应用缩放前: launchImpulse={0}, damage={1}, knockback={2}, stun={3}",
                 attackSettings.launchImpulse, attackSettings.damage, attackSettings.knockback, attackSettings.stun));
 
             switch (squadLevel)
@@ -201,7 +205,7 @@ namespace BadNorthAxeThrower
 
             if (attackSettings.launchImpulse <= 0f)
             {
-                Plugin.Logger.LogWarning(string.Format("[AxeThrower] launchImpulse 为 {0}（来自模板），设置为默认值 1.0f", attackSettings.launchImpulse));
+                GameplayLogWarn(string.Format("[AxeThrower] launchImpulse 为 {0}（来自模板），设置为默认值 1.0f", attackSettings.launchImpulse));
                 attackSettings.launchImpulse = 1.0f;
             }
 
@@ -236,16 +240,16 @@ namespace BadNorthAxeThrower
                     SetFieldValue(comp, FIELD_ATTACK_SETTINGS, null);
                 }
 
-                Plugin.Logger.LogInfo("[AxeThrower] 成功从模板复制攻击属性（AttackSettings 已深拷贝）");
+                GameplayLog("[AxeThrower] 成功从模板复制攻击属性（AttackSettings 已深拷贝）");
             }
             else
             {
-                Plugin.Logger.LogWarning("[AxeThrower] 无模板可用，使用默认值");
+                GameplayLogWarn("[AxeThrower] 无模板可用，使用默认值");
             }
 
             ApplyLevelScaling(comp, squad.hero.squadLevel);
 
-            Plugin.Logger.LogInfo("[AxeThrower] 等级缩放已应用, 等级=" + squad.hero.squadLevel);
+            GameplayLog("[AxeThrower] 等级缩放已应用, 等级=" + squad.hero.squadLevel);
 
             comp.Setup();
 
@@ -254,15 +258,15 @@ namespace BadNorthAxeThrower
             if (!ReferenceEquals(finalSettingsObj, null))
             {
                 AttackSettings finalSettings = (AttackSettings)finalSettingsObj;
-                Plugin.Logger.LogInfo(string.Format("[AxeThrower] 验证：ammo={0}, damage={1}, knockback={2}, stun={3}, launchImpulse={4}",
+                GameplayLog(string.Format("[AxeThrower] 验证：ammo={0}, damage={1}, knockback={2}, stun={3}, launchImpulse={4}",
                     finalAmmo, finalSettings.damage, finalSettings.knockback, finalSettings.stun, finalSettings.launchImpulse));
             }
             else
             {
-                Plugin.Logger.LogWarning(string.Format("[AxeThrower] 验证：ammo={0}, attackSettings 获取失败", finalAmmo));
+                GameplayLogWarn(string.Format("[AxeThrower] 验证：ammo={0}, attackSettings 获取失败", finalAmmo));
             }
 
-            Plugin.Logger.LogInfo(string.Format("[AxeThrower] 已应用到小队 {0}，等级={1}", squad.name, squad.hero.squadLevel));
+            GameplayLog(string.Format("[AxeThrower] 已应用到小队 {0}，等级={1}", squad.name, squad.hero.squadLevel));
         }
     }
 }

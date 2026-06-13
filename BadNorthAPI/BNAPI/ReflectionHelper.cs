@@ -28,7 +28,7 @@ namespace BadNorthAPI
             if (ReferenceEquals(field, null))
             {
                 string tag = string.IsNullOrEmpty(callerTag) ? "[ReflectionHelper]" : "[" + callerTag + "]";
-                Plugin.logger.LogWarning(string.Format("{0} 反射字段 {1} 未找到", tag, fieldName));
+                Plugin.Logger.LogWarning(string.Format("{0} 反射字段 {1} 未找到", tag, fieldName));
                 return null;
             }
             return field.GetValue(instance);
@@ -53,7 +53,7 @@ namespace BadNorthAPI
             if (ReferenceEquals(field, null))
             {
                 string tag = string.IsNullOrEmpty(callerTag) ? "[ReflectionHelper]" : "[" + callerTag + "]";
-                Plugin.logger.LogWarning(string.Format("{0} 反射字段 {1} 未找到，无法设置", tag, fieldName));
+                Plugin.Logger.LogWarning(string.Format("{0} 反射字段 {1} 未找到，无法设置", tag, fieldName));
                 return false;
             }
             field.SetValue(instance, value);
