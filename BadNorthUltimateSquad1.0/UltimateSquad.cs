@@ -1,3 +1,4 @@
+// Author: ABaLaQiYaShanMaiI
 using System;
 using BadNorthAPI;
 using UnityEngine;
@@ -7,9 +8,9 @@ using Voxels.TowerDefense.Flag;
 namespace BadNorthUltimateSquad
 {
     /// <summary>
-    /// ç»ˆæéƒ¨é˜Ÿ (Ultimate Squad) - å¿ å®è¿˜åŸé­”æ”¹ç‰ˆ FancyTraits/UltimateSquad.cs
-    /// è‹±é›„è·å¾—å¦å…‹åŒ–æ”¹é€ ï¼ˆå¤åˆ¶ Tank åŠ¨ç”»ã€scale=1.28ã€æŠ¤ç”²{6,8,11,14}ã€é«˜ä¼¤å®³/å‡»é€€/çœ©æ™•ã€å…ç–«å‡»é€€ï¼‰ï¼Œ
-    /// é¢å¤–è·å¾—è´­ä¹°æŠ˜æ‰£å’Œé¢å¤–ä½¿ç”¨æ¬¡æ•°ï¼›å°å…µè·å¾—æ¸©å’Œçš„å…¨é¢å¼ºåŒ–ã€‚
+    /// ÖÕ¼«²¿¶Ó (Ultimate Squad) - ÖÒÊµ»¹Ô­Ä§¸Ä°æ FancyTraits/UltimateSquad.cs
+    /// Ó¢ĞÛ»ñµÃÌ¹¿Ë»¯¸ÄÔì£¨¸´ÖÆ Tank ¶¯»­¡¢scale=1.28¡¢»¤¼×{6,8,11,14}¡¢¸ßÉËº¦/»÷ÍË/Ñ£ÔÎ¡¢ÃâÒß»÷ÍË£©£¬
+    /// ¶îÍâ»ñµÃ¹ºÂòÕÛ¿ÛºÍ¶îÍâÊ¹ÓÃ´ÎÊı£»Ğ¡±ø»ñµÃÎÂºÍµÄÈ«ÃæÇ¿»¯¡£
     /// </summary>
     public class UltimateSquad : HeroUpgradeDefinition, IAttackResponder
     {
@@ -19,13 +20,13 @@ namespace BadNorthUltimateSquad
         {
             this.upgradeType = TraitHelper.CreateTraitUpgradeType();
             TraitHelper.SetupBaseDefinition(this, ULTIMATE_ID,
-                "YYYYY/TRAIT/ULTIMATE/NAME",
-                "YYYYY/TRAIT/ULTIMATE/DESCSHORT",
+                "ABaLaQiYaShanMaiI/TRAIT/ULTIMATE/NAME",
+                "ABaLaQiYaShanMaiI/TRAIT/ULTIMATE/DESCSHORT",
                 CustomSprites.Sprites["trait_ultimatesquad"],
-                TraitHelper.CreateSingleLevel("YYYYY/TRAIT/ULTIMATE/DESC"));
+                TraitHelper.CreateSingleLevel("ABaLaQiYaShanMaiI/TRAIT/ULTIMATE/DESC"));
         }
 
-        // â”€â”€ ä¸»å…¥å£ï¼šåº”ç”¨åˆ°å°é˜Ÿ â”€â”€
+        // ©¤©¤ Ö÷Èë¿Ú£ºÓ¦ÓÃµ½Ğ¡¶Ó ©¤©¤
 
         public override void OnAppliedToSquad(EnglishSquad squad, int upgradeLevel)
         {
@@ -34,7 +35,7 @@ namespace BadNorthUltimateSquad
             squad.onAgentCreated += this.UltimateEffect;
         }
 
-        // â”€â”€ è´­ä¹°æ—¶é¢å¤–æ•ˆæœ â”€â”€
+        // ©¤©¤ ¹ºÂòÊ±¶îÍâĞ§¹û ©¤©¤
 
         public override void OnPurchased(HeroDefinition hero, int level)
         {
@@ -43,7 +44,7 @@ namespace BadNorthUltimateSquad
             hero.discountType = HeroUpgradeTypeEnum.Class;
         }
 
-        // â”€â”€ è‹±é›„å¦å…‹åŒ–æ”¹é€  â”€â”€
+        // ©¤©¤ Ó¢ĞÛÌ¹¿Ë»¯¸ÄÔì ©¤©¤
 
         private void HeroEffect(Agent agent)
         {
@@ -56,7 +57,7 @@ namespace BadNorthUltimateSquad
                 agent.scale = 1.28f;
                 agent.maxSpeed *= 1.3f;
 
-                // è°ƒæ•´æ——å¸œå¤§å°ä»¥è¡¥å¿ç¼©æ”¾å˜åŒ–
+                // µ÷ÕûÆìÖÄ´óĞ¡ÒÔ²¹³¥Ëõ·Å±ä»¯
                 FlagPole flagPole = agent.GetComponentInChildren<FlagPole>(true);
                 if (flagPole != null)
                 {
@@ -90,7 +91,7 @@ namespace BadNorthUltimateSquad
             }
         }
 
-        // â”€â”€ å°å…µå…¨é¢å¼ºåŒ– â”€â”€
+        // ©¤©¤ Ğ¡±øÈ«ÃæÇ¿»¯ ©¤©¤
 
         private void UltimateEffect(Agent agent)
         {
@@ -105,7 +106,7 @@ namespace BadNorthUltimateSquad
             agent.maxSpeed *= 1.25f;
             agent.GetComponent<Stun>().stunMultiplier = 0.5f;
 
-            // â”€â”€ æ­¥å…µ (Swordsman) â”€â”€
+            // ©¤©¤ ²½±ø (Swordsman) ©¤©¤
             Swordsman swordsman = agent.GetComponent<Swordsman>();
             if (swordsman)
             {
@@ -126,7 +127,7 @@ namespace BadNorthUltimateSquad
                 }
             }
 
-            // â”€â”€ å¼“ç®­æ‰‹ (Archery) â”€â”€
+            // ©¤©¤ ¹­¼ıÊÖ (Archery) ©¤©¤
             Archery archery = agent.GetComponent<Archery>();
             if (archery)
             {
@@ -144,7 +145,7 @@ namespace BadNorthUltimateSquad
                 }
             }
 
-            // â”€â”€ çŸ›å…µ (Spear) â”€â”€
+            // ©¤©¤ Ã¬±ø (Spear) ©¤©¤
             Spear spear = agent.GetComponent<Spear>();
             if (spear)
             {
@@ -163,7 +164,7 @@ namespace BadNorthUltimateSquad
             }
         }
 
-        // â”€â”€ å¤åˆ¶ Tank åŠ¨ç”» â”€â”€
+        // ©¤©¤ ¸´ÖÆ Tank ¶¯»­ ©¤©¤
 
         private void CopyTank(Agent myAgent)
         {
@@ -203,7 +204,7 @@ namespace BadNorthUltimateSquad
             }
         }
 
-        // â”€â”€ IAttackResponderï¼šè‹±é›„å…ç–«å‡»é€€ â”€â”€
+        // ©¤©¤ IAttackResponder£ºÓ¢ĞÛÃâÒß»÷ÍË ©¤©¤
 
         public void ModifyAttack(ref Attack attack)
         {

@@ -1,3 +1,4 @@
+// Author: ABaLaQiYaShanMaiI
 using System;
 using BadNorthAPI;
 using UnityEngine;
@@ -6,9 +7,9 @@ using Voxels.TowerDefense;
 namespace BadNorthSlash
 {
     /// <summary>
-    /// æ¨ªæ‰«ä¹‹åˆƒ (Slash / Sweeping Blade) - å¿ å®è¿˜åŸé­”æ”¹ç‰ˆ FancyTraits/Slash.cs
-    /// è‹±é›„è·å¾—é«˜çœ©æ™•æŠ—æ€§ (stunMultiplier=0.1)ï¼Œå¹¶è·å¾— SlashSword ç»„ä»¶ï¼ˆæ»¡è¡€+æº…å°„ï¼‰ã€‚
-    /// å½“ç­‰çº§â‰¥1ä¸”å°å…µä¸º Swordsman æ—¶ï¼Œå°å…µä¹Ÿè·å¾— SlashSword ç»„ä»¶ã€‚
+    /// ºáÉ¨Ö®ÈĞ (Slash / Sweeping Blade) - ÖÒÊµ»¹Ô­Ä§¸Ä°æ FancyTraits/Slash.cs
+    /// Ó¢ĞÛ»ñµÃ¸ßÑ£ÔÎ¿¹ĞÔ (stunMultiplier=0.1)£¬²¢»ñµÃ SlashSword ×é¼ş£¨ÂúÑª+½¦Éä£©¡£
+    /// µ±µÈ¼¶¡İ1ÇÒĞ¡±øÎª Swordsman Ê±£¬Ğ¡±øÒ²»ñµÃ SlashSword ×é¼ş¡£
     /// </summary>
     public class SweepingBlade : HeroUpgradeDefinition
     {
@@ -18,10 +19,10 @@ namespace BadNorthSlash
         {
             this.upgradeType = TraitHelper.CreateTraitUpgradeType();
             TraitHelper.SetupBaseDefinition(this, Slash_ID,
-                "YYYYY/TRAIT/SLASH/NAME",
-                "YYYYY/TRAIT/SLASH/DESCSHORT",
+                "ABaLaQiYaShanMaiI/TRAIT/SLASH/NAME",
+                "ABaLaQiYaShanMaiI/TRAIT/SLASH/DESCSHORT",
                 CustomSprites.Sprites["trait_slash"],
-                TraitHelper.CreateSingleLevel("YYYYY/TRAIT/SLASH/DESC"));
+                TraitHelper.CreateSingleLevel("ABaLaQiYaShanMaiI/TRAIT/SLASH/DESC"));
         }
 
         public override void OnAppliedToSquad(EnglishSquad squad, int upgradeLevel)

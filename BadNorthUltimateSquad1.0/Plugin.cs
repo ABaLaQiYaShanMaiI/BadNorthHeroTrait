@@ -1,3 +1,4 @@
+// Author: ABaLaQiYaShanMaiI
 using System;
 using System.IO;
 using System.Reflection;
@@ -8,8 +9,8 @@ using UnityEngine;
 
 namespace BadNorthUltimateSquad
 {
-    [BepInDependency("nacu.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("nacu.badnorthultimatesquad1.0", "Bad North - Ultimate Squad Trait 1.0", "1.0")]
+    [BepInDependency("ABaLaQiYaShanMaiI.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
+    [BepInPlugin("ABaLaQiYaShanMaiI.badnorthultimatesquad1.0", "Bad North - Ultimate Squad Trait 1.0", "1.0")]
     public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource Logger;
@@ -44,9 +45,9 @@ namespace BadNorthUltimateSquad
 
         private void AddCustomTerms()
         {
-            CustomText.AddCustomTerm("YYYYY/TRAIT/ULTIMATE/NAME", "终极部队");
-            CustomText.AddCustomTerm("YYYYY/TRAIT/ULTIMATE/DESCSHORT", "部队力量提升，但升级很贵");
-            CustomText.AddCustomTerm("YYYYY/TRAIT/ULTIMATE/DESC", "部队大幅提高实力\n升级价格非常高");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/ULTIMATE/NAME", "终极部队 (BadNorthUltimateSquad1.0)");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/ULTIMATE/DESCSHORT", "部队力量提升，但升级很贵 (BadNorthUltimateSquad1.0)");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/ULTIMATE/DESC", "部队大幅提高实力\n升级价格非常高 (BadNorthUltimateSquad1.0)");
         }
     }
 }

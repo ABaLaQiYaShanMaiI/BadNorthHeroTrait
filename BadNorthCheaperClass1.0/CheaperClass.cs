@@ -1,3 +1,4 @@
+﻿// Author: ABaLaQiYaShanMaiI
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -20,10 +21,10 @@ namespace BadNorthCheaperClass
         {
             this.upgradeType = TraitHelper.CreateTraitUpgradeType();
             TraitHelper.SetupBaseDefinition(this, CHEAPERCLASS_ID,
-                "NACU/TRAIT/CCLASS/NAME",
-                "NACU/TRAIT/CCLASS/DESCSHORT",
+                "ABaLaQiYaShanMaiI/TRAIT/CCLASS/NAME",
+                "ABaLaQiYaShanMaiI/TRAIT/CCLASS/DESCSHORT",
                 CustomSprites.Sprites["trait_cheaperclass"],
-                TraitHelper.CreateSingleLevel("NACU/TRAIT/CCLASS/DESC"));
+                TraitHelper.CreateSingleLevel("ABaLaQiYaShanMaiI/TRAIT/CCLASS/DESC"));
         }
 
         public static bool ApplyDiscountToHeroDef(HeroDefinition heroDef)

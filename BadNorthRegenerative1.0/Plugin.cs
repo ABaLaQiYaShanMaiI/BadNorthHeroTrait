@@ -1,3 +1,4 @@
+﻿// Author: ABaLaQiYaShanMaiI
 using System;
 using System.IO;
 using System.Reflection;
@@ -8,8 +9,8 @@ using UnityEngine;
 
 namespace BadNorthRegenerative
 {
-    [BepInDependency("nacu.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("nacu.badnorthregenerative1.0", "Bad North - Regenerative Trait 1.0", "1.0")]
+    [BepInDependency("ABaLaQiYaShanMaiI.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
+    [BepInPlugin("ABaLaQiYaShanMaiI.badnorthregenerative1.0", "Bad North - Regenerative Trait 1.0", "1.0")]
     public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource Logger;
@@ -47,10 +48,10 @@ namespace BadNorthRegenerative
 
         private void AddCustomTerms()
         {
-            CustomText.AddCustomTerm("NACU/TRAIT/REGENERATIVE/NAME", "追猎");
-            CustomText.AddCustomTerm("NACU/TRAIT/REGENERATIVE/DESCSHORT", "特化部队，依据当前兵种获得不同的针对性机制。");
-            CustomText.AddCustomTerm("NACU/TRAIT/REGENERATIVE/DESC", "基础移速很快，依据当前兵种获得对应的针对性特化效果。");
-            CustomText.AddCustomTerm("NACU/HERO_TRAITS/REGENERATIVE/ABILITY_TOOLTIP", "精锐部队无法在房屋补员。");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/REGENERATIVE/NAME", "追猎 (BadNorthRegenerative1.0)");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/REGENERATIVE/DESCSHORT", "特化部队，依据当前兵种获得不同的针对性机制。 (BadNorthRegenerative1.0)");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/REGENERATIVE/DESC", "基础移速很快，依据当前兵种获得对应的针对性特化效果。 (BadNorthRegenerative1.0)");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/HERO_TRAITS/REGENERATIVE/ABILITY_TOOLTIP", "精锐部队无法在房屋补员。 (BadNorthRegenerative1.0)");
         }
     }
 }

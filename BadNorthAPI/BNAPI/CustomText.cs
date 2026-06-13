@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Author: ABaLaQiYaShanMaiI
+using System;
 using System.Runtime.CompilerServices;
 
 namespace BadNorthAPI

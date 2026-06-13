@@ -1,3 +1,4 @@
+﻿// Author: ABaLaQiYaShanMaiI
 using System;
 using System.IO;
 using System.Reflection;
@@ -8,8 +9,8 @@ using UnityEngine;
 
 namespace BadNorthThorns
 {
-    [BepInDependency("nacu.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("nacu.badnorththorns1.0", "Bad North - Thorns Trait 1.0", "1.0")]
+    [BepInDependency("ABaLaQiYaShanMaiI.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
+    [BepInPlugin("ABaLaQiYaShanMaiI.badnorththorns1.0", "Bad North - Thorns Trait 1.0", "1.0")]
     public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource Logger;
@@ -47,9 +48,9 @@ namespace BadNorthThorns
 
         private void AddCustomTerms()
         {
-            CustomText.AddCustomTerm("NACU/TRAIT/THORNS/NAME", "荆棘");
-            CustomText.AddCustomTerm("NACU/TRAIT/THORNS/DESCSHORT", "近战攻击者会受到反伤");
-            CustomText.AddCustomTerm("NACU/TRAIT/THORNS/DESC", "所有近战攻击者都会受到少量反伤。");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/THORNS/NAME", "荆棘 (BadNorthThorns1.0)");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/THORNS/DESCSHORT", "近战攻击者会受到反伤 (BadNorthThorns1.0)");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/THORNS/DESC", "所有近战攻击者都会受到少量反伤。 (BadNorthThorns1.0)");
         }
     }
 }

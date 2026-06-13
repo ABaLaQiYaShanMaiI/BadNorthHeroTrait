@@ -1,3 +1,4 @@
+﻿// Author: ABaLaQiYaShanMaiI
 using System;
 using System.IO;
 using System.Reflection;
@@ -8,8 +9,8 @@ using UnityEngine;
 
 namespace BadNorthAxeThrower
 {
-    [BepInDependency("nacu.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("nacu.badnorthaxethrower1.0", "Bad North - Axe Thrower Trait 1.0", "1.0")]
+    [BepInDependency("ABaLaQiYaShanMaiI.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
+    [BepInPlugin("ABaLaQiYaShanMaiI.badnorthaxethrower1.0", "Bad North - Axe Thrower Trait 1.0", "1.0")]
     public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource Logger;
@@ -47,9 +48,9 @@ namespace BadNorthAxeThrower
 
         private void AddCustomTerms()
         {
-            CustomText.AddCustomTerm("NACU/TRAIT/AXE/NAME", "掷斧手");
-            CustomText.AddCustomTerm("NACU/TRAIT/AXE/DESCSHORT", "指挥官可以投掷战斧");
-            CustomText.AddCustomTerm("NACU/TRAIT/AXE/DESC", "指挥官会投掷战斧。\n战斧的数量与威力会随小队等级变化。");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/AXE/NAME", "掷斧手 (BadNorthAxeThrower1.0)");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/AXE/DESCSHORT", "指挥官可以投掷战斧 (BadNorthAxeThrower1.0)");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/AXE/DESC", "指挥官会投掷战斧。\n战斧的数量与威力会随小队等级变化。 (BadNorthAxeThrower1.0)");
         }
     }
 }

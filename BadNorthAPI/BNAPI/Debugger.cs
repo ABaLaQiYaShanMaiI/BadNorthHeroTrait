@@ -1,3 +1,4 @@
+﻿// Author: ABaLaQiYaShanMaiI
 using BepInEx.Configuration;
 
 namespace BadNorthAPI

@@ -1,3 +1,4 @@
+﻿// Author: ABaLaQiYaShanMaiI
 using System;
 using System.IO;
 using System.Reflection;
@@ -8,8 +9,8 @@ using UnityEngine;
 
 namespace BadNorthCheaperClass
 {
-    [BepInDependency("nacu.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("nacu.badnorthcheaperclass1.0", "Bad North - Cheaper Class Trait 1.0", "1.0")]
+    [BepInDependency("ABaLaQiYaShanMaiI.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
+    [BepInPlugin("ABaLaQiYaShanMaiI.badnorthcheaperclass1.0", "Bad North - Cheaper Class Trait 1.0", "1.0")]
     public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource Logger;
@@ -47,9 +48,9 @@ namespace BadNorthCheaperClass
 
         private void AddCustomTerms()
         {
-            CustomText.AddCustomTerm("NACU/TRAIT/CCLASS/NAME", "迅捷精通");
-            CustomText.AddCustomTerm("NACU/TRAIT/CCLASS/DESCSHORT", "职业升级费用更低");
-            CustomText.AddCustomTerm("NACU/TRAIT/CCLASS/DESC", "该指挥官的职业升级费用降低 40%。");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/CCLASS/NAME", "迅捷精通 (BadNorthCheaperClass1.0)");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/CCLASS/DESCSHORT", "职业升级费用更低 (BadNorthCheaperClass1.0)");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/CCLASS/DESC", "该指挥官的职业升级费用降低 40%。 (BadNorthCheaperClass1.0)");
         }
     }
 }

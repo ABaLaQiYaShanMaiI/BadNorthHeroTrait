@@ -1,6 +1,6 @@
-# 文件夹名：PlentyTraits（魔改版）
+# 文件夹名：PlentyTraits（魔改版�?
 
-**解析文件数**：13，**总字符数**：41,731
+**解析文件�?*�?3�?*总字符数**�?1,731
 
 ---
 
@@ -9,7 +9,7 @@
 ## 📄 AxeThrower.cs
 
 **文件大小**: 6.8 KB  
-**字符数**: 6,795
+**字符�?*: 6,795
 
 ```csharp
 using System;
@@ -191,7 +191,7 @@ namespace PlentyTraits
 ## 📄 Charge.cs
 
 **文件大小**: 1.5 KB  
-**字符数**: 1,466
+**字符�?*: 1,466
 
 ```csharp
 using System;
@@ -216,15 +216,15 @@ namespace PlentyTraits
 			this.upgradeType.startItemUnlockedTerm = "META_INVENTORY/START/TRAIT/UNLOCKED";
 			this.affectsPortrait = false;
 			base.name = Charge.Charge_ID;
-			this.nameTerm = "YYYYY/ITEM/CHARGE/NAME";
-			this.shortDescription = "YYYYY/ITEM/CHARGE/DESCSHORT";
+			this.nameTerm = "ABaLaQiYaShanMaiI/ITEM/CHARGE/NAME";
+			this.shortDescription = "ABaLaQiYaShanMaiI/ITEM/CHARGE/DESCSHORT";
 			this.infoSprite = CustomSprites.Sprites["charge"];
 			this.levels = new HeroUpgradeDefinition.Level[]
 			{
 				new HeroUpgradeDefinition.Level
 				{
 					cost = 0,
-					description = "YYYYY/ITEM/CHARGE/DESC"
+					description = "ABaLaQiYaShanMaiI/ITEM/CHARGE/DESC"
 				}
 			};
 		}
@@ -245,7 +245,7 @@ namespace PlentyTraits
 ## 📄 CheaperClass.cs
 
 **文件大小**: 1.5 KB  
-**字符数**: 1,459
+**字符�?*: 1,459
 
 ```csharp
 using System;
@@ -297,7 +297,7 @@ namespace PlentyTraits
 ## 📄 Creeper.cs
 
 **文件大小**: 3.5 KB  
-**字符数**: 3,438
+**字符�?*: 3,438
 
 ```csharp
 using System;
@@ -324,15 +324,15 @@ namespace PlentyTraits
 			this.upgradeType.startItemUnlockedTerm = "META_INVENTORY/START/TRAIT/UNLOCKED";
 			this.affectsPortrait = false;
 			base.name = Creeper.CREEPER_ID;
-			this.nameTerm = "YYYYY/TRAIT/CREEPER/NAME";
-			this.shortDescription = "YYYYY/TRAIT/CREEPER/DESCSHORT";
+			this.nameTerm = "ABaLaQiYaShanMaiI/TRAIT/CREEPER/NAME";
+			this.shortDescription = "ABaLaQiYaShanMaiI/TRAIT/CREEPER/DESCSHORT";
 			this.infoSprite = CustomSprites.Sprites["creeper"];
 			this.levels = new HeroUpgradeDefinition.Level[]
 			{
 				new HeroUpgradeDefinition.Level
 				{
 					cost = 0,
-					description = "YYYYY/TRAIT/CREEPER/DESC"
+					description = "ABaLaQiYaShanMaiI/TRAIT/CREEPER/DESC"
 				}
 			};
 		}
@@ -422,7 +422,7 @@ namespace PlentyTraits
 ## 📄 Flyer.cs
 
 **文件大小**: 6.4 KB  
-**字符数**: 6,388
+**字符�?*: 6,388
 
 ```csharp
 using System;
@@ -448,15 +448,15 @@ namespace PlentyTraits
 			this.upgradeType.startItemUnlockedTerm = "META_INVENTORY/START/TRAIT/UNLOCKED";
 			this.affectsPortrait = false;
 			base.name = Flyer.FLYER_ID;
-			this.nameTerm = "YYYYY/TRAIT/FLYER/NAME";
-			this.shortDescription = "YYYYY/TRAIT/FLYER/DESCSHORT";
+			this.nameTerm = "ABaLaQiYaShanMaiI/TRAIT/FLYER/NAME";
+			this.shortDescription = "ABaLaQiYaShanMaiI/TRAIT/FLYER/DESCSHORT";
 			this.infoSprite = CustomSprites.Sprites["mystory"];
 			this.levels = new HeroUpgradeDefinition.Level[]
 			{
 				new HeroUpgradeDefinition.Level
 				{
 					cost = 0,
-					description = "YYYYY/TRAIT/FLYER/DESC"
+					description = "ABaLaQiYaShanMaiI/TRAIT/FLYER/DESC"
 				}
 			};
 		}
@@ -598,7 +598,7 @@ namespace PlentyTraits
 ## 📄 Jumper.cs
 
 **文件大小**: 6.0 KB  
-**字符数**: 5,981
+**字符�?*: 5,981
 
 ```csharp
 using System;
@@ -624,15 +624,15 @@ namespace PlentyTraits
 			this.upgradeType.startItemUnlockedTerm = "META_INVENTORY/START/TRAIT/UNLOCKED";
 			this.affectsPortrait = false;
 			base.name = Jumper.JUMPER_ID;
-			this.nameTerm = "YYYYY/TRAIT/JUMP/NAME";
-			this.shortDescription = "YYYYY/TRAIT/JUMP/DESCSHORT";
+			this.nameTerm = "ABaLaQiYaShanMaiI/TRAIT/JUMP/NAME";
+			this.shortDescription = "ABaLaQiYaShanMaiI/TRAIT/JUMP/DESCSHORT";
 			this.infoSprite = CustomSprites.Sprites["jump"];
 			this.levels = new HeroUpgradeDefinition.Level[]
 			{
 				new HeroUpgradeDefinition.Level
 				{
 					cost = 0,
-					description = "YYYYY/TRAIT/JUMP/DESC"
+					description = "ABaLaQiYaShanMaiI/TRAIT/JUMP/DESC"
 				}
 			};
 		}
@@ -758,7 +758,7 @@ namespace PlentyTraits
 ## 📄 Plugin.cs
 
 **文件大小**: 5.4 KB  
-**字符数**: 5,081
+**字符�?*: 5,081
 
 ```csharp
 using System;
@@ -830,32 +830,32 @@ namespace PlentyTraits
 		{
 			CustomText.AddCustomTerm("NACU/TRAIT/AXE/NAME", "投斧大队");
 			CustomText.AddCustomTerm("NACU/TRAIT/AXE/DESCSHORT", "步兵全给我扔");
-			CustomText.AddCustomTerm("NACU/TRAIT/AXE/DESC", "扔斧头\n升级步兵全都扔");
+			CustomText.AddCustomTerm("NACU/TRAIT/AXE/DESC", "扔斧头\n升级步兵全都�?);
 			CustomText.AddCustomTerm("NACU/TRAIT/THORNS/NAME", "荆棘");
-			CustomText.AddCustomTerm("NACU/TRAIT/THORNS/DESCSHORT", "反弹近战和跳劈");
-			CustomText.AddCustomTerm("NACU/TRAIT/THORNS/DESC", "近战和跳劈攻击会被反伤，不计入击杀数");
-			CustomText.AddCustomTerm("NACU/TRAIT/CCLASS/NAME", "快速精通");
-			CustomText.AddCustomTerm("NACU/TRAIT/CCLASS/DESCSHORT", "常规升级更便宜");
-			CustomText.AddCustomTerm("NACU/TRAIT/CCLASS/DESC", "英雄兵种升级打六折");
+			CustomText.AddCustomTerm("NACU/TRAIT/THORNS/DESCSHORT", "反弹近战和跳�?);
+			CustomText.AddCustomTerm("NACU/TRAIT/THORNS/DESC", "近战和跳劈攻击会被反伤，不计入击杀�?);
+			CustomText.AddCustomTerm("NACU/TRAIT/CCLASS/NAME", "快速精�?);
+			CustomText.AddCustomTerm("NACU/TRAIT/CCLASS/DESCSHORT", "常规升级更便�?);
+			CustomText.AddCustomTerm("NACU/TRAIT/CCLASS/DESC", "英雄兵种升级打六�?);
 			CustomText.AddCustomTerm("NACU/TRAIT/REGENERATIVE/NAME", "医疗训练");
-			CustomText.AddCustomTerm("NACU/TRAIT/REGENERATIVE/DESCSHORT", "单位再生血量");
+			CustomText.AddCustomTerm("NACU/TRAIT/REGENERATIVE/DESCSHORT", "单位再生血�?);
 			CustomText.AddCustomTerm("NACU/TRAIT/REGENERATIVE/DESC", "All units passively regenerate lost health.\nSquad can't replenish at houses.");
 			CustomText.AddCustomTerm("NACU/HERO_TRAITS/REGENERATIVE/ABILITY_TOOLTIP", "Medical Training squads can't replenish.");
-			CustomText.AddCustomTerm("YYYYY/TRAIT/JUMP/NAME", "跳劈大队");
-			CustomText.AddCustomTerm("YYYYY/TRAIT/JUMP/DESCSHORT", "像双刀一样劈");
-			CustomText.AddCustomTerm("YYYYY/TRAIT/JUMP/DESC", "步兵可以像双刀一样跳着劈砍");
-			CustomText.AddCustomTerm("YYYYY/TRAIT/CREEPER/NAME", "短人部队");
-			CustomText.AddCustomTerm("YYYYY/TRAIT/CREEPER/DESCSHORT", "霍克斯矮子为您效力");
-			CustomText.AddCustomTerm("YYYYY/TRAIT/CREEPER/DESC", "士兵体型小数值低，但人数多恢复快");
-			CustomText.AddCustomTerm("YYYYY/TRAIT/FLYER/NAME", "神鹰");
-			CustomText.AddCustomTerm("YYYYY/TRAIT/FLYER/DESCSHORT", "让敌人飞起来");
-			CustomText.AddCustomTerm("YYYYY/TRAIT/FLYER/DESC", "产生让敌人升天的力量");
-			CustomText.AddCustomTerm("YYYYY/TRAIT/TITAN/NAME", "泰坦");
-			CustomText.AddCustomTerm("YYYYY/TRAIT/TITAN/DESCSHORT", "真正的巨人之力，盾弓皆可，升级后起效");
-			CustomText.AddCustomTerm("YYYYY/TRAIT/TITAN/DESC", "步兵弓箭手都可以是巨人");
-			CustomText.AddCustomTerm("YYYYY/ITEM/CHARGE/NAME", "盾冲");
-			CustomText.AddCustomTerm("YYYYY/ITEM/CHARGE/DESCSHORT", "步兵习得新技能");
-			CustomText.AddCustomTerm("YYYYY/ITEM/CHARGE/DESC", "步兵可以用盾撞击");
+			CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/JUMP/NAME", "跳劈大队");
+			CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/JUMP/DESCSHORT", "像双刀一样劈");
+			CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/JUMP/DESC", "步兵可以像双刀一样跳着劈砍");
+			CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/CREEPER/NAME", "短人部队");
+			CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/CREEPER/DESCSHORT", "霍克斯矮子为您效�?);
+			CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/CREEPER/DESC", "士兵体型小数值低，但人数多恢复快");
+			CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/FLYER/NAME", "神鹰");
+			CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/FLYER/DESCSHORT", "让敌人飞起来");
+			CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/FLYER/DESC", "产生让敌人升天的力量");
+			CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/TITAN/NAME", "泰坦");
+			CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/TITAN/DESCSHORT", "真正的巨人之力，盾弓皆可，升级后起效");
+			CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/TITAN/DESC", "步兵弓箭手都可以是巨�?);
+			CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/ITEM/CHARGE/NAME", "盾冲");
+			CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/ITEM/CHARGE/DESCSHORT", "步兵习得新技�?);
+			CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/ITEM/CHARGE/DESC", "步兵可以用盾撞击");
 		}
 
 		// Token: 0x04000003 RID: 3
@@ -871,7 +871,7 @@ namespace PlentyTraits
 ## 📄 Regenerative.cs
 
 **文件大小**: 3.0 KB  
-**字符数**: 3,019
+**字符�?*: 3,019
 
 ```csharp
 using System;
@@ -971,7 +971,7 @@ namespace PlentyTraits
 ## 📄 SelfHealing.cs
 
 **文件大小**: 667 B  
-**字符数**: 637
+**字符�?*: 637
 
 ```csharp
 using System;
@@ -1006,7 +1006,7 @@ namespace PlentyTraits
 ## 📄 Thorns.cs
 
 **文件大小**: 2.6 KB  
-**字符数**: 2,567
+**字符�?*: 2,567
 
 ```csharp
 using System;
@@ -1086,7 +1086,7 @@ namespace PlentyTraits
 ## 📄 Titan.cs
 
 **文件大小**: 3.8 KB  
-**字符数**: 3,800
+**字符�?*: 3,800
 
 ```csharp
 using System;
@@ -1111,15 +1111,15 @@ namespace PlentyTraits
 			this.upgradeType.startItemUnlockedTerm = "META_INVENTORY/START/TRAIT/UNLOCKED";
 			this.affectsPortrait = false;
 			base.name = Titan.Titan_ID;
-			this.nameTerm = "YYYYY/TRAIT/TITAN/NAME";
-			this.shortDescription = "YYYYY/TRAIT/TITAN/DESCSHORT";
+			this.nameTerm = "ABaLaQiYaShanMaiI/TRAIT/TITAN/NAME";
+			this.shortDescription = "ABaLaQiYaShanMaiI/TRAIT/TITAN/DESCSHORT";
 			this.infoSprite = CustomSprites.Sprites["titan"];
 			this.levels = new HeroUpgradeDefinition.Level[]
 			{
 				new HeroUpgradeDefinition.Level
 				{
 					cost = 0,
-					description = "YYYYY/TRAIT/TITAN/DESC"
+					description = "ABaLaQiYaShanMaiI/TRAIT/TITAN/DESC"
 				}
 			};
 		}
@@ -1207,7 +1207,7 @@ namespace PlentyTraits
 ## 📄 Properties/AssemblyInfo.cs
 
 **文件大小**: 335 B  
-**字符数**: 321
+**字符�?*: 321
 
 ```csharp
 using System;
@@ -1226,7 +1226,7 @@ using System.Security.Permissions;
 ## 📄 System/Runtime/Versioning/TargetFrameworkAttribute.cs
 
 **文件大小**: 807 B  
-**字符数**: 779
+**字符�?*: 779
 
 ```csharp
 using System;

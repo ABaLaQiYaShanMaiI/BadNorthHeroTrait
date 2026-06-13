@@ -1,3 +1,4 @@
+﻿// Author: ABaLaQiYaShanMaiI
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -40,10 +41,10 @@ namespace BadNorthRegenerative
         {
             this.upgradeType = TraitHelper.CreateTraitUpgradeType();
             TraitHelper.SetupBaseDefinition(this, REGENERATIVE_ID,
-                "NACU/TRAIT/REGENERATIVE/NAME",
-                "NACU/TRAIT/REGENERATIVE/DESCSHORT",
+                "ABaLaQiYaShanMaiI/TRAIT/REGENERATIVE/NAME",
+                "ABaLaQiYaShanMaiI/TRAIT/REGENERATIVE/DESCSHORT",
                 CustomSprites.Sprites["trait_regenerative"],
-                TraitHelper.CreateSingleLevel("NACU/TRAIT/REGENERATIVE/DESC"));
+                TraitHelper.CreateSingleLevel("ABaLaQiYaShanMaiI/TRAIT/REGENERATIVE/DESC"));
         }
 
         public override void OnAppliedToSquad(EnglishSquad squad, int upgradeLevel)

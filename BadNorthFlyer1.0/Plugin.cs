@@ -1,3 +1,4 @@
+// Author: ABaLaQiYaShanMaiI
 using System;
 using System.IO;
 using System.Reflection;
@@ -8,8 +9,8 @@ using UnityEngine;
 
 namespace BadNorthFlyer
 {
-    [BepInDependency("nacu.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("nacu.badnorthflyer1.0", "Bad North - Flyer Trait 1.0", "1.0")]
+    [BepInDependency("ABaLaQiYaShanMaiI.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
+    [BepInPlugin("ABaLaQiYaShanMaiI.badnorthflyer1.0", "Bad North - Flyer Trait 1.0", "1.0")]
     public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource Logger;
@@ -47,9 +48,9 @@ namespace BadNorthFlyer
 
         private void AddCustomTerms()
         {
-            CustomText.AddCustomTerm("YYYYY/TRAIT/FLYER/NAME", "神鹰");
-            CustomText.AddCustomTerm("YYYYY/TRAIT/FLYER/DESCSHORT", "让敌人飞起来");
-            CustomText.AddCustomTerm("YYYYY/TRAIT/FLYER/DESC", "产生让敌人升天的力量。\n英雄获得飞斧能力，所有单位攻击附带击飞效果。");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/FLYER/NAME", "神鹰 (BadNorthFlyer1.0)");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/FLYER/DESCSHORT", "让敌人飞起来 (BadNorthFlyer1.0)");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/FLYER/DESC", "产生让敌人升天的力量。\n英雄获得飞斧能力，所有单位攻击附带击飞效果。 (BadNorthFlyer1.0)");
         }
     }
 }

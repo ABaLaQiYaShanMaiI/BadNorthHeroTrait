@@ -1,3 +1,4 @@
+﻿// Author: ABaLaQiYaShanMaiI
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -250,9 +251,24 @@ namespace BadNorthTitan
 			}
 		}
 
-		// ── InSight（含诊断） ──
-		private static bool InSightPrefix(Vector3 testPosition, Vector3 targeterPosition, ref bool __result)
+		// ── InSight（含诊断 + Agent 守卫） ──
+		private static bool InSightPrefix(ArcheryTargeter __instance, Vector3 testPosition, Vector3 targeterPosition, ref bool __result)
 		{
+			if (__instance == null) return true;
+
+			Agent agent = __instance.GetComponent<Agent>();
+			if (agent == null)
+			{
+				Archery archery = __instance.GetComponent<Archery>();
+				if (archery != null)
+					agent = archery.agent;
+			}
+
+			// 非泰坦弓箭手：完全放行，保持原版行为
+			if (!IsTitanArcher(agent))
+				return true;
+
+			// 泰坦弓箭手：使用泰坦专属 8f 视野范围
 			try
 			{
 				if (Vector3.Distance(testPosition, targeterPosition) < AttackRange)

@@ -1,3 +1,4 @@
+﻿// Author: ABaLaQiYaShanMaiI
 using UnityEngine;
 
 namespace BadNorthAPI

@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Author: ABaLaQiYaShanMaiI
+using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security;

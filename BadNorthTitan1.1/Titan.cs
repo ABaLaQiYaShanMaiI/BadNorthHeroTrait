@@ -1,3 +1,4 @@
+// Author: ABaLaQiYaShanMaiI
 using System;
 using System.Reflection;
 using BadNorthAPI;
@@ -7,9 +8,9 @@ using Voxels.TowerDefense;
 namespace BadNorthTitan
 {
 	/// <summary>
-	/// æ³°å¦ (Titan) - çœŸæ­£çš„å·¨äººä¹‹åŠ›ï¼Œç›¾å¼“çš†å¯ï¼Œå‡çº§åèµ·æ•ˆã€‚
-	/// ä¿ç•™ TankArcher ç®­çŸ¢å¤–è§‚ + trajectoryCalculatorï¼›
-	/// ä¸“æ³¨å°„å‡»ç”± TitanArcheryFixes + TitanFocusHelper å®‰å…¨æ¥ç®¡ã€‚
+	/// Ì©Ì¹ (Titan) - ÕæÕıµÄ¾ŞÈËÖ®Á¦£¬¶Ü¹­½Ô¿É£¬Éı¼¶ºóÆğĞ§¡£
+	/// ±£Áô TankArcher ¼ıÊ¸Íâ¹Û + trajectoryCalculator£»
+	/// ×¨×¢Éä»÷ÓÉ TitanArcheryFixes + TitanFocusHelper °²È«½Ó¹Ü¡£
 	/// </summary>
 	public class Titan : HeroUpgradeDefinition
 	{
@@ -31,15 +32,15 @@ namespace BadNorthTitan
 			this.upgradeType.startItemUnlockedTerm = "META_INVENTORY/START/TRAIT/UNLOCKED";
 			this.affectsPortrait = false;
 			base.name = Titan.Titan_ID;
-			this.nameTerm = "YYYYY/TRAIT/TITAN/NAME";
-			this.shortDescription = "YYYYY/TRAIT/TITAN/DESCSHORT";
+			this.nameTerm = "ABaLaQiYaShanMaiI/TRAIT/TITAN/NAME";
+			this.shortDescription = "ABaLaQiYaShanMaiI/TRAIT/TITAN/DESCSHORT";
 			this.infoSprite = CustomSprites.Sprites["trait_titan"];
 			this.levels = new HeroUpgradeDefinition.Level[]
 			{
 				new HeroUpgradeDefinition.Level
 				{
 					cost = 0,
-					description = "YYYYY/TRAIT/TITAN/DESC"
+					description = "ABaLaQiYaShanMaiI/TRAIT/TITAN/DESC"
 				}
 			};
 		}
@@ -126,7 +127,7 @@ namespace BadNorthTitan
 				}
 				catch (Exception ex)
 				{
-					Plugin.Logger.LogWarning("[Titan] æ¨¡æ¿å¤åˆ¶å¤±è´¥: " + ex.Message);
+					Plugin.Logger.LogWarning("[Titan] Ä£°å¸´ÖÆÊ§°Ü: " + ex.Message);
 				}
 
 				for (int j = 0; j < component2._archerySettings.Length; j++)

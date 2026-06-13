@@ -1,3 +1,4 @@
+// Author: ABaLaQiYaShanMaiI
 using System;
 using System.Reflection;
 using BadNorthAPI;
@@ -7,25 +8,25 @@ using Voxels.TowerDefense;
 namespace BadNorthTitan
 {
     /// <summary>
-    /// æ³°å¦ (Titan) - çœŸæ­£çš„å·¨äººä¹‹åŠ›ï¼Œç›¾å¼“çš†å¯ï¼Œå‡çº§åèµ·æ•ˆã€‚
-    /// éœ€è¦å°é˜Ÿç­‰çº§ >= 1 æ‰èƒ½ç”Ÿæ•ˆï¼Œå¤§å¹…æå‡å•ä½å±æ€§ä½†å‡å°‘å°é˜Ÿäººæ•°ã€‚
+    /// Ì©Ì¹ (Titan) - ÕæÕıµÄ¾ŞÈËÖ®Á¦£¬¶Ü¹­½Ô¿É£¬Éı¼¶ºóÆğĞ§¡£
+    /// ĞèÒªĞ¡¶ÓµÈ¼¶ >= 1 ²ÅÄÜÉúĞ§£¬´ó·ùÌáÉıµ¥Î»ÊôĞÔµ«¼õÉÙĞ¡¶ÓÈËÊı¡£
     /// </summary>
     public class Titan : HeroUpgradeDefinition
     {
         public static readonly string Titan_ID = "Hero_Trait_Titan";
 
-        // â”€â”€ é€šç”¨å‚æ•° â”€â”€
+        // ©¤©¤ Í¨ÓÃ²ÎÊı ©¤©¤
         private const float SCALE = 1.25f;
-        private const float STUN_MULTIPLIER = 1E-06f; // å‡ ä¹å…ç–«çœ©æ™•
+        private const float STUN_MULTIPLIER = 1E-06f; // ¼¸ºõÃâÒßÑ£ÔÎ
 
-        // â”€â”€ æ­¥å…µ (Swordsman) å‚æ•° â”€â”€
+        // ©¤©¤ ²½±ø (Swordsman) ²ÎÊı ©¤©¤
         private const float SWORD_DAMAGE_MULT = 2f;
         private const float SWORD_KNOCKBACK_MULT = 1.5f;
         private const float SWORD_STUN_MULT = 1.5f;
         private const float SWORD_MAX_SPEED = 3f;
         private readonly float[] SwordArmorLevels = { 3f, 5f, 7f, 8f };
 
-        // â”€â”€ å¼“ç®­æ‰‹ (Archery) å‚æ•° â”€â”€
+        // ©¤©¤ ¹­¼ıÊÖ (Archery) ²ÎÊı ©¤©¤
         private const float ARCHER_MAX_SPEED = 2.5f;
         private const float ARCHER_COOLDOWN_MULT = 1.3f;
         private const float ARCHER_SPREAD_MULT = 0.4f;
@@ -34,7 +35,7 @@ namespace BadNorthTitan
         private const float ARCHER_STUN_MULT = 1.1f;
         private readonly float[] ArcherArmorLevels = { 2f, 3f, 4f, 5f };
 
-        // â”€â”€ åå°„ç›¸å…³ â”€â”€
+        // ©¤©¤ ·´ÉäÏà¹Ø ©¤©¤
         private static FieldInfo _armorField = null;
         private static bool _armorFieldAttempted = false;
         private static FieldInfo _stunField = null;
@@ -44,14 +45,14 @@ namespace BadNorthTitan
         {
             this.upgradeType = TraitHelper.CreateTraitUpgradeType();
             TraitHelper.SetupBaseDefinition(this, Titan_ID,
-                "YYYYY/TRAIT/TITAN/NAME",
-                "YYYYY/TRAIT/TITAN/DESCSHORT",
+                "ABaLaQiYaShanMaiI/TRAIT/TITAN/NAME",
+                "ABaLaQiYaShanMaiI/TRAIT/TITAN/DESCSHORT",
                 CustomSprites.Sprites["trait_titan"],
-                TraitHelper.CreateSingleLevel("YYYYY/TRAIT/TITAN/DESC"));
+                TraitHelper.CreateSingleLevel("ABaLaQiYaShanMaiI/TRAIT/TITAN/DESC"));
         }
 
         /// <summary>
-        /// å®‰å…¨è®¾ç½® Agent çš„æŠ¤ç”²å€¼ï¼ˆé€šè¿‡åå°„ï¼Œé¿å…ä¾èµ–ç‰¹å®šç‰ˆæœ¬å­—æ®µåï¼‰
+        /// °²È«ÉèÖÃ Agent µÄ»¤¼×Öµ£¨Í¨¹ı·´Éä£¬±ÜÃâÒÀÀµÌØ¶¨°æ±¾×Ö¶ÎÃû£©
         /// </summary>
         private static void SetAgentArmor(Agent agent, float[] armorValues)
         {
@@ -74,12 +75,12 @@ namespace BadNorthTitan
             }
             else
             {
-                Plugin.Logger.LogWarning("[Titan] Armor.armor åå°„å­—æ®µæœªæ‰¾åˆ°ï¼Œæ— æ³•è®¾ç½®æŠ¤ç”²");
+                Plugin.Logger.LogWarning("[Titan] Armor.armor ·´Éä×Ö¶ÎÎ´ÕÒµ½£¬ÎŞ·¨ÉèÖÃ»¤¼×");
             }
         }
 
         /// <summary>
-        /// å®‰å…¨è®¾ç½® Agent çš„çœ©æ™•å€ç‡ï¼ˆé€šè¿‡åå°„ï¼‰
+        /// °²È«ÉèÖÃ Agent µÄÑ£ÔÎ±¶ÂÊ£¨Í¨¹ı·´Éä£©
         /// </summary>
         private static void SetAgentStunMultiplier(Agent agent, float value)
         {
@@ -102,12 +103,12 @@ namespace BadNorthTitan
             }
             else
             {
-                Plugin.Logger.LogWarning("[Titan] Stun.stunMultiplier åå°„å­—æ®µæœªæ‰¾åˆ°ï¼Œæ— æ³•è®¾ç½®çœ©æ™•å…ç–«");
+                Plugin.Logger.LogWarning("[Titan] Stun.stunMultiplier ·´Éä×Ö¶ÎÎ´ÕÒµ½£¬ÎŞ·¨ÉèÖÃÑ£ÔÎÃâÒß");
             }
         }
 
         /// <summary>
-        /// æ³°å¦åŒ–æ­¥å…µå•ä½
+        /// Ì©Ì¹»¯²½±øµ¥Î»
         /// </summary>
         private void TitanizeSwordsman(Agent agent)
         {
@@ -129,11 +130,11 @@ namespace BadNorthTitan
             agent.maxSpeed = SWORD_MAX_SPEED;
             SetAgentArmor(agent, SwordArmorLevels);
 
-            Debugger.Log("[Titan] æ­¥å…µæ³°å¦åŒ–å®Œæˆ: damageMult=" + SWORD_DAMAGE_MULT + ", speed=" + SWORD_MAX_SPEED);
+            Debugger.Log("[Titan] ²½±øÌ©Ì¹»¯Íê³É: damageMult=" + SWORD_DAMAGE_MULT + ", speed=" + SWORD_MAX_SPEED);
         }
 
         /// <summary>
-        /// æ³°å¦åŒ–å¼“ç®­æ‰‹å•ä½ - ä» Viking_TankArcher è·å–æ¨¡æ¿
+        /// Ì©Ì¹»¯¹­¼ıÊÖµ¥Î» - ´Ó Viking_TankArcher »ñÈ¡Ä£°å
         /// </summary>
         private void TitanizeArchery(Agent agent)
         {
@@ -142,7 +143,7 @@ namespace BadNorthTitan
 
             agent.maxSpeed = ARCHER_MAX_SPEED;
 
-            // ä»é‡è£…å¼“ç®­æ‰‹è·å–ç®­çŸ¢å’Œå£°éŸ³æ¨¡æ¿
+            // ´ÓÖØ×°¹­¼ıÊÖ»ñÈ¡¼ıÊ¸ºÍÉùÒôÄ£°å
             try
             {
                 if (!ReferenceEquals(LevelStateObjectReferences.dict, null) &&
@@ -172,7 +173,7 @@ namespace BadNorthTitan
                     }
                     catch (Exception ex)
                     {
-                        Plugin.Logger.LogWarning("[Titan] VikingReference(TankArcher) åå°„å¤±è´¥: " + ex.Message);
+                        Plugin.Logger.LogWarning("[Titan] VikingReference(TankArcher) ·´ÉäÊ§°Ü: " + ex.Message);
                     }
 
                     if (!ReferenceEquals(templateObj, null))
@@ -180,7 +181,7 @@ namespace BadNorthTitan
                         Archery template = templateObj.GetComponent<Archery>();
                         if (!ReferenceEquals(template, null))
                         {
-                            // ä½¿ç”¨åå°„å¤åˆ¶ç®­çŸ¢å’Œå£°éŸ³å±æ€§
+                            // Ê¹ÓÃ·´Éä¸´ÖÆ¼ıÊ¸ºÍÉùÒôÊôĞÔ
                             FieldInfo arrowPrefabField = typeof(Archery).GetField("arrowPrefab",
                                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                             FieldInfo drawSoundField = typeof(Archery).GetField("drawSound",
@@ -199,17 +200,17 @@ namespace BadNorthTitan
                             if (!ReferenceEquals(trajectoryField, null))
                                 trajectoryField.SetValue(component, trajectoryField.GetValue(template));
 
-                            Plugin.Logger.LogInfo("[Titan] æˆåŠŸä»é‡è£…å¼“ç®­æ‰‹å¤åˆ¶ç®­çŸ¢/å£°éŸ³æ¨¡æ¿");
+                            Plugin.Logger.LogInfo("[Titan] ³É¹¦´ÓÖØ×°¹­¼ıÊÖ¸´ÖÆ¼ıÊ¸/ÉùÒôÄ£°å");
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                Plugin.Logger.LogWarning("[Titan] è·å–é‡è£…å¼“ç®­æ‰‹æ¨¡æ¿å¤±è´¥: " + ex.Message);
+                Plugin.Logger.LogWarning("[Titan] »ñÈ¡ÖØ×°¹­¼ıÊÖÄ£°åÊ§°Ü: " + ex.Message);
             }
 
-            // è°ƒæ•´å°„å‡»å‚æ•°
+            // µ÷ÕûÉä»÷²ÎÊı
             FieldInfo archerySettingsField = typeof(Archery).GetField("_archerySettings",
                 BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 
@@ -272,11 +273,11 @@ namespace BadNorthTitan
             component.Setup();
             SetAgentArmor(agent, ArcherArmorLevels);
 
-            Debugger.Log("[Titan] å¼“ç®­æ‰‹æ³°å¦åŒ–å®Œæˆ: damageMult=" + ARCHER_DAMAGE_MULT + ", spreadMult=" + ARCHER_SPREAD_MULT);
+            Debugger.Log("[Titan] ¹­¼ıÊÖÌ©Ì¹»¯Íê³É: damageMult=" + ARCHER_DAMAGE_MULT + ", spreadMult=" + ARCHER_SPREAD_MULT);
         }
 
         /// <summary>
-        /// æ³°å¦åŒ–å•ä¸ª Agent
+        /// Ì©Ì¹»¯µ¥¸ö Agent
         /// </summary>
         private void Titanize(Agent agent)
         {
@@ -298,36 +299,36 @@ namespace BadNorthTitan
             }
             else
             {
-                Debugger.Log("[Titan] " + agent.name + " æ—¢éæ­¥å…µä¹Ÿéå¼“ç®­æ‰‹ï¼Œè·³è¿‡æ³°å¦åŒ–");
+                Debugger.Log("[Titan] " + agent.name + " ¼È·Ç²½±øÒ²·Ç¹­¼ıÊÖ£¬Ìø¹ıÌ©Ì¹»¯");
             }
         }
 
-        // â”€â”€ ä¸»å…¥å£ â”€â”€
+        // ©¤©¤ Ö÷Èë¿Ú ©¤©¤
         public override void OnAppliedToSquad(EnglishSquad squad, int upgradeLevel)
         {
             base.OnAppliedToSquad(squad, upgradeLevel);
 
-            // æ³°å¦ç‰¹è´¨éœ€è¦å°é˜Ÿç­‰çº§ >= 1 æ‰èƒ½ç”Ÿæ•ˆ
+            // Ì©Ì¹ÌØÖÊĞèÒªĞ¡¶ÓµÈ¼¶ >= 1 ²ÅÄÜÉúĞ§
             if (squad.level < 1)
             {
-                Plugin.Logger.LogInfo("[Titan] å°é˜Ÿç­‰çº§ " + squad.level + " < 1ï¼Œæ³°å¦æ•ˆæœæœªæ¿€æ´»");
+                Plugin.Logger.LogInfo("[Titan] Ğ¡¶ÓµÈ¼¶ " + squad.level + " < 1£¬Ì©Ì¹Ğ§¹ûÎ´¼¤»î");
                 return;
             }
 
-            // å‡å°‘å°é˜Ÿäººæ•°ï¼ˆå› ä¸ºä¸ªä½“æ›´å¼ºï¼‰
+            // ¼õÉÙĞ¡¶ÓÈËÊı£¨ÒòÎª¸öÌå¸üÇ¿£©
             squad.maxCount = squad.maxCount / 2 + 1;
 
-            // ä¸ºæ–°ç”Ÿæˆçš„ Agent åº”ç”¨æ³°å¦åŒ–ï¼ˆé˜²é‡å¤è®¢é˜…ï¼‰
+            // ÎªĞÂÉú³ÉµÄ Agent Ó¦ÓÃÌ©Ì¹»¯£¨·ÀÖØ¸´¶©ÔÄ£©
             squad.onAgentCreated -= this.Titanize;
             squad.onAgentCreated += this.Titanize;
 
-            // å¯¹ç°æœ‰ Agent åº”ç”¨æ³°å¦åŒ–
+            // ¶ÔÏÖÓĞ Agent Ó¦ÓÃÌ©Ì¹»¯
             foreach (Agent agent in squad.agents)
             {
                 this.Titanize(agent);
             }
 
-            Plugin.Logger.LogInfo(string.Format("[Titan] å·²åº”ç”¨åˆ°å°é˜Ÿ {0}ï¼Œå°é˜Ÿäººæ•°: {1}", squad.name, squad.maxCount));
+            Plugin.Logger.LogInfo(string.Format("[Titan] ÒÑÓ¦ÓÃµ½Ğ¡¶Ó {0}£¬Ğ¡¶ÓÈËÊı: {1}", squad.name, squad.maxCount));
         }
     }
 }

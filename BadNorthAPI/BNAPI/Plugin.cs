@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Author: ABaLaQiYaShanMaiI
+using System;
 using System.Text;
 using BepInEx;
 using BepInEx.Configuration;
@@ -8,7 +9,7 @@ using BadNorthAPI;
 
 namespace BadNorthAPI
 {
-	[BepInPlugin("nacu.bnapi.modular", "BN Mod API (Modular)", "1.0")]
+	[BepInPlugin("ABaLaQiYaShanMaiI.bnapi.modular", "BN Mod API (Modular)", "1.0")]
 	public class Plugin : BaseUnityPlugin
 	{
 		public static ManualLogSource Logger;

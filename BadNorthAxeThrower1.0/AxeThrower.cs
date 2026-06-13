@@ -1,3 +1,4 @@
+﻿// Author: ABaLaQiYaShanMaiI
 using System.Reflection;
 using BadNorthAPI;
 using UnityEngine;
@@ -20,10 +21,10 @@ namespace BadNorthAxeThrower
         {
             this.upgradeType = TraitHelper.CreateTraitUpgradeType();
             TraitHelper.SetupBaseDefinition(this, AXETHROWER_ID,
-                "NACU/TRAIT/AXE/NAME",
-                "NACU/TRAIT/AXE/DESCSHORT",
+                "ABaLaQiYaShanMaiI/TRAIT/AXE/NAME",
+                "ABaLaQiYaShanMaiI/TRAIT/AXE/DESCSHORT",
                 CustomSprites.Sprites["trait_axethrower"],
-                TraitHelper.CreateSingleLevel("NACU/TRAIT/AXE/DESC"));
+                TraitHelper.CreateSingleLevel("ABaLaQiYaShanMaiI/TRAIT/AXE/DESC"));
         }
 
         // ── 反射辅助（使用 ReflectionHelper 统一入口） ──

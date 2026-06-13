@@ -1,3 +1,4 @@
+// Author: ABaLaQiYaShanMaiI
 using System;
 using System.IO;
 using System.Reflection;
@@ -8,8 +9,8 @@ using UnityEngine;
 
 namespace BadNorthSlash
 {
-    [BepInDependency("nacu.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("nacu.badnorthsweepingblade1.0", "Bad North - Sweeping Blade Trait 1.0", "1.0")]
+    [BepInDependency("ABaLaQiYaShanMaiI.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
+    [BepInPlugin("ABaLaQiYaShanMaiI.badnorthsweepingblade1.0", "Bad North - Sweeping Blade Trait 1.0", "1.0")]
     public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource Logger;
@@ -44,9 +45,9 @@ namespace BadNorthSlash
 
         private void AddCustomTerms()
         {
-            CustomText.AddCustomTerm("YYYYY/TRAIT/SLASH/NAME", "横扫之刃");
-            CustomText.AddCustomTerm("YYYYY/TRAIT/SLASH/DESCSHORT", "命中额外目标");
-            CustomText.AddCustomTerm("YYYYY/TRAIT/SLASH/DESC", "单位的攻击能击中多个敌人");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/SLASH/NAME", "横扫之刃 (BadNorthSlash1.0)");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/SLASH/DESCSHORT", "命中额外目标 (BadNorthSlash1.0)");
+            CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/SLASH/DESC", "单位的攻击能击中多个敌人 (BadNorthSlash1.0)");
         }
     }
 }

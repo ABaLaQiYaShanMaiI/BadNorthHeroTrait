@@ -1,3 +1,4 @@
+// Author: ABaLaQiYaShanMaiI
 using System;
 using BadNorthAPI;
 using UnityEngine;
@@ -6,9 +7,9 @@ using Voxels.TowerDefense;
 namespace BadNorthYuri
 {
     /// <summary>
-    /// å¿ƒçµç²¾è‹± (Yuri / Mind Elite) - å¿ å®è¿˜åŸé­”æ”¹ç‰ˆ FancyTraits/Yuri.cs
-    /// ç»™è‹±é›„æ·»åŠ  YuriComponentï¼Œè¯¥ç»„ä»¶ä¼šæŒ‰ç­‰çº§å‘¨æœŸæ€§é‡Šæ”¾å¿ƒçµå†²å‡»ï¼Œ
-    /// å¯¹é™„è¿‘æ•Œäººé€ æˆä¼¤å®³+çœ©æ™•ã€‚è‹±é›„è·å¾—é«˜çœ©æ™•æŠ—æ€§ (stunMultiplier=0.1)ã€‚
+    /// ĞÄÁé¾«Ó¢ (Yuri / Mind Elite) - ÖÒÊµ»¹Ô­Ä§¸Ä°æ FancyTraits/Yuri.cs
+    /// ¸øÓ¢ĞÛÌí¼Ó YuriComponent£¬¸Ã×é¼ş»á°´µÈ¼¶ÖÜÆÚĞÔÊÍ·ÅĞÄÁé³å»÷£¬
+    /// ¶Ô¸½½üµĞÈËÔì³ÉÉËº¦+Ñ£ÔÎ¡£Ó¢ĞÛ»ñµÃ¸ßÑ£ÔÎ¿¹ĞÔ (stunMultiplier=0.1)¡£
     /// </summary>
     public class MindElite : HeroUpgradeDefinition
     {
@@ -18,10 +19,10 @@ namespace BadNorthYuri
         {
             this.upgradeType = TraitHelper.CreateTraitUpgradeType();
             TraitHelper.SetupBaseDefinition(this, YURI_ID,
-                "YYYYY/TRAIT/YURI/NAME",
-                "YYYYY/TRAIT/YURI/DESCSHORT",
+                "ABaLaQiYaShanMaiI/TRAIT/YURI/NAME",
+                "ABaLaQiYaShanMaiI/TRAIT/YURI/DESCSHORT",
                 CustomSprites.Sprites["trait_yuri"],
-                TraitHelper.CreateSingleLevel("YYYYY/TRAIT/YURI/DESC"));
+                TraitHelper.CreateSingleLevel("ABaLaQiYaShanMaiI/TRAIT/YURI/DESC"));
         }
 
         public override void OnAppliedToSquad(EnglishSquad squad, int upgradeLevel)

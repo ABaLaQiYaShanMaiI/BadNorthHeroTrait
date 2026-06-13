@@ -1,3 +1,4 @@
+// Author: ABaLaQiYaShanMaiI
 using System;
 using System.IO;
 using System.Reflection;
@@ -9,8 +10,8 @@ using UnityEngine;
 
 namespace BadNorthTitan
 {
-	[BepInDependency("nacu.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
-	[BepInPlugin("nacu.badnorthtitan1.1", "Bad North - Titan Trait 1.1", "1.1")]
+	[BepInDependency("ABaLaQiYaShanMaiI.bnapi.modular", BepInDependency.DependencyFlags.HardDependency)]
+	[BepInPlugin("ABaLaQiYaShanMaiI.badnorthtitan1.1", "Bad North - Titan Trait 1.1", "1.1")]
 	public class Plugin : BaseUnityPlugin
 	{
 		public static ManualLogSource Logger;
@@ -34,7 +35,7 @@ namespace BadNorthTitan
 			CustomText.CustomTermsAdded += AddCustomTerms;
 
 			// 4. Apply Titan archery Harmony patches (8 patches: sight/aim/ballistics + focus fix)
-			Harmony harmony = new Harmony("nacu.badnorthtitan1.1.archeryfix");
+			Harmony harmony = new Harmony("ABaLaQiYaShanMaiI.badnorthtitan1.1.archeryfix");
 			TitanArcheryFixes.ApplyPatches(harmony);
 
 			Logger.LogInfo("======== BadNorthTitan 1.1 已就绪 ========");
@@ -42,9 +43,9 @@ namespace BadNorthTitan
 
 		private void AddCustomTerms()
 		{
-			CustomText.AddCustomTerm("YYYYY/TRAIT/TITAN/NAME", "泰坦");
-			CustomText.AddCustomTerm("YYYYY/TRAIT/TITAN/DESCSHORT", "真正的巨人之力，盾弓皆可，升级后起效");
-			CustomText.AddCustomTerm("YYYYY/TRAIT/TITAN/DESC", "步兵与弓箭手皆可获得泰坦之力。\n大幅提升伤害、护甲与抗性，但小队人数减半。\n需要小队达到1级后解锁。");
+			CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/TITAN/NAME", "泰坦 (BadNorthTitan1.1)");
+			CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/TITAN/DESCSHORT", "真正的巨人之力，盾弓皆可，升级后起效 (BadNorthTitan1.1)");
+			CustomText.AddCustomTerm("ABaLaQiYaShanMaiI/TRAIT/TITAN/DESC", "步兵与弓箭手皆可获得泰坦之力。\n大幅提升伤害、护甲与抗性，但小队人数减半。\n需要小队达到1级后解锁。 (BadNorthTitan1.1)");
 		}
 	}
 }

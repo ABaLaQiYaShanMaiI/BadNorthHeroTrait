@@ -1,3 +1,4 @@
+﻿// Author: ABaLaQiYaShanMaiI
 using BadNorthAPI;
 using UnityEngine;
 using Voxels.TowerDefense;
@@ -18,10 +19,10 @@ namespace BadNorthThorns
             this.upgradeType = TraitHelper.CreateTraitUpgradeType();
             this.upgradeType.canBeStartItem = true;
             TraitHelper.SetupBaseDefinition(this, THORNS_ID,
-                "NACU/TRAIT/THORNS/NAME",
-                "NACU/TRAIT/THORNS/DESCSHORT",
+                "ABaLaQiYaShanMaiI/TRAIT/THORNS/NAME",
+                "ABaLaQiYaShanMaiI/TRAIT/THORNS/DESCSHORT",
                 CustomSprites.Sprites["trait_thorns"],
-                TraitHelper.CreateSingleLevel("NACU/TRAIT/THORNS/DESC"));
+                TraitHelper.CreateSingleLevel("ABaLaQiYaShanMaiI/TRAIT/THORNS/DESC"));
         }
 
         public override void OnAppliedToSquad(EnglishSquad squad, int upgradeLevel)
