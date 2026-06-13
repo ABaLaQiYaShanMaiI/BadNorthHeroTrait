@@ -1,7 +1,8 @@
-﻿// Author: ABaLaQiYaShanMaiI
+// Author: ABaLaQiYaShanMaiI
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using BadNorthAPI;
 using HarmonyLib;
 using UnityEngine;
 using Voxels.TowerDefense;
@@ -11,7 +12,7 @@ using Voxels.TowerDefense.Upgrades;
 namespace BadNorthTitan
 {
 	/// <summary>
-	/// 泰坦弓箭手 Harmony 补丁 — 8 个补丁（含诊断日志）。
+	/// 泰坦弓箭手 Harmony 补丁 — 8 个补丁（含诊断日志，受 EnableGameplayLog 开关控制）。
 	/// 
 	/// 5 个核心：索敌/瞄准/视野/射击 → 高速直线弹道
 	/// 1 个安全：MaybeSetup 拦截 → 阻止 ModifyArrow 注册 m__1，根除 NPE
@@ -39,6 +40,10 @@ namespace BadNorthTitan
 		private const float CooldownExtra = 3.5f;
 		private const float CooldownRandomMax = 1.5f;
 
+		// ── 日志门控 ──
+		private static void GameplayLog(string message) => Debugger.Log(Plugin.EnableGameplayLog, message);
+		private static void GameplayLogWarn(string message) => Debugger.LogWarning(Plugin.EnableGameplayLog, message);
+
 		// 反射缓存
 		private static FieldInfo _radiusField = null;
 		private static bool _radiusFieldAttempted = false;
@@ -56,9 +61,8 @@ namespace BadNorthTitan
 		private static int _maybeSetupNonTitanCountSinceLog = 0;
 		private static float _lastDiagFlushTime = 0f;
 		private const float DiagFlushInterval = 5f;
-		// 索敌日志去重：记录每个 Agent 上次输出 enemyCount，仅变化时输出
 		private static Dictionary<int, int> _lastSightEnemyCount = new Dictionary<int, int>();
-		private const float SightLogCooldown = 2f; // 同一 Agent 至少间隔 2 秒输出
+		private const float SightLogCooldown = 2f;
 		private static Dictionary<int, float> _lastSightLogTime = new Dictionary<int, float>();
 
 		private static bool IsTitanArcher(Agent agent)
@@ -77,18 +81,19 @@ namespace BadNorthTitan
 
 			if (_shootNonTitanCountSinceLog > 0)
 			{
-				Plugin.Logger.LogInfo(string.Format("[Titan DIAG] ShootPrefix 放行非泰坦弓箭手 ×{0}（最近5秒）", _shootNonTitanCountSinceLog));
+				GameplayLog(string.Format("[Titan DIAG] ShootPrefix 放行非泰坦弓箭手 ×{0}（最近5秒）", _shootNonTitanCountSinceLog));
 				_shootNonTitanCountSinceLog = 0;
 			}
 			if (_maybeSetupNonTitanCountSinceLog > 0)
 			{
-				Plugin.Logger.LogInfo(string.Format("[Titan DIAG] MaybeSetupPrefix 放行非泰坦 ×{0}（最近5秒）", _maybeSetupNonTitanCountSinceLog));
+				GameplayLog(string.Format("[Titan DIAG] MaybeSetupPrefix 放行非泰坦 ×{0}（最近5秒）", _maybeSetupNonTitanCountSinceLog));
 				_maybeSetupNonTitanCountSinceLog = 0;
 			}
 		}
 
 		public static void ApplyPatches(Harmony harmony)
 		{
+			// 加载日志始终输出（不受开关控制）
 			Plugin.Logger.LogInfo("[Titan DIAG] === 开始注册 Harmony 补丁 ===");
 
 			harmony.Patch(
@@ -156,13 +161,11 @@ namespace BadNorthTitan
 		{
 			Agent agent = __instance.agent;
 			if (agent == null) return true;
-			if (!agent.isEnglish) return true; // 非英军不做任何处理
-			if (agent.GetComponent<Archery>() == null) return true; // 无弓箭组件
+			if (!agent.isEnglish) return true;
+			if (agent.GetComponent<Archery>() == null) return true;
 
-			// ★ 诊断：scale <= 1.1 的弓箭手未被 Titanize，但仍穿过 IsTitanArcher 的 scale 门槛
 			if (agent.scale <= 1.1f)
 			{
-				// 普通弓箭手 — 完全放行（不做任何拦截）
 				return true;
 			}
 
@@ -170,7 +173,7 @@ namespace BadNorthTitan
 			Faction enemyFaction = agent.faction.enemy;
 			if (enemyFaction == null)
 			{
-				Plugin.Logger.LogWarning(string.Format("[Titan WARN] Archer#{0} faction.enemy == null，回退原版索敌", agent.GetInstanceID()));
+				GameplayLogWarn(string.Format("[Titan WARN] Archer#{0} faction.enemy == null，回退原版索敌", agent.GetInstanceID()));
 				return true;
 			}
 
@@ -226,7 +229,7 @@ namespace BadNorthTitan
 			}
 			catch (Exception ex)
 			{
-				Plugin.Logger.LogWarning(string.Format("[Titan ERROR] AimAtPrefix 异常: {0}", ex.Message));
+				GameplayLogWarn(string.Format("[Titan ERROR] AimAtPrefix 异常: {0}", ex.Message));
 				return true;
 			}
 		}
@@ -239,15 +242,15 @@ namespace BadNorthTitan
 			{
 				if (!_radiusFieldAttempted) { _radiusFieldAttempted = true; _radiusField = typeof(LineOfSight).GetField("radius", BindingFlags.Instance | BindingFlags.NonPublic); }
 				if (!ReferenceEquals(_radiusField, null)) _radiusField.SetValue(__instance, AttackRange);
-				else Plugin.Logger.LogWarning("[Titan WARN] LoS.radius 反射未找到！");
+				else GameplayLogWarn("[Titan WARN] LoS.radius 反射未找到！");
 
 				if (!_sqRadiusFieldAttempted) { _sqRadiusFieldAttempted = true; _sqRadiusField = typeof(LineOfSight).GetField("sqRadius", BindingFlags.Instance | BindingFlags.NonPublic); }
 				if (!ReferenceEquals(_sqRadiusField, null)) _sqRadiusField.SetValue(__instance, AttackRangeSqr);
-				else Plugin.Logger.LogWarning("[Titan WARN] LoS.sqRadius 反射未找到！");
+				else GameplayLogWarn("[Titan WARN] LoS.sqRadius 反射未找到！");
 			}
 			catch (Exception ex)
 			{
-				Plugin.Logger.LogWarning(string.Format("[Titan ERROR] SetupLineOfSightPostfix 异常: {0}", ex.Message));
+				GameplayLogWarn(string.Format("[Titan ERROR] SetupLineOfSightPostfix 异常: {0}", ex.Message));
 			}
 		}
 
@@ -264,11 +267,9 @@ namespace BadNorthTitan
 					agent = archery.agent;
 			}
 
-			// 非泰坦弓箭手：完全放行，保持原版行为
 			if (!IsTitanArcher(agent))
 				return true;
 
-			// 泰坦弓箭手：使用泰坦专属 8f 视野范围
 			try
 			{
 				if (Vector3.Distance(testPosition, targeterPosition) < AttackRange)
@@ -279,7 +280,7 @@ namespace BadNorthTitan
 			}
 			catch (Exception ex)
 			{
-				Plugin.Logger.LogWarning(string.Format("[Titan ERROR] InSightPrefix 异常: {0}", ex.Message));
+				GameplayLogWarn(string.Format("[Titan ERROR] InSightPrefix 异常: {0}", ex.Message));
 			}
 			return true;
 		}
@@ -309,7 +310,6 @@ namespace BadNorthTitan
 
 			try
 			{
-				// 如果正在自建聚焦模式 → 放行，保留 TitanFocusHelper 自身的参数
 				TitanFocusHelper tfh = __instance.GetComponent<TitanFocusHelper>();
 				if (!ReferenceEquals(tfh, null) && tfh.enabled)
 				{
@@ -339,7 +339,7 @@ namespace BadNorthTitan
 				}
 				else
 				{
-					Plugin.Logger.LogWarning("[Titan WARN] Archery.target 反射未找到！使用 transform.forward 作为射击方向");
+					GameplayLogWarn("[Titan WARN] Archery.target 反射未找到！使用 transform.forward 作为射击方向");
 				}
 
 				if (shootDirOriginal == Vector3.zero)
@@ -361,14 +361,14 @@ namespace BadNorthTitan
 				if (!ReferenceEquals(_coolDownTimeField, null))
 					_coolDownTimeField.SetValue(__instance, Time.time + cooldown);
 				else
-					Plugin.Logger.LogWarning("[Titan WARN] Archery.coolDownTime 反射未找到！冷却时间未设置");
+					GameplayLogWarn("[Titan WARN] Archery.coolDownTime 反射未找到！冷却时间未设置");
 
 				return true;
 			}
 			catch (Exception ex)
 			{
-				Plugin.Logger.LogWarning(string.Format("[Titan ERROR] ShootPrefix 异常 (Archer#{0}): {1}", agent.GetInstanceID(), ex.Message));
-				return true; // 异常时放行原版逻辑以防更严重崩溃
+				GameplayLogWarn(string.Format("[Titan ERROR] ShootPrefix 异常 (Archer#{0}): {1}", agent.GetInstanceID(), ex.Message));
+				return true;
 			}
 		}
 
@@ -377,28 +377,26 @@ namespace BadNorthTitan
 		{
 			if (__instance == null || __instance.gameObject == null)
 			{
-				Plugin.Logger.LogWarning("[Titan WARN] MaybeSetupPrefix: __instance 或 gameObject 为 null！放行");
+				GameplayLogWarn("[Titan WARN] MaybeSetupPrefix: __instance 或 gameObject 为 null！放行");
 				return true;
 			}
 
 			Archery archery = __instance.GetComponent<Archery>();
 			if (ReferenceEquals(archery, null))
 			{
-				// 可能是非 Archery 的 ArcheryFocusComponent？记录类型以便排查
-				Plugin.Logger.LogInfo(string.Format("[Titan DIAG] MaybeSetupPrefix: ArcheryFocusComponent 位于非 Archery GameObject '{0}' — 放行", __instance.gameObject.name));
+				GameplayLog(string.Format("[Titan DIAG] MaybeSetupPrefix: ArcheryFocusComponent 位于非 Archery GameObject '{0}' — 放行", __instance.gameObject.name));
 				return true;
 			}
 
 			Agent agent = archery.agent;
 			if (agent == null)
 			{
-				Plugin.Logger.LogWarning("[Titan WARN] MaybeSetupPrefix: archery.agent 为 null！放行");
+				GameplayLogWarn("[Titan WARN] MaybeSetupPrefix: archery.agent 为 null！放行");
 				return true;
 			}
 
 			FlushDiagBatch();
 
-			// 非英军 / 无 Archery / scale 正常 — 放行
 			if (!agent.isEnglish || agent.scale <= 1.1f)
 			{
 				_maybeSetupNonTitanCountSinceLog++;
@@ -414,7 +412,7 @@ namespace BadNorthTitan
 			{
 				if (!alreadyBlocked)
 				{
-					Plugin.Logger.LogInfo(string.Format(
+					GameplayLog(string.Format(
 						"[Titan FocusFix] Archer#{0} MaybeSetup 已拦截 ✓（m__1 被阻止注册到 AgentState.OnUpdate）",
 						agentId));
 				}
@@ -422,12 +420,11 @@ namespace BadNorthTitan
 			}
 			catch (Exception ex)
 			{
-				// 极端情况：return false 本身触发了 Harmony 包装异常
-				Plugin.Logger.LogWarning(string.Format(
+				GameplayLogWarn(string.Format(
 					"[Titan ERROR] MaybeSetupPrefix 返回 false 时异常 (Archer#{0}): {1} — 穿透放行！",
 					agentId, ex.Message));
 				_maybeSetupPenetrated.Add(agentId);
-				return true; // 穿透放行（兜底安全）
+				return true;
 			}
 		}
 
@@ -444,7 +441,6 @@ namespace BadNorthTitan
 		/// </summary>
 		private static Agent FindTitanAgentFromAbility(ArcheryFocusAbility ability, NavSpot heroNavSpot)
 		{
-			// ── 路径 1-2：反射 NavSpotTargetableAbility 及基类的候选字段名 ──
 			string[] heroFieldNames = { "hero", "_hero", "heroObj", "_heroObj", "heroAgent", "_heroAgent" };
 			string[] agentFieldNames = { "agent", "_agent", "owner", "_owner", "heroAgent", "_heroAgent" };
 			string[] heroAgentFieldNames = { "agent", "_agent", "heroAgent", "_heroAgent" };
@@ -452,7 +448,6 @@ namespace BadNorthTitan
 			Type abilityType = typeof(NavSpotTargetableAbility);
 			Type archeryFocusType = typeof(ArcheryFocusAbility);
 
-			// 1a. 在基类/自身中查找 hero 字段
 			foreach (string hfName in heroFieldNames)
 			{
 				FieldInfo hf = abilityType.GetField(hfName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
@@ -463,7 +458,6 @@ namespace BadNorthTitan
 				object hero = hf.GetValue(ability);
 				if (hero == null) continue;
 
-				// 从 hero 对象中找 agent 字段
 				Type heroType = hero.GetType();
 				foreach (string agName in heroAgentFieldNames)
 				{
@@ -472,13 +466,12 @@ namespace BadNorthTitan
 					Agent agent = ag.GetValue(hero) as Agent;
 					if (!ReferenceEquals(agent, null) && IsTitanArcher(agent))
 					{
-						Plugin.Logger.LogInfo(string.Format("[Titan DIAG] Agent 探测成功: hero.{0} → Archer#{1}", hfName, agent.GetInstanceID()));
+						GameplayLog(string.Format("[Titan DIAG] Agent 探测成功: hero.{0} → Archer#{1}", hfName, agent.GetInstanceID()));
 						return agent;
 					}
 				}
 			}
 
-			// 1b. 在基类/自身中查找 agent 字段
 			foreach (string agName in agentFieldNames)
 			{
 				FieldInfo ag = abilityType.GetField(agName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
@@ -489,26 +482,24 @@ namespace BadNorthTitan
 				Agent agent = ag.GetValue(ability) as Agent;
 				if (!ReferenceEquals(agent, null) && IsTitanArcher(agent))
 				{
-					Plugin.Logger.LogInfo(string.Format("[Titan DIAG] Agent 探测成功: ability.{0} → Archer#{1}", agName, agent.GetInstanceID()));
+					GameplayLog(string.Format("[Titan DIAG] Agent 探测成功: ability.{0} → Archer#{1}", agName, agent.GetInstanceID()));
 					return agent;
 				}
 			}
 
-			// ── 路径 3：GetComponent ──
 			Agent compAgent = ability.GetComponent<Agent>();
 			if (!ReferenceEquals(compAgent, null) && IsTitanArcher(compAgent))
 			{
-				Plugin.Logger.LogInfo(string.Format("[Titan DIAG] Agent 探测成功: GetComponent<Agent>() → Archer#{0}", compAgent.GetInstanceID()));
+				GameplayLog(string.Format("[Titan DIAG] Agent 探测成功: GetComponent<Agent>() → Archer#{0}", compAgent.GetInstanceID()));
 				return compAgent;
 			}
 			compAgent = ability.GetComponentInParent<Agent>();
 			if (!ReferenceEquals(compAgent, null) && IsTitanArcher(compAgent))
 			{
-				Plugin.Logger.LogInfo(string.Format("[Titan DIAG] Agent 探测成功: GetComponentInParent<Agent>() → Archer#{0}", compAgent.GetInstanceID()));
+				GameplayLog(string.Format("[Titan DIAG] Agent 探测成功: GetComponentInParent<Agent>() → Archer#{0}", compAgent.GetInstanceID()));
 				return compAgent;
 			}
 
-			// ── 路径 4：从 heroNavSpot 通过反射获取 squad → 遍历 Agent ──
 			if (!ReferenceEquals(heroNavSpot, null))
 			{
 				EnglishSquad squadFromSpot = null;
@@ -521,14 +512,13 @@ namespace BadNorthTitan
 					{
 						if (IsTitanArcher(a))
 						{
-							Plugin.Logger.LogInfo(string.Format("[Titan DIAG] Agent 探测成功: heroNavSpot(reflect).squad → Archer#{0}", a.GetInstanceID()));
+							GameplayLog(string.Format("[Titan DIAG] Agent 探测成功: heroNavSpot(reflect).squad → Archer#{0}", a.GetInstanceID()));
 							return a;
 						}
 					}
 				}
 			}
 
-			// ── 路径 5：全局扫描 ──
 			EnglishSquad[] allSquads = Resources.FindObjectsOfTypeAll<EnglishSquad>();
 			foreach (EnglishSquad sq in allSquads)
 			{
@@ -537,13 +527,13 @@ namespace BadNorthTitan
 				{
 					if (IsTitanArcher(a))
 					{
-						Plugin.Logger.LogInfo(string.Format("[Titan DIAG] Agent 探测成功: 全局扫描 → Archer#{0} (squad={1})", a.GetInstanceID(), sq.name));
+						GameplayLog(string.Format("[Titan DIAG] Agent 探测成功: 全局扫描 → Archer#{0} (squad={1})", a.GetInstanceID(), sq.name));
 						return a;
 					}
 				}
 			}
 
-			Plugin.Logger.LogWarning("[Titan WARN] ⚠ 所有 5 条 Agent 探测路径均失败！");
+			GameplayLogWarn("[Titan WARN] ⚠ 所有 5 条 Agent 探测路径均失败！");
 			return null;
 		}
 
@@ -551,7 +541,7 @@ namespace BadNorthTitan
 		{
 			if (__instance == null)
 			{
-				Plugin.Logger.LogWarning("[Titan WARN] DoTargetedActionPrefix: __instance == null！穿透放行");
+				GameplayLogWarn("[Titan WARN] DoTargetedActionPrefix: __instance == null！穿透放行");
 				return true;
 			}
 
@@ -562,15 +552,14 @@ namespace BadNorthTitan
 				if (!IsTitanArcher(abilityAgent))
 				{
 					if (abilityAgent != null)
-						Plugin.Logger.LogInfo(string.Format("[Titan DIAG] DoTargetedActionPrefix: Agent#{0} 非泰坦弓箭手 — 放行", abilityAgent.GetInstanceID()));
+						GameplayLog(string.Format("[Titan DIAG] DoTargetedActionPrefix: Agent#{0} 非泰坦弓箭手 — 放行", abilityAgent.GetInstanceID()));
 					else
-						Plugin.Logger.LogWarning("[Titan WARN] DoTargetedActionPrefix: 无法找到任何泰坦弓箭手 Agent，穿透放行（原版可能崩溃）");
+						GameplayLogWarn("[Titan WARN] DoTargetedActionPrefix: 无法找到任何泰坦弓箭手 Agent，穿透放行（原版可能崩溃）");
 					return true;
 				}
 
 				// ↓ 泰坦弓箭手 ↓
 
-				// 获取目标位置
 				Vector3 targetPos = Vector3.zero;
 				if (!ReferenceEquals(target, null))
 					targetPos = target.transform.position;
@@ -578,18 +567,17 @@ namespace BadNorthTitan
 					targetPos = heroNavSpot.transform.position;
 				if (targetPos == Vector3.zero)
 				{
-					Plugin.Logger.LogWarning("[Titan WARN] DoTargetedActionPrefix: targetPos == zero！穿透放行");
+					GameplayLogWarn("[Titan WARN] DoTargetedActionPrefix: targetPos == zero！穿透放行");
 					return true;
 				}
 
 				EnglishSquad squad = abilityAgent.squad as EnglishSquad;
 				if (ReferenceEquals(squad, null))
 				{
-					Plugin.Logger.LogWarning("[Titan WARN] DoTargetedActionPrefix: squad == null！穿透放行");
+					GameplayLogWarn("[Titan WARN] DoTargetedActionPrefix: squad == null！穿透放行");
 					return true;
 				}
 
-				// 清除任何残留的 TitanFocusHelper
 				int cleaned = 0;
 				foreach (Agent squadAgent in squad.agents)
 				{
@@ -602,7 +590,6 @@ namespace BadNorthTitan
 						cleaned++;
 					}
 				}
-				// 计算小队中心位置
 				Vector3 squadCenter = Vector3.zero;
 				int archerCountForCenter = 0;
 				foreach (Agent squadAgent in squad.agents)
@@ -617,10 +604,8 @@ namespace BadNorthTitan
 				else
 					squadCenter = abilityAgent.transform.position;
 
-				// 计算统一射击方向（含垂直角度，保证高地对低地命中）
 				Vector3 unifiedDir = (targetPos - squadCenter).normalized;
 
-				// 获取第一个弓箭手的原版 ProjectileSettings（保留地形/敌人碰撞层掩码）
 				ProjectileSettings baseSettings = null;
 				foreach (Agent squadAgent in squad.agents)
 				{
@@ -629,7 +614,6 @@ namespace BadNorthTitan
 					Archery archeryComp = squadAgent.GetComponent<Archery>();
 					if (!ReferenceEquals(archeryComp, null))
 					{
-						// 从反射获取 _archerySettings 字段
 						System.Reflection.FieldInfo settingsField = typeof(Archery).GetField("_archerySettings",
 							System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
 						if (!ReferenceEquals(settingsField, null))
@@ -637,7 +621,6 @@ namespace BadNorthTitan
 							object settingsArray = settingsField.GetValue(archeryComp);
 							if (settingsArray is System.Array arr && arr.Length > 0)
 							{
-								// 获取第一个 settings 的结构
 								object firstSetting = arr.GetValue(0);
 								if (firstSetting != null)
 								{
@@ -652,7 +635,6 @@ namespace BadNorthTitan
 					}
 				}
 
-				// 为每个泰坦弓箭手挂载 TitanFocusHelper（每次射击前自动转向）
 				int count = 0;
 				foreach (Agent squadAgent in squad.agents)
 				{
@@ -667,13 +649,13 @@ namespace BadNorthTitan
 				int abilityAgentId = abilityAgent.GetInstanceID();
 				if (_focusRedirected.Add(abilityAgentId))
 				{
-					Plugin.Logger.LogInfo(string.Format(
+					GameplayLog(string.Format(
 						"[Titan FocusFix] DoTargetedAction 重定向 ✓: {0} 个 Archer 已挂载 TitanFocusHelper，方向 ({1:F2},{2:F2},{3:F2}) → ({4:F1},{5:F1},{6:F1})",
 						count, unifiedDir.x, unifiedDir.y, unifiedDir.z, targetPos.x, targetPos.y, targetPos.z));
 				}
 				else
 				{
-					Plugin.Logger.LogInfo(string.Format(
+					GameplayLog(string.Format(
 						"[Titan FocusFix] DoTargetedAction 重定向（再次）: {0} 个 Archer，方向 ({1:F2},{2:F2},{3:F2})",
 						count, unifiedDir.x, unifiedDir.y, unifiedDir.z));
 				}
@@ -682,7 +664,7 @@ namespace BadNorthTitan
 			}
 			catch (Exception ex)
 			{
-				Plugin.Logger.LogWarning(string.Format(
+				GameplayLogWarn(string.Format(
 					"[Titan ERROR] DoTargetedActionPrefix 异常: {0} — 穿透放行（原版可能崩溃）", ex.Message));
 				return true;
 			}
