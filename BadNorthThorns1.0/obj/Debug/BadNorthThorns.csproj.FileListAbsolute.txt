@@ -1,7 +1,0 @@
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns1.0\bin\Debug\Resources\trait_thorns.png
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns1.0\bin\Debug\BadNorthThorns1.0.dll
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns1.0\bin\Debug\BadNorthThorns1.0.pdb
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns1.0\obj\Debug\BadNorthThorns.csproj.AssemblyReference.cache
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns1.0\obj\Debug\BadNorthThorns.csproj.CoreCompileInputs.cache
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns1.0\obj\Debug\BadNorthThorns1.0.dll
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthThorns1.0\obj\Debug\BadNorthThorns1.0.pdb

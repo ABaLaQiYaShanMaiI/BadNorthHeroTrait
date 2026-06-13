@@ -1,7 +1,0 @@
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthRegenerative1.0\bin\Debug\Resources\trait_regenerative.png
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthRegenerative1.0\bin\Debug\BadNorthRegenerative1.0.dll
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthRegenerative1.0\bin\Debug\BadNorthRegenerative1.0.pdb
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthRegenerative1.0\obj\Debug\BadNorthRegenerative.csproj.AssemblyReference.cache
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthRegenerative1.0\obj\Debug\BadNorthRegenerative.csproj.CoreCompileInputs.cache
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthRegenerative1.0\obj\Debug\BadNorthRegenerative1.0.dll
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthRegenerative1.0\obj\Debug\BadNorthRegenerative1.0.pdb

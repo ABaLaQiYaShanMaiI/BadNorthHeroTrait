@@ -1,6 +1,0 @@
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthAPI\BNAPI\bin\Debug\BadNorthAPI.dll
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthAPI\BNAPI\bin\Debug\BadNorthAPI.pdb
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthAPI\BNAPI\obj\Debug\BNAPI.csproj.AssemblyReference.cache
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthAPI\BNAPI\obj\Debug\BNAPI.csproj.CoreCompileInputs.cache
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthAPI\BNAPI\obj\Debug\BadNorthAPI.dll
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthAPI\BNAPI\obj\Debug\BadNorthAPI.pdb

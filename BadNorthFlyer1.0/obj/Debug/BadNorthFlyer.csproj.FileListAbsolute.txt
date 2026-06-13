@@ -1,7 +1,0 @@
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthFlyer1.0\bin\Debug\Resources\trait_flyer.png
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthFlyer1.0\bin\Debug\BadNorthFlyer1.0.dll
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthFlyer1.0\bin\Debug\BadNorthFlyer1.0.pdb
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthFlyer1.0\obj\Debug\BadNorthFlyer.csproj.AssemblyReference.cache
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthFlyer1.0\obj\Debug\BadNorthFlyer.csproj.CoreCompileInputs.cache
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthFlyer1.0\obj\Debug\BadNorthFlyer1.0.dll
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthFlyer1.0\obj\Debug\BadNorthFlyer1.0.pdb

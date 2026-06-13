@@ -1,7 +1,0 @@
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthUltimateSquad1.0\bin\Debug\Resources\trait_ultimatesquad.png
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthUltimateSquad1.0\bin\Debug\BadNorthUltimateSquad1.0.dll
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthUltimateSquad1.0\bin\Debug\BadNorthUltimateSquad1.0.pdb
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthUltimateSquad1.0\obj\Debug\BadNorthUltimateSquad.csproj.AssemblyReference.cache
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthUltimateSquad1.0\obj\Debug\BadNorthUltimateSquad.csproj.CoreCompileInputs.cache
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthUltimateSquad1.0\obj\Debug\BadNorthUltimateSquad1.0.dll
-C:\Users\ABaLaQiYaShanMaiI\OneDrive\Desktop\BadNorthProgram\BadNorthHeroTraits\BadNorthUltimateSquad1.0\obj\Debug\BadNorthUltimateSquad1.0.pdb
