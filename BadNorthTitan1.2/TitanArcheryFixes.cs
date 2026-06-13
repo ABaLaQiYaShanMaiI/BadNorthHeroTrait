@@ -571,7 +571,26 @@ namespace BadNorthTitan
 				}
 				if (ReferenceEquals(squad, null))
 				{
-					GameplayLogWarn("[Titan WARN] DoTargetedActionPrefix: 无法从 heroNavSpot 获取 squad！穿透放行");
+					// ── 回退：全局扫描所有 EnglishSquad 中的泰坦弓箭手 ──
+					EnglishSquad[] allSquads = Resources.FindObjectsOfTypeAll<EnglishSquad>();
+					foreach (EnglishSquad sq in allSquads)
+					{
+						if (ReferenceEquals(sq, null)) continue;
+						foreach (Agent a in sq.agents)
+						{
+							if (ReferenceEquals(a, null)) continue;
+							if (IsTitanArcher(a) && TitanArcheryFixes.OurAgentIds.Contains(a.GetInstanceID()))
+							{
+								squad = sq;
+								break;
+							}
+						}
+						if (!ReferenceEquals(squad, null)) break;
+					}
+				}
+				if (ReferenceEquals(squad, null))
+				{
+					GameplayLogWarn("[Titan WARN] DoTargetedActionPrefix: 无法找到任何泰坦弓箭手小队！穿透放行");
 					return true;
 				}
 

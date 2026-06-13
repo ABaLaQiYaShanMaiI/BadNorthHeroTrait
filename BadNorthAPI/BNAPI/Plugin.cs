@@ -26,6 +26,9 @@ namespace BadNorthAPI
 			CustomText.ApplyHooks();
 			CustomTraits.ApplyHooks();
 
+			// 应用 SerializableHeroUpgrade.PreSave 空引用保护补丁
+			SerializableHeroUpgradePatch.Apply();
+
 			// 使用 StringBuilder 替代 string.Join 避免 Mono CLR 2.0 兼容性问题
 			StringBuilder sb = new StringBuilder("======== [BadNorthAPI] 已就绪，特性ID: ");
             for (int i = 0; i < CustomTraits.StartingTraits.Count; i++)

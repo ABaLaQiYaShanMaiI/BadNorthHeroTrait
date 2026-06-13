@@ -246,21 +246,22 @@ namespace BadNorthAPI
             if (ReferenceEquals(_serializableHeroUpgradeConstructor, null))
                 return null;
 
+            object shu = null;
             ParameterInfo[] parameters = _serializableHeroUpgradeConstructor.GetParameters();
             if (parameters.Length == 2)
             {
                 // (HeroUpgradeDefinition, int)：int 通常为 level 索引，默认 0
-                return _serializableHeroUpgradeConstructor.Invoke(new object[] { def, 0 });
+                shu = _serializableHeroUpgradeConstructor.Invoke(new object[] { def, 0 });
             }
             else if (parameters.Length == 1)
             {
                 // (HeroUpgradeDefinition)
-                return _serializableHeroUpgradeConstructor.Invoke(new object[] { def });
+                shu = _serializableHeroUpgradeConstructor.Invoke(new object[] { def });
             }
             else if (parameters.Length == 0)
             {
                 // 无参构造器：需要手动设置 definition 属性
-                object shu = _serializableHeroUpgradeConstructor.Invoke(null);
+                shu = _serializableHeroUpgradeConstructor.Invoke(null);
                 PropertyInfo defProp = _serializableHeroUpgradeType.GetProperty("definition");
                 if (!ReferenceEquals(defProp, null))
                 {
@@ -279,9 +280,29 @@ namespace BadNorthAPI
                         return null;
                     }
                 }
-                return shu;
             }
-            return null;
+
+            // ── 防御性填充 name 字段 ──
+            // PreSave 会访问 this.definition.name，确保 name 已设置防止 NRE。
+            // 同时设置 level 为 -1 标记由 API 注入，便于 PreSave 识别。
+            if (!ReferenceEquals(shu, null) && !ReferenceEquals(def, null))
+            {
+                try
+                {
+                    PropertyInfo nameProp = _serializableHeroUpgradeType.GetProperty("name",
+                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                    if (!ReferenceEquals(nameProp, null) && ReferenceEquals(nameProp.GetValue(shu, null), null))
+                    {
+                        nameProp.SetValue(shu, def.name, null);
+                    }
+                }
+                catch
+                {
+                    // 非致命：PreSave patch 有 finalizer 兜底
+                }
+            }
+
+            return shu;
         }
 
         private static object CreateUpgradeEntry(HeroUpgradeDefinition def, bool isStarting)
