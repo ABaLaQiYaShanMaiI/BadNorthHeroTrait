@@ -139,26 +139,19 @@ namespace BadNorthTitan
 			);
 			Plugin.Logger.LogInfo("[Titan DIAG]   [6/8] MaybeSetup Prefix 已注册");
 
-			// DoTargetedAction 重定向
-			MethodInfo dtMethod = AccessTools.Method(typeof(ArcheryFocusAbility), "DoTargetedAction");
-			string methodName = "DoTargetedAction";
-			if (ReferenceEquals(dtMethod, null))
-			{
-				dtMethod = AccessTools.Method(typeof(ArcheryFocusAbility), "DoTargetedAction_Implementation");
-				methodName = "DoTargetedAction_Implementation";
-			}
-			if (!ReferenceEquals(dtMethod, null))
-			{
-				harmony.Patch(
-					original: dtMethod,
-					prefix: new HarmonyMethod(typeof(TitanArcheryFixes), nameof(DoTargetedActionPrefix))
-				);
-				Plugin.Logger.LogInfo(string.Format("[Titan DIAG]   [7/8] {0} Prefix 已注册", methodName));
-			}
-			else
-			{
-				Plugin.Logger.LogWarning("[Titan WARN] ⚠ DoTargetedAction 方法未找到！原版专注射击将正常执行（可能崩溃）");
-			}
+			// ShootAt 拦截 —— 在每个弓箭手个体层级挂载 TitanFocusHelper
+			harmony.Patch(
+				original: AccessTools.Method(typeof(ArcheryFocusComponent), "ShootAt"),
+				prefix: new HarmonyMethod(typeof(TitanArcheryFixes), nameof(ShootAtPrefix))
+			);
+			Plugin.Logger.LogInfo("[Titan DIAG]   [7/8] ShootAt Prefix 已注册");
+
+			// DirectUpdate Finalizer —— 兜底抑制每帧 ModifyArrow NPE
+			harmony.Patch(
+				original: AccessTools.Method(typeof(AgentState), "DirectUpdate"),
+				finalizer: new HarmonyMethod(typeof(TitanArcheryFixes), nameof(DirectUpdateFinalizer))
+			);
+			Plugin.Logger.LogInfo("[Titan DIAG]   [8/8] DirectUpdate Finalizer 已注册");
 
 			Plugin.Logger.LogInfo("[Titan DIAG] === 8 个补丁注册完成 ===");
 		}
@@ -379,335 +372,78 @@ namespace BadNorthTitan
 			}
 		}
 
-		// ── MaybeSetup 拦截 + 穿透告警 ──
+		// ── MaybeSetup 放行 —— 允许组件正常初始化 ──
+		/// <summary>
+		/// 放行 MaybeSetup，让 ArcheryFocusComponent 正常初始化。
+		/// 崩溃由 DirectUpdateFinalizer（每帧 ModifyArrow）和 ShootAtPrefix（手动技能）分别兜底。
+		/// </summary>
 		private static bool MaybeSetupPrefix(ArcheryFocusComponent __instance)
 		{
-			if (__instance == null || __instance.gameObject == null)
+			return true;
+		}
+
+		// ── DirectUpdate Finalizer 兜底 —— 抑制每帧 ModifyArrow NPE ──
+		/// <summary>
+		/// Finalizer 在原始方法（AgentState.DirectUpdate）执行后调用。
+		/// 捕获并抑制 ModifyArrow 每帧触发的 NullReferenceException。
+		/// </summary>
+		private static void DirectUpdateFinalizer(AgentState __instance, Exception __exception)
+		{
+			if (!ReferenceEquals(__exception, null))
 			{
-				GameplayLogWarn("[Titan WARN] MaybeSetupPrefix: __instance 或 gameObject 为 null！放行");
-				return true;
+				// 静默抑制异常，避免刷屏
 			}
+		}
+
+		// ── ShootAt 拦截 —— 在每个弓箭手个体层级挂载 TitanFocusHelper ──
+		/// <summary>
+		/// 封堵点从 DoTargetedAction（英雄层级）下移到 ShootAt（弓箭手个体层级）。
+		/// 天然按 Agent 隔离：1.1/1.2 各自处理各自的 Agent，互不阻塞。
+		/// 同一小队内多个同版本泰坦弓箭手 → 全员齐射（正确的小队技能行为）。
+		/// </summary>
+		private static bool ShootAtPrefix(ArcheryFocusComponent __instance, ArcheryFocusAbility focusAbility, ArcheryFocusComponent.Settings settings, Vector3 targetPos, Vector3 targetDelta)
+		{
+			if (__instance == null || __instance.gameObject == null) return true;
 
 			Archery archery = __instance.GetComponent<Archery>();
-			if (ReferenceEquals(archery, null))
-			{
-				GameplayLog(string.Format("[Titan DIAG] MaybeSetupPrefix: ArcheryFocusComponent 位于非 Archery GameObject '{0}' — 放行", __instance.gameObject.name));
-				return true;
-			}
+			if (ReferenceEquals(archery, null)) return true;
 
 			Agent agent = archery.agent;
-			if (agent == null)
-			{
-				GameplayLogWarn("[Titan WARN] MaybeSetupPrefix: archery.agent 为 null！放行");
+			if (ReferenceEquals(agent, null)) return true;
+
+			// ── 版本检查：仅处理本版本的泰坦弓箭手 ──
+			if (!IsTitanArcher(agent)
+				|| !OurAgentIds.Contains(agent.GetInstanceID()))
 				return true;
-			}
-
-			FlushDiagBatch();
-
-			if (!agent.isEnglish || agent.scale <= 1.1f)
-			{
-				_maybeSetupNonTitanCountSinceLog++;
-				return true;
-			}
-
-			// ↓ 泰坦弓箭手 ↓
-
-			int agentId = agent.GetInstanceID();
-			bool alreadyBlocked = !_maybeSetupBlocked.Add(agentId);
 
 			try
 			{
-				if (!alreadyBlocked)
+				TitanFocusHelper existing = agent.GetComponent<TitanFocusHelper>();
+				if (!ReferenceEquals(existing, null))
 				{
-					GameplayLog(string.Format(
-						"[Titan FocusFix] Archer#{0} MaybeSetup 已拦截 ✓（m__1 被阻止注册到 AgentState.OnUpdate）",
-						agentId));
-				}
-				return false;
-			}
-			catch (Exception ex)
-			{
-				GameplayLogWarn(string.Format(
-					"[Titan ERROR] MaybeSetupPrefix 返回 false 时异常 (Archer#{0}): {1} — 穿透放行！",
-					agentId, ex.Message));
-				_maybeSetupPenetrated.Add(agentId);
-				return true;
-			}
-		}
-
-		// ── DoTargetedAction 重定向 + 多路 Agent 探测 ──
-		/// <summary>
-		/// 从 ArcheryFocusAbility 中探测 Agent（多路回退策略）。
-		/// 
-		/// 路径优先级：
-		///   1. NavSpotTargetableAbility 的 hero/_hero/heroObj → hero.agent/_agent
-		///   2. NavSpotTargetableAbility 的 agent/_agent/owner
-		///   3. __instance.GetComponent[InParent]<Agent>()
-		///   4. heroNavSpot.squad → 检查每个 Agent 是否为泰坦弓箭手
-		///   5. 全局扫描所有 EnglishSquad 中的泰坦弓箭手 Agent
-		/// </summary>
-		private static Agent FindTitanAgentFromAbility(ArcheryFocusAbility ability, NavSpot heroNavSpot)
-		{
-			string[] heroFieldNames = { "hero", "_hero", "heroObj", "_heroObj", "heroAgent", "_heroAgent" };
-			string[] agentFieldNames = { "agent", "_agent", "owner", "_owner", "heroAgent", "_heroAgent" };
-			string[] heroAgentFieldNames = { "agent", "_agent", "heroAgent", "_heroAgent" };
-
-			Type abilityType = typeof(NavSpotTargetableAbility);
-			Type archeryFocusType = typeof(ArcheryFocusAbility);
-
-			foreach (string hfName in heroFieldNames)
-			{
-				FieldInfo hf = abilityType.GetField(hfName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-				if (ReferenceEquals(hf, null))
-					hf = archeryFocusType.GetField(hfName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-				if (ReferenceEquals(hf, null)) continue;
-
-				object hero = hf.GetValue(ability);
-				if (hero == null) continue;
-
-				Type heroType = hero.GetType();
-				foreach (string agName in heroAgentFieldNames)
-				{
-					FieldInfo ag = heroType.GetField(agName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-					if (ReferenceEquals(ag, null)) continue;
-					Agent agent = ag.GetValue(hero) as Agent;
-					if (!ReferenceEquals(agent, null) && IsTitanArcher(agent))
-					{
-						GameplayLog(string.Format("[Titan DIAG] Agent 探测成功: hero.{0} → Archer#{1}", hfName, agent.GetInstanceID()));
-						return agent;
-					}
-				}
-			}
-
-			foreach (string agName in agentFieldNames)
-			{
-				FieldInfo ag = abilityType.GetField(agName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-				if (ReferenceEquals(ag, null))
-					ag = archeryFocusType.GetField(agName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-				if (ReferenceEquals(ag, null)) continue;
-
-				Agent agent = ag.GetValue(ability) as Agent;
-				if (!ReferenceEquals(agent, null) && IsTitanArcher(agent))
-				{
-					GameplayLog(string.Format("[Titan DIAG] Agent 探测成功: ability.{0} → Archer#{1}", agName, agent.GetInstanceID()));
-					return agent;
-				}
-			}
-
-			Agent compAgent = ability.GetComponent<Agent>();
-			if (!ReferenceEquals(compAgent, null) && IsTitanArcher(compAgent))
-			{
-				GameplayLog(string.Format("[Titan DIAG] Agent 探测成功: GetComponent<Agent>() → Archer#{0}", compAgent.GetInstanceID()));
-				return compAgent;
-			}
-			compAgent = ability.GetComponentInParent<Agent>();
-			if (!ReferenceEquals(compAgent, null) && IsTitanArcher(compAgent))
-			{
-				GameplayLog(string.Format("[Titan DIAG] Agent 探测成功: GetComponentInParent<Agent>() → Archer#{0}", compAgent.GetInstanceID()));
-				return compAgent;
-			}
-
-			if (!ReferenceEquals(heroNavSpot, null))
-			{
-				EnglishSquad squadFromSpot = null;
-				FieldInfo squadField = typeof(NavSpot).GetField("squad", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-				if (!ReferenceEquals(squadField, null))
-					squadFromSpot = squadField.GetValue(heroNavSpot) as EnglishSquad;
-				if (!ReferenceEquals(squadFromSpot, null))
-				{
-					foreach (Agent a in squadFromSpot.agents)
-					{
-						if (IsTitanArcher(a))
-						{
-							GameplayLog(string.Format("[Titan DIAG] Agent 探测成功: heroNavSpot(reflect).squad → Archer#{0}", a.GetInstanceID()));
-							return a;
-						}
-					}
-				}
-			}
-
-			EnglishSquad[] allSquads = Resources.FindObjectsOfTypeAll<EnglishSquad>();
-			foreach (EnglishSquad sq in allSquads)
-			{
-				if (ReferenceEquals(sq, null)) continue;
-				foreach (Agent a in sq.agents)
-				{
-					if (IsTitanArcher(a))
-					{
-						GameplayLog(string.Format("[Titan DIAG] Agent 探测成功: 全局扫描 → Archer#{0} (squad={1})", a.GetInstanceID(), sq.name));
-						return a;
-					}
-				}
-			}
-
-			GameplayLogWarn("[Titan WARN] ⚠ 所有 5 条 Agent 探测路径均失败！");
-			return null;
-		}
-
-		private static bool DoTargetedActionPrefix(ArcheryFocusAbility __instance, NavSpot heroNavSpot, NavSpot target)
-		{
-			if (__instance == null)
-			{
-				GameplayLogWarn("[Titan WARN] DoTargetedActionPrefix: __instance == null！穿透放行");
-				return true;
-			}
-
-			try
-			{
-				Vector3 targetPos = Vector3.zero;
-				if (!ReferenceEquals(target, null))
-					targetPos = target.transform.position;
-				else if (!ReferenceEquals(heroNavSpot, null))
-					targetPos = heroNavSpot.transform.position;
-				if (targetPos == Vector3.zero)
-				{
-					GameplayLogWarn("[Titan WARN] DoTargetedActionPrefix: targetPos == zero！穿透放行");
-					return true;
+					UnityEngine.Object.Destroy(existing);
 				}
 
-				// ── 直接从 heroNavSpot 获取小队，避免全局扫描跨小队串台 ──
-				EnglishSquad squad = null;
-				if (!ReferenceEquals(heroNavSpot, null))
-				{
-					FieldInfo squadField = typeof(NavSpot).GetField("squad", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-					if (!ReferenceEquals(squadField, null))
-						squad = squadField.GetValue(heroNavSpot) as EnglishSquad;
-				}
-				if (ReferenceEquals(squad, null))
-				{
-					// ── 回退：全局扫描所有 EnglishSquad 中的泰坦弓箭手 ──
-					EnglishSquad[] allSquads = Resources.FindObjectsOfTypeAll<EnglishSquad>();
-					foreach (EnglishSquad sq in allSquads)
-					{
-						if (ReferenceEquals(sq, null)) continue;
-						foreach (Agent a in sq.agents)
-						{
-							if (ReferenceEquals(a, null)) continue;
-							if (IsTitanArcher(a) && TitanArcheryFixes.OurAgentIds.Contains(a.GetInstanceID())
-								&& a.GetComponent("TitanV12Marker") == null)
-							{
-								squad = sq;
-								break;
-							}
-						}
-						if (!ReferenceEquals(squad, null)) break;
-					}
-				}
-				if (ReferenceEquals(squad, null))
-				{
-					GameplayLogWarn("[Titan WARN] DoTargetedActionPrefix: 无法找到任何泰坦弓箭手小队！穿透放行");
-					return true;
-				}
-
-				// 检查该小队是否有本版本的泰坦弓箭手（且不含 TitanV12Marker）
-				bool hasOurArcher = false;
-				foreach (Agent squadAgent in squad.agents)
-				{
-					if (ReferenceEquals(squadAgent, null)) continue;
-					if (IsTitanArcher(squadAgent) && TitanArcheryFixes.OurAgentIds.Contains(squadAgent.GetInstanceID())
-						&& squadAgent.GetComponent("TitanV12Marker") == null)
-					{
-						hasOurArcher = true;
-						break;
-					}
-				}
-				if (!hasOurArcher)
-				{
-					GameplayLog(string.Format("[Titan DIAG] DoTargetedActionPrefix: 小队 {0} 没有 1.1 版泰坦弓箭手 — 放行", squad.name));
-					return true;
-				}
-
-			int cleaned = 0;
-				foreach (Agent squadAgent in squad.agents)
-				{
-					if (ReferenceEquals(squadAgent, null)) continue;
-					if (!IsTitanArcher(squadAgent)) continue;
-					if (!TitanArcheryFixes.OurAgentIds.Contains(squadAgent.GetInstanceID())) continue;
-					TitanFocusHelper existing = squadAgent.GetComponent<TitanFocusHelper>();
-					if (!ReferenceEquals(existing, null))
-					{
-						UnityEngine.Object.Destroy(existing);
-						cleaned++;
-					}
-				}
-				Vector3 squadCenter = Vector3.zero;
-				int archerCountForCenter = 0;
-				foreach (Agent squadAgent in squad.agents)
-				{
-					if (ReferenceEquals(squadAgent, null)) continue;
-					if (!IsTitanArcher(squadAgent)) continue;
-					if (!TitanArcheryFixes.OurAgentIds.Contains(squadAgent.GetInstanceID())) continue;
-					squadCenter += squadAgent.transform.position;
-					archerCountForCenter++;
-				}
-				if (archerCountForCenter > 0)
-					squadCenter /= archerCountForCenter;
-				else
-					squadCenter = squad.agents[0].transform.position;
-
-				Vector3 unifiedDir = (targetPos - squadCenter).normalized;
+				Vector3 shootDir = (targetPos - agent.chestPos).normalized;
+				TitanFocusHelper helper = agent.gameObject.AddComponent<TitanFocusHelper>();
 
 				ProjectileSettings baseSettings = null;
-				foreach (Agent squadAgent in squad.agents)
+				if (!ReferenceEquals(settings, null))
 				{
-					if (ReferenceEquals(squadAgent, null)) continue;
-					if (!IsTitanArcher(squadAgent)) continue;
-					Archery archeryComp = squadAgent.GetComponent<Archery>();
-					if (!ReferenceEquals(archeryComp, null))
-					{
-						System.Reflection.FieldInfo settingsField = typeof(Archery).GetField("_archerySettings",
-							System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
-						if (!ReferenceEquals(settingsField, null))
-						{
-							object settingsArray = settingsField.GetValue(archeryComp);
-							if (settingsArray is System.Array arr && arr.Length > 0)
-							{
-								object firstSetting = arr.GetValue(0);
-								if (firstSetting != null)
-								{
-									System.Reflection.FieldInfo psField = firstSetting.GetType().GetField("projectileSettings",
-										System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
-									if (!ReferenceEquals(psField, null))
-										baseSettings = psField.GetValue(firstSetting) as ProjectileSettings;
-								}
-							}
-						}
-						break;
-					}
+					System.Reflection.FieldInfo psField = settings.GetType().GetField("projectileSettings",
+						System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+					if (!ReferenceEquals(psField, null))
+						baseSettings = psField.GetValue(settings) as ProjectileSettings;
 				}
 
-				int count = 0;
-				foreach (Agent squadAgent in squad.agents)
-				{
-					if (ReferenceEquals(squadAgent, null)) continue;
-					if (!IsTitanArcher(squadAgent)) continue;
-					if (!TitanArcheryFixes.OurAgentIds.Contains(squadAgent.GetInstanceID())) continue;
+				helper.Configure(shootDir, 5, 0.4f, baseSettings);
 
-					TitanFocusHelper helper = squadAgent.gameObject.AddComponent<TitanFocusHelper>();
-					helper.Configure(unifiedDir, 5, 0.4f, baseSettings);
-					count++;
-				}
-
-				int logAgentId = 0;
-				foreach (Agent a in squad.agents)
-				{
-					if (IsTitanArcher(a) && OurAgentIds.Contains(a.GetInstanceID()))
-					{
-						logAgentId = a.GetInstanceID();
-						break;
-					}
-				}
-				if (_focusRedirected.Add(logAgentId))
+				int agentId = agent.GetInstanceID();
+				if (_focusRedirected.Add(agentId))
 				{
 					GameplayLog(string.Format(
-						"[Titan FocusFix] DoTargetedAction 重定向 ✓: {0} 个 Archer 已挂载 TitanFocusHelper，方向 ({1:F2},{2:F2},{3:F2}) → ({4:F1},{5:F1},{6:F1})",
-						count, unifiedDir.x, unifiedDir.y, unifiedDir.z, targetPos.x, targetPos.y, targetPos.z));
-				}
-				else
-				{
-					GameplayLog(string.Format(
-						"[Titan FocusFix] DoTargetedAction 重定向（再次）: {0} 个 Archer，方向 ({1:F2},{2:F2},{3:F2})",
-						count, unifiedDir.x, unifiedDir.y, unifiedDir.z));
+						"[Titan FocusFix] ShootAt 重定向 ✓: Archer#{0} 已挂载 TitanFocusHelper，方向 ({1:F2},{2:F2},{3:F2}) → ({4:F1},{5:F1},{6:F1})",
+						agentId, shootDir.x, shootDir.y, shootDir.z, targetPos.x, targetPos.y, targetPos.z));
 				}
 
 				return false;
@@ -715,7 +451,7 @@ namespace BadNorthTitan
 			catch (Exception ex)
 			{
 				GameplayLogWarn(string.Format(
-					"[Titan ERROR] DoTargetedActionPrefix 异常: {0} — 穿透放行（原版可能崩溃）", ex.Message));
+					"[Titan ERROR] ShootAtPrefix 异常 (Archer#{0}): {1} — 穿透放行", agent.GetInstanceID(), ex.Message));
 				return true;
 			}
 		}

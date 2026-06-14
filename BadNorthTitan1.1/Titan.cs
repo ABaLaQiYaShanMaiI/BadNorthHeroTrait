@@ -152,6 +152,6 @@ namespace BadNorthTitan
 				stunComp.stunMultiplier = 1E-06f;
 		}
 
-		public static readonly string Titan_ID = "Hero_Trait_Titan";
+		public static readonly string Titan_ID = "Hero_Trait_TitanV11";
 	}
 }

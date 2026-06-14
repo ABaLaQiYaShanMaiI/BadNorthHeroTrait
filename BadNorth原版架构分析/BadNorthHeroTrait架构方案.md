@@ -1,4 +1,4 @@
-# BadNorthHeroTraits 架构方案
+# BadNorthHeroTraits 架构
 
 ## 概述
 
@@ -17,8 +17,12 @@ BadNorthHeroTraits/                    # 根目录（Git 仓库）
 │       ├── CustomSprites.cs           # 精灵/图标加载
 │       ├── CustomText.cs              # 本地化术语注入
 │       ├── CustomTraits.cs            # 特质注册
-│       ├── IgnoresAccessChecksToAttribute.cs
+│       ├── TraitHelper.cs             # HeroUpgradeType/Level 模板工厂
+│       ├── ComponentHelper.cs         # GetOrAddComponent 通用工具
+│       ├── ReflectionHelper.cs        # 统一反射字段读写
+│       ├── SerializableHeroUpgradePatch.cs  # PreSave 空引用保护 (Harmony)
 │       ├── Debugger.cs                # 调试日志工具
+│       ├── IgnoresAccessChecksToAttribute.cs
 │       ├── Plugin.cs                  # BNAPI 入口（GUID: ABaLaQiYaShanMaiI.bnapi.modular）
 │       ├── Properties/AssemblyInfo.cs
 │       └── BNAPI.csproj (AssemblyName: BadNorthAPI)
@@ -146,8 +150,8 @@ BadNorthSlash1.0.dll ─────────────┘
 | 追猎 | `Hero_Trait_RegenerativeV10` | BadNorthRegenerative | ABaLaQiYaShanMaiI.badnorthregenerative1.0 |
 | 荆棘 | `Hero_Trait_Thorns` | BadNorthThorns | ABaLaQiYaShanMaiI.badnorththorns1.0 |
 | 神鹰 | `Hero_Trait_Flyer` | BadNorthFlyer | ABaLaQiYaShanMaiI.badnorthflyer1.0 |
-| 泰坦 v1.0 | `Hero_Trait_Titan` | BadNorthTitan | ABaLaQiYaShanMaiI.badnorthtitan1.0 |
-| 泰坦 v1.1 | `Hero_Trait_Titan` | BadNorthTitan | ABaLaQiYaShanMaiI.badnorthtitan1.1 |
+| 泰坦 v1.0 | `Hero_Trait_TitanV10` | BadNorthTitan | ABaLaQiYaShanMaiI.badnorthtitan1.0 |
+| 泰坦 v1.1 | `Hero_Trait_TitanV11` | BadNorthTitan | ABaLaQiYaShanMaiI.badnorthtitan1.1 |
 | 泰坦 v1.2 | `Hero_Trait_TitanV12` | BadNorthTitan | ABaLaQiYaShanMaiI.badnorthtitan1.2 |
 | 终极部队 | `Hero_Trait_UltimateSquadV10` | BadNorthUltimateSquad | ABaLaQiYaShanMaiI.badnorthultimatesquad1.0 |
 | 心灵精英 | `Hero_Trait_YuriV10` | BadNorthYuri | ABaLaQiYaShanMaiI.badnorthyuri1.0 |
@@ -313,8 +317,8 @@ public void OnEnable()
 
 将原 PlentyTraits Titan 重写为模块化版本，并在 1.1 中加入泰坦弓箭手索敌/瞄准修复。
 
-> **1.0 版本**也存在：目录 `BadNorthTitan1.0/`，GUID `ABaLaQiYaShanMaiI.badnorthtitan1.0`，DLL `BadNorthTitan1.0.dll`，AssemblyVersion `1.0.0.0`，Trait ID `Hero_Trait_Titan`。不含 TitanArcheryFixes.cs。
-> **1.1 版本**也存在：目录 `BadNorthTitan1.1/`，GUID `ABaLaQiYaShanMaiI.badnorthtitan1.1`，DLL `BadNorthTitan1.1.dll`，AssemblyVersion `1.1.0.0`，Trait ID `Hero_Trait_Titan`。
+> **1.0 版本**也存在：目录 `BadNorthTitan1.0/`，GUID `ABaLaQiYaShanMaiI.badnorthtitan1.0`，DLL `BadNorthTitan1.0.dll`，AssemblyVersion `1.0.0.0`，Trait ID `Hero_Trait_TitanV10`。不含 TitanArcheryFixes.cs。
+> **1.1 版本**也存在：目录 `BadNorthTitan1.1/`，GUID `ABaLaQiYaShanMaiI.badnorthtitan1.1`，DLL `BadNorthTitan1.1.dll`，AssemblyVersion `1.1.0.0`，Trait ID `Hero_Trait_TitanV11`。
 
 #### 3.1 文件结构（v1.2）
 
@@ -438,6 +442,48 @@ TitanArcheryFixes.ApplyPatches(harmony);
 日志标签：`[Titan Sight]`、`[Titan Aim]`、`[Titan Setup]`、`[Titan Shot]`、`[Titan FocusFix]`
 
 ---
+
+#### 3.3.3 版本隔离机制（最终方案）
+
+三版本的完整隔离体系：
+
+| 版本 | Trait ID | Marker 组件 | OurAgentIds | IsTitanArcher 排除 |
+|------|----------|------------|-------------|-------------------|
+| 1.0 | `Hero_Trait_TitanV10` | `TitanV10Marker` | `TitanizedAgentIds` | 无（仅使用 Marker 被上层排除） |
+| 1.1 | `Hero_Trait_TitanV11` | 无 | `OurAgentIds` | `TitanV10Marker` |
+| 1.2 | `Hero_Trait_TitanV12` | `TitanV12Marker` | `OurAgentIds` | `TitanV10Marker` |
+
+三版本通过 **Trait ID + Marker 组件 + OurAgentIds 三重重合隔离**，可无冲突共存于同一游戏实例。
+
+#### 3.3.4 专注射击防崩溃最终方案 —— 三层防护架构
+
+经过多次迭代，最终确定以下三层防护方案（1.1 与 1.2 共用）：
+
+| 补丁 | 目标方法 | 类型 | 行为 | 防护目标 |
+|------|----------|------|------|----------|
+| ① | `ArcheryFocusComponent.MaybeSetup` | Prefix → **return true** | 放行组件初始化，确保 DoTargetedAction 能正常遍历 squad.agents | 防止技能被跳过 |
+| ② | `ArcheryFocusComponent.ShootAt` | Prefix → 挂载 TitanFocusHelper → **return false** | 仅对本版本 Agent 挂载自建聚焦，阻断原版 ShootAt | 防止手动技能触发 NPE |
+| ③ | `AgentState.DirectUpdate` | Finalizer → 捕获并抑制异常 | 兜底抑制每帧 ModifyArrow 触发的 NPE | 防止被动每帧崩溃 |
+
+**为何技能不再互相干扰**：
+
+关键在于封堵点从 `DoTargetedAction`（英雄层级，小队遍历）下移到了 `ShootAt`（弓箭手个体层级）。
+
+```
+玩家点击专注按钮
+  → DoTargetedAction（英雄，不 patch，原版自由遍历 squad.agents）
+    → Agent A (1.1) 的 ShootAt:
+        1.2 ShootAtPrefix: IsTitanArcher ✅ + OurAgentIds ❌ → return true（放行）
+        1.1 ShootAtPrefix: IsTitanArcher ✅ + OurAgentIds ✅ → 挂载 TitanFocusHelper → return false ✅
+    → Agent B (1.2) 的 ShootAt:
+        1.2 ShootAtPrefix: IsTitanArcher ✅ + OurAgentIds ✅ → 挂载 TitanFocusHelper → return false ✅
+        (1.1 ShootAtPrefix 被 1.2 的 return false 短路，但 Agent B 本就是 1.2 的，1.1 不应处理)
+    → Agent C (普通弓箭手) 的 ShootAt:
+        1.2 ShootAtPrefix: IsTitanArcher ❌ → return true
+        1.1 ShootAtPrefix: IsTitanArcher ❌ → return true → 原版正常执行 ✅
+```
+
+**隔离原理**：`ShootAt` 在每个弓箭手的 `ArcheryFocusComponent` 上独立执行，不同 Agent 的调用天然隔离。`OurAgentIds` HashSet 确保每个版本只处理自己注册的 Agent。即使 `IsTitanArcher()` 仅通过 scale > 1.1f 做粗筛（可能同时匹配多个版本的 Agent），`OurAgentIds` 的精确版本匹配作为最后一道防线，确保不会跨版本处理。
 
 #### 3.4 完整数值参数
 

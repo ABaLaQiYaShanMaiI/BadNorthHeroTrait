@@ -19,7 +19,7 @@ namespace BadNorthTitan
     /// </summary>
     public class Titan : HeroUpgradeDefinition
     {
-        public static readonly string Titan_ID = "Hero_Trait_Titan";
+        public static readonly string Titan_ID = "Hero_Trait_TitanV10";
 
         // ── 版本隔离：记录属于本版本的 Agent InstanceID ──
         public static readonly HashSet<int> TitanizedAgentIds = new HashSet<int>();

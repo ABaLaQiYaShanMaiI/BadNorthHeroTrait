@@ -123,7 +123,7 @@
 
 | 字段 | 值 |
 |------|----|
-| **Trait ID** | `Hero_Trait_Titan` |
+| **Trait ID** | `Hero_Trait_TitanV10` |
 | **NAMESPACE** | `ABaLaQiYaShanMaiI/TRAIT/TITAN/NAME` |
 | **DESCSHORT** | `ABaLaQiYaShanMaiI/TRAIT/TITAN/DESCSHORT` |
 | **DESC** | `ABaLaQiYaShanMaiI/TRAIT/TITAN/DESC` |
@@ -137,7 +137,7 @@
 
 | 字段 | 值 |
 |------|----|
-| **Trait ID** | `Hero_Trait_Titan` |
+| **Trait ID** | `Hero_Trait_TitanV11` |
 | **NAMESPACE** | `ABaLaQiYaShanMaiI/TRAIT/TITAN/NAME` |
 | **DESCSHORT** | `ABaLaQiYaShanMaiI/TRAIT/TITAN/DESCSHORT` |
 | **DESC** | `ABaLaQiYaShanMaiI/TRAIT/TITAN/DESC` |
@@ -152,9 +152,9 @@
 | 字段 | 值 |
 |------|----|
 | **Trait ID** | `Hero_Trait_TitanV12` |
-| **NAMESPACE** | `ABaLaQiYaShanMaiI/TRAIT/TITAN/NAME` |
-| **DESCSHORT** | `ABaLaQiYaShanMaiI/TRAIT/TITAN/DESCSHORT` |
-| **DESC** | `ABaLaQiYaShanMaiI/TRAIT/TITAN/DESC` |
+| **NAMESPACE** | `ABaLaQiYaShanMaiI/TRAIT/TITANV12/NAME` |
+| **DESCSHORT** | `ABaLaQiYaShanMaiI/TRAIT/TITANV12/DESCSHORT` |
+| **DESC** | `ABaLaQiYaShanMaiI/TRAIT/TITANV12/DESC` |
 | **名称** | 泰坦 (BadNorthTitan1.2) |
 | **简述** | 真正的巨人之力，盾弓皆可，升级后起效 (BadNorthTitan1.2) |
 | **描述** | 步兵与弓箭手皆可获得泰坦之力。\n大幅提升伤害、护甲与抗性，但小队人数减半。\n需要小队达到1级后解锁。 (BadNorthTitan1.2) |
@@ -173,8 +173,8 @@
 | 追猎 | BadNorthRegenerative1.0 | `Hero_Trait_RegenerativeV10` |
 | 心灵精英 | BadNorthYuri1.0 | `Hero_Trait_YuriV10` |
 | 终极部队 | BadNorthUltimateSquad1.0 | `Hero_Trait_UltimateSquadV10` |
-| 泰坦 1.0 | BadNorthTitan1.0 | `Hero_Trait_Titan` |
-| 泰坦 1.1 | BadNorthTitan1.1 | `Hero_Trait_Titan` |
+| 泰坦 1.0 | BadNorthTitan1.0 | `Hero_Trait_TitanV10` |
+| 泰坦 1.1 | BadNorthTitan1.1 | `Hero_Trait_TitanV11` |
 | 泰坦 1.2 | BadNorthTitan1.2 | `Hero_Trait_TitanV12` |
 
-> ⚠ **注意**：Trait ID 由各代码文件中的 `public static readonly string ..._ID` 常量定义，以上为实际代码中的值。`V10`/`V12` 只有 CheaperClass、Regenerative、UltimateSquad、Yuri、Titan 1.2 保留了版本号后缀。
+> ⚠ **注意**：Trait ID 由各代码文件中的 `public static readonly string ..._ID` 常量定义，以上为实际代码中的值。所有 V10 后缀特质（CheaperClass、Regenerative、UltimateSquad、Yuri、Titan 1.0/1.1）及 Titan 1.2（V12）均保留了版本号后缀以确保版本隔离。
