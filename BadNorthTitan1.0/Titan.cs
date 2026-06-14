@@ -1,5 +1,6 @@
 // Author: ABaLaQiYaShanMaiI
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using BadNorthAPI;
 using UnityEngine;
@@ -8,12 +9,20 @@ using Voxels.TowerDefense;
 namespace BadNorthTitan
 {
     /// <summary>
+    /// 版本标记：用于 1.1+ 检测同一 Agent 上是否存在 1.0 版 Titan trait
+    /// </summary>
+    public class TitanV10Marker : MonoBehaviour { }
+
+    /// <summary>
     /// 泰坦 (Titan) - 真正的巨人之力，盾弓皆可，升级后起效。
     /// 需要小队等级 >= 1 才能生效，大幅提升单位属性但减少小队人数。
     /// </summary>
     public class Titan : HeroUpgradeDefinition
     {
         public static readonly string Titan_ID = "Hero_Trait_Titan";
+
+        // ── 版本隔离：记录属于本版本的 Agent InstanceID ──
+        public static readonly HashSet<int> TitanizedAgentIds = new HashSet<int>();
 
         // ── 通用参数 ──
         private const float SCALE = 1.25f;
@@ -282,6 +291,11 @@ namespace BadNorthTitan
         private void Titanize(Agent agent)
         {
             if (ReferenceEquals(agent, null)) return;
+
+            // ── 版本隔离：注册 ID 并挂载 Marker ──
+            TitanizedAgentIds.Add(agent.GetInstanceID());
+            if (agent.GetComponent<TitanV10Marker>() == null)
+                agent.gameObject.AddComponent<TitanV10Marker>();
 
             agent.scale = SCALE;
             SetAgentStunMultiplier(agent, STUN_MULTIPLIER);

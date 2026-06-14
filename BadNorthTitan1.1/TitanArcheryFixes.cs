@@ -70,7 +70,11 @@ namespace BadNorthTitan
 
 		private static bool IsTitanArcher(Agent agent)
 		{
-			return agent != null && agent.isEnglish && agent.scale > 1.1f && agent.GetComponent<Archery>() != null;
+			return agent != null
+				&& agent.isEnglish
+				&& agent.scale > 1.1f
+				&& agent.GetComponent<Archery>() != null
+				&& agent.GetComponent("TitanV10Marker") == null; // 排除 1.0 版 Agent
 		}
 
 		/// <summary>
