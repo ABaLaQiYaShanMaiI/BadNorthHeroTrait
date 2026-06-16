@@ -1,10 +1,10 @@
-# BadNorthHeroTraits 架构
+# BadNorthHeroTraits
 
 ## 概述
 
-将原本单 DLL 多特质的 PlentyTraits Mod 拆分为 9 个独立的特质 Mod + 1 个公共 API 库 (BadNorthAPI)。每个 Mod 遵循 **单一职责** 原则，仅负责一个特质的注册与运行逻辑。
+将原本单 DLL 多特质的 PlentyTraits Mod 拆分为 9 个独立的特质 Mod + 1 个公共 API 库 (BadNorthAPI) + 1 个通用崩溃修复库 (BadNorthArcheryFix)。每个 Mod 遵循 **单一职责** 原则。
 
-5 个特质中：BadNorthFlyer 和 BadNorthTitan 为忠实还原 PlentyTraits 魔改版；BadNorthUltimateSquad、BadNorthYuri、BadNorthSlash 为忠实还原 FancyTraits 魔改版。
+5 个特质中：BadNorthFlyer 和 BadNorthTitan 为忠实还原 PlentyTraits 魔改版；BadNorthUltimateSquad、BadNorthYuri、BadNorthSlash 为忠实还原 FancyTraits 魔改版。BadNorthArcheryFix 1.0 为独立通用崩溃修复，零依赖 BadNorthAPI。
 
 ## 项目结构（当前实际）
 
@@ -104,13 +104,20 @@ BadNorthHeroTraits/                    # 根目录（Git 仓库）
 │   ├── Resources/trait_yuri.png
 │   └── BadNorthYuri.csproj           # AssemblyName: BadNorthYuri1.0
 │
-└── BadNorthSlash1.0/                 # 特质: 横扫之刃
-    ├── SweepingBlade.cs               # 特质定义（英雄高抗晕，小兵获得 SlashSword）
-    ├── SlashSword.cs                  # 横扫组件（满血+0.4m范围内最多2个额外目标溅射伤害）
-    ├── Plugin.cs                      # Mod 入口
+├── BadNorthSlash1.0/                 # 特质: 横扫之刃
+│   ├── SweepingBlade.cs               # 特质定义（英雄高抗晕，小兵获得 SlashSword）
+│   ├── SlashSword.cs                  # 横扫组件（满血+0.4m范围内最多2个额外目标溅射伤害）
+│   ├── Plugin.cs                      # Mod 入口
+│   ├── Properties/AssemblyInfo.cs     # AssemblyVersion("1.0.0.0")
+│   ├── Resources/trait_slash.png
+│   └── BadNorthSlash.csproj           # AssemblyName: BadNorthSlash1.0
+│
+└── BadNorthArcheryFix1.0/            # 通用崩溃修复: 巨人弓箭手
+    ├── ArcheryCrashFix.cs             # 8 个 Harmony 补丁（索敌/瞄准/弹道 + 专注防崩溃）
+    ├── FocusFixHelper.cs              # 通用自建专注射击助手
+    ├── Plugin.cs                      # Mod 入口（GUID: ABaLaQiYaShanMaiI.badnortharcheryfix1.0）
     ├── Properties/AssemblyInfo.cs     # AssemblyVersion("1.0.0.0")
-    ├── Resources/trait_slash.png
-    └── BadNorthSlash.csproj           # AssemblyName: BadNorthSlash1.0
+    └── BadNorthArcheryFix.csproj      # AssemblyName: BadNorthArcheryFix1.0
 ```
 
 ## 依赖关系
@@ -125,9 +132,12 @@ BadNorthTitan1.0.dll / 1.1.dll / 1.2.dll ───┤
 BadNorthUltimateSquad1.0.dll ─────┤
 BadNorthYuri1.0.dll ──────────────┤
 BadNorthSlash1.0.dll ─────────────┘
+
+BadNorthArcheryFix1.0.dll ──→ 0Harmony.dll ──→ BepInEx.dll ──→ Assembly-CSharp.dll  （独立链路，零依赖 BadNorthAPI）
 ```
 
-- **强依赖链**: 每个 Mod → BadNorthAPI → MMHOOK → BepInEx → 游戏程序集
+- **强依赖链**: 特质 Mod → BadNorthAPI → MMHOOK → BepInEx → 游戏程序集
+- **独立链路**: BadNorthArcheryFix 1.0 仅依赖 BepInEx + 0Harmony，不依赖 BadNorthAPI
 - **同级无依赖**: 9 个特质 Mod 之间互不引用，完全独立
 - **零侵入**: 所有运行时修改通过 MMHOOK 委托实现，不修改任何原始游戏文件
 
@@ -184,6 +194,7 @@ dotnet build BadNorthTitan1.2/BadNorthTitan.csproj -c Debug
 dotnet build BadNorthUltimateSquad1.0/BadNorthUltimateSquad.csproj -c Debug
 dotnet build BadNorthYuri1.0/BadNorthYuri.csproj -c Debug
 dotnet build BadNorthSlash1.0/BadNorthSlash.csproj -c Debug
+dotnet build BadNorthArcheryFix1.0/BadNorthArcheryFix.csproj -c Debug
 ```
 
 ### 输出产物
@@ -202,6 +213,7 @@ dotnet build BadNorthSlash1.0/BadNorthSlash.csproj -c Debug
 | UltimateSquad 1.0 | `BadNorthUltimateSquad1.0/bin/Debug/BadNorthUltimateSquad1.0.dll` |
 | Yuri 1.0 | `BadNorthYuri1.0/bin/Debug/BadNorthYuri1.0.dll` |
 | Slash 1.0 | `BadNorthSlash1.0/bin/Debug/BadNorthSlash1.0.dll` |
+| ArcheryFix 1.0 | `BadNorthArcheryFix1.0/bin/Debug/BadNorthArcheryFix1.0.dll` |
 
 ## 安装说明（游戏部署）
 
@@ -221,6 +233,7 @@ BadNorth/BepInEx/plugins/
 ├── BadNorthUltimateSquad1.0.dll       # 可选 - 终极部队特质
 ├── BadNorthYuri1.0.dll                # 可选 - 心灵精英特质
 ├── BadNorthSlash1.0.dll               # 可选 - 横扫之刃特质
+├── BadNorthArcheryFix1.0.dll          # 可选 - 巨人弓箭手崩溃修复（零依赖）
 ```
 
 > 每个 Mod 的 `Resources/trait_xxx.png` 图标文件会自动复制到 DLL 同目录，无需手动操作。
@@ -751,3 +764,60 @@ TitanArcheryFixes.ApplyPatches(harmony);
 10. 如果需要访问私有字段：实现专用的 `GetFieldValue`/`SetFieldValue` 反射方法（注意 `ReferenceEquals`）
 11. 如果实现 `IAttackResponder`：注意通过 `squad.onAgentCreated` 添加到 `agent.attackResponders`
 12. 编译测试
+
+### 🔟 BadNorthArcheryFix 1.0 —— 通用巨人弓箭手崩溃修复
+
+> **版本**: v1.0 | **目录**: `BadNorthArcheryFix1.0/` | **GUID**: `ABaLaQiYaShanMaiI.badnortharcheryfix1.0` | **DLL**: `BadNorthArcheryFix1.0.dll` | **AssemblyVersion**: `1.0.0.0`
+
+**定位**：独立通用崩溃修复库，零依赖 BadNorthAPI。自动检测所有 scale > 1.0f 的英军弓箭手，透明修复巨人弓箭手的索敌失效和专注射击崩溃。只需放入 `BepInEx/plugins/` 即可保护任何巨人弓箭手 mod。
+
+**原理解释（一句话）**：3 个 Harmony 补丁只处理专注技能的两个崩溃点——放行 MaybeSetup 初始化 + 拦截 ShootAt 挂自建聚焦 + DirectUpdate 兜底吞异常，不修改索敌/瞄准/弹道参数，保留其他 mod 的数据多样性。
+
+#### 10.1 文件结构
+
+| 文件 | 职责 |
+|------|------|
+| `ArcheryCrashFix.cs` | 核心 — 3 个 Harmony 补丁（仅专注技能防崩溃） |
+| `FocusFixHelper.cs` | 通用自建专注射击助手（`MonoBehaviour.Update` 驱动射击，弹道参数继承原版不做覆盖） |
+| `Plugin.cs` | BepInEx 入口 — 注册 3 补丁，零依赖 |
+| `BadNorthArcheryFix.csproj` | 项目文件 — AssemblyName: BadNorthArcheryFix1.0，引用 BepInEx + 0Harmony + Unity |
+
+#### 10.2 检测机制
+
+```csharp
+IsGiantArcher(agent) = agent.scale > 1.0f && agent.isEnglish && Archery != null
+```
+
+不依赖任何 marker 组件或 OurAgentIds，纯属性判断。任何 mod 将单位放大到超过原版最大 scale（~1.0）并赋予 Archery 组件后，自动被保护。对原版单位完全透明（`return true` 走原版逻辑）。
+
+#### 10.3 3 补丁防护体系
+
+| 补丁 | 目标方法 | 类型 | 效果 |
+|------|----------|------|------|
+| ① MaybeSetupPrefix | `ArcheryFocusComponent.MaybeSetup` | Prefix | 放行（return true），确保组件始化 |
+| ② ShootAtPrefix | `ArcheryFocusComponent.ShootAt` | Prefix | 拦截专注技能，挂载 FocusFixHelper 自建聚焦 |
+| ③ DirectUpdateFinalizer | `AgentState.DirectUpdate` | Finalizer | 兜底吞掉每帧 ModifyArrow NPE |
+
+**不修改**：索敌距离、瞄准逻辑、弹道物理（speed/gravity/drag）、伤害、冷却——全部保持原版或由其他 mod 定义。
+
+#### 10.4 与 TitanArcheryFixes 的区别
+
+| 维度 | BadNorthArcheryFix 1.0 | TitanArcheryFixes (1.1/1.2) |
+|------|------------------------|------------------------------|
+| 依赖 | 仅 BepInEx + 0Harmony | BadNorthAPI + BepInEx + 0Harmony |
+| 检测方式 | `scale > 1.0f`（自动） | `scale > 1.1f` + `TitanV10Marker` 排除 |
+| 版本隔离 | 无（全局生效） | `OurAgentIds` HashSet 精确匹配 |
+| 命名空间 | `BadNorthArcheryFix` | `BadNorthTitan` |
+| 适用场景 | 保护任何第三方巨人弓箭手 mod | 仅保护 Titan trait 自身 |
+
+#### 10.5 构建
+
+```powershell
+dotnet build BadNorthArcheryFix1.0/BadNorthArcheryFix.csproj -c Debug
+```
+
+产物：`BadNorthArcheryFix1.0/bin/Debug/BadNorthArcheryFix1.0.dll`
+
+#### 10.6 安装
+
+将 `BadNorthArcheryFix1.0.dll` 放入 `BadNorth/BepInEx/plugins/`。无需任何配置，日志默认关闭（`EnableGameplayLog = false`）。与 BadNorthTitan 1.0/1.1/1.2 及其它任何特质 Mod 完全兼容。
