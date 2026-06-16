@@ -1,12 +1,3 @@
-// Author: ABaLaQiYaShanMaiI
-// 通用巨人弓箭手崩溃修复 — 3 个 Harmony 补丁（仅处理专注技能崩溃）
-// 自动检测 scale > 1.0f 的英军弓箭手，透明修复专注射击崩溃：
-//   1. ModifyArrow NPE（每帧）
-//   2. ShootAt NPE（手动触发）
-//
-// 不修改索敌/瞄准/弹道参数，保留其他 mod 的数据多样性。
-// 零外部依赖，纯 BepInEx + 0Harmony。
-// 任何将原版单位改成巨人弓箭手的 mod 只需将此 DLL 放入 plugins/ 即可获得保护。
 using System;
 using System.Reflection;
 using HarmonyLib;
@@ -113,7 +104,7 @@ namespace BadNorthArcheryFix
 				}
 
 				FocusFixHelper helper = agent.gameObject.AddComponent<FocusFixHelper>();
-				helper.Configure(shootDir, 8, 0.04f, baseSettings);
+				helper.Configure(shootDir, 8, 0.2f, baseSettings);
 
 				Log(string.Format("[ArcheryFix] ShootAt 已重定向: Agent#{0}", agent.GetInstanceID()));
 
