@@ -33,6 +33,12 @@ namespace BadNorthTitan
 		// 反射缓存：ProjectileSettings 字段列表（用于全字段拷贝）
 		private static FieldInfo[] _psFields = null;
 		private static bool _psFieldsAttempted = false;
+		// 反射缓存：Archery.coolDownTime（每次射击前清零以绕过原版冷却门）
+		private static FieldInfo _tfhCoolDownField = null;
+		private static bool _tfhCoolDownFieldAttempted = false;
+		// 反射缓存：Archery.target（用于修复碰撞掩码）
+		private static FieldInfo _tfhTargetField = null;
+		private static bool _tfhTargetFieldAttempted = false;
 
 		/// <summary>
 		/// 配置专注参数（由外部在挂载后立即调用）。
@@ -72,6 +78,44 @@ namespace BadNorthTitan
 			}
 
 			_lastShotTime = Time.time;
+
+			// ── 清除 Archery 冷却时间，绕过原版射击门控 ──
+			if (!_tfhCoolDownFieldAttempted)
+			{
+				_tfhCoolDownFieldAttempted = true;
+				_tfhCoolDownField = typeof(Archery).GetField("coolDownTime",
+					BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			}
+			if (!ReferenceEquals(_tfhCoolDownField, null))
+				_tfhCoolDownField.SetValue(archery, 0f);
+
+			// ── 确保 target.mask0/mask1 包含地形层，防止弹丸穿透 ──
+			if (!_tfhTargetFieldAttempted)
+			{
+				_tfhTargetFieldAttempted = true;
+				_tfhTargetField = typeof(Archery).GetField("target",
+					BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			}
+			if (!ReferenceEquals(_tfhTargetField, null))
+			{
+				object targetObj = _tfhTargetField.GetValue(archery);
+				if (targetObj != null)
+				{
+					LineOfSight.Sight sight = (LineOfSight.Sight)targetObj;
+					sight.mask0 |= LayerMaster.arrowLow;
+					sight.mask1 |= LayerMaster.arrowLow;
+					_tfhTargetField.SetValue(archery, sight);
+				}
+				else
+				{
+					LineOfSight.Sight fallback = default(LineOfSight.Sight);
+					fallback.mask0 = LayerMaster.arrowLow;
+					fallback.mask1 = LayerMaster.arrowLow;
+					fallback.agent = null;
+					fallback.score = 0f;
+					_tfhTargetField.SetValue(archery, fallback);
+				}
+			}
 
 			// 每次射击前自动转向到统一射击方向的水平朝向
 			Vector3 horizontalDir = _shootDir;

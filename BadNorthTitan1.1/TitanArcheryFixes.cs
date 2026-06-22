@@ -206,7 +206,7 @@ namespace BadNorthTitan
 				LineOfSight.Sight sight = default(LineOfSight.Sight);
 				sight.agent = bestTarget;
 				sight.mask0 = LayerMaster.arrowLow;
-				sight.mask1 = LayerMaster.arrowHigh;
+				sight.mask1 = LayerMaster.arrowHigh | LayerMaster.arrowLow;  // 下降段也检测地形，防穿透
 				sight.score = -bestDistSqr;
 				__instance.enemies.Clear();
 				__instance.enemies.Add(sight);
@@ -449,7 +449,7 @@ namespace BadNorthTitan
 				return false;
 			}
 			catch (Exception ex)
-			{
+	x		{
 				GameplayLogWarn(string.Format(
 					"[Titan ERROR] ShootAtPrefix 异常 (Archer#{0}): {1} — 穿透放行", agent.GetInstanceID(), ex.Message));
 				return true;

@@ -206,7 +206,7 @@ namespace BadNorthTitan
 				LineOfSight.Sight sight = default(LineOfSight.Sight);
 				sight.agent = bestTarget;
 				sight.mask0 = LayerMaster.arrowLow;
-				sight.mask1 = LayerMaster.arrowHigh;
+				sight.mask1 = LayerMaster.arrowHigh | LayerMaster.arrowLow;  // 下降段也检测地形，防穿透
 				sight.score = -bestDistSqr;
 				__instance.enemies.Clear();
 				__instance.enemies.Add(sight);
